@@ -243,6 +243,19 @@ function initSidebar() {
   const toggle=document.getElementById('sidebarToggle');
   const sidebar=document.getElementById('appSidebar');
   if(toggle&&sidebar) toggle.addEventListener('click',()=>sidebar.classList.toggle('open'));
+  
+  // Dynamically set Online Store link based on protocol and branch ID
+  const storeLink = document.querySelector('.sidebar-nav-link[data-tab="store"]');
+  if (storeLink) {
+    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+    const isFile = window.location.protocol === 'file:';
+    let base = isFile ? 'store.html' : '/store';
+    if (branch) {
+      storeLink.href = `${base}?branch=${branch}`;
+    } else {
+      storeLink.href = base;
+    }
+  }
 }
 
 // =============================================
