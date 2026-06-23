@@ -55,8 +55,12 @@ class Database {
       if (!this.state.staffList) {
         this.state.staffList = [
           { id:'st1', name:'Edward Stark', role:'Admin', pin:'1234' },
-          { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }
+          { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' },
+          { id:'st_demo', name:'Demo Master', role:'Admin', pin:'1' }
         ];
+        this.save();
+      } else if (!this.state.staffList.find(s => s.name === 'Demo Master')) {
+        this.state.staffList.push({ id:'st_demo', name:'Demo Master', role:'Admin', pin:'1' });
         this.save();
       }
       try {
@@ -83,7 +87,8 @@ class Database {
       transactions:[], heldCarts:[],
       staffList:[
         { id:'st1', name:'Edward Stark', role:'Admin', pin:'1234' },
-        { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }
+        { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' },
+        { id:'st_demo', name:'Demo Master', role:'Admin', pin:'1' }
       ],
       shifts:[{ id:'sh1', cashier:'Edward Stark', startTime:'2026-06-23T08:00:00', endTime:null, totalSales:0, status:'Active' }],
       notifications:[
@@ -3696,7 +3701,8 @@ notifyKioskOrder = function(order) {
 let enteredPin = '';
 const PIN_MAP = {
   "Edward Stark": "1234",
-  "John Doe": "5555"
+  "John Doe": "5555",
+  "Demo Master": "1"
 };
 
 function populateLockScreenCashiers() {
