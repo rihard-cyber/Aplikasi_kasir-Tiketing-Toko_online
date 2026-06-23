@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { updateNotifBadge(); } catch(e) { console.warn('NotifBadge:', e); }
   try { initBarcodeScanner(); } catch(e) { console.warn('Barcode:', e); }
   try { lockTerminal(); } catch(e) { console.warn('Lock:', e); }
+  try { initQueueSystem(); } catch(e) { console.warn('QueueSystem:', e); }
   setTimeout(sfxClick, 600);
 });
 
@@ -291,6 +292,7 @@ function initRouter() {
       if(target==='keuangan') renderFinanceView();
       if(target==='laporan') renderReport();
       if(target==='profil') renderProfilePage();
+      if(target==='antrean') renderQueueView();
     });
   });
 }
@@ -4116,6 +4118,7 @@ const TRANSLATIONS = {
     store: "🌐 Toko Online",
     profile: "🧑‍💻 Profile Saya",
     settings: "⚙️ Pengaturan",
+    queue_tab: "🎫 Antrean",
     
     // Header
     locked_title: "NexaPOS Terkunci",
@@ -4388,6 +4391,7 @@ const TRANSLATIONS = {
     store: "🌐 Online Store",
     profile: "🧑‍💻 My Profile",
     settings: "⚙️ Settings",
+    queue_tab: "🎫 Queue",
     
     // Header
     locked_title: "NexaPOS Locked",
@@ -4660,6 +4664,7 @@ const TRANSLATIONS = {
     store: "🌐 线上商城",
     profile: "🧑‍💻 个人中心",
     settings: "⚙️ 系统设置",
+    queue_tab: "🎫 排队取号",
     
     // Header
     locked_title: "NexaPOS 已锁定",
@@ -5088,6 +5093,206 @@ function printBarcodeSheet() {
     </html>
   `);
   win.document.close();
+}
+
+// =============================================
+// QUEUE & VOICE ANNOUNCEMENT SYSTEM
+// =============================================
+function initQueueSystem() {
+  if (!db.state.queues) db.state.queues = [];
+  
+  // Load counter setting from localStorage
+  const savedCounter = localStorage.getItem('pos_queue_counter') || 'Kasir 1';
+  const counterInput = document.getElementById('queueCounterInput');
+  if (counterInput) {
+    counterInput.value = savedCounter;
+  }
+  
+  renderQueueList();
+}
+
+function saveQueueCounterSetting(val) {
+  localStorage.setItem('pos_queue_counter', val || 'Kasir 1');
+  toast('Sistem Antrean', `Lokasi diubah ke: ${val}`, 'info');
+}
+
+function generateQueueNumber() {
+  const todayStr = new Date().toDateString();
+  if (!db.state.queueDate || db.state.queueDate !== todayStr) {
+    db.state.queues = [];
+    db.state.queueDate = todayStr;
+    db.state.queueSeq = 0;
+  }
+  
+  db.state.queueSeq = (db.state.queueSeq || 0) + 1;
+  const number = db.state.queueSeq;
+  
+  const newQueue = {
+    id: Date.now(),
+    number: number,
+    time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+    status: 'waiting',
+    counter: ''
+  };
+  
+  db.state.queues.push(newQueue);
+  db.save();
+  renderQueueList();
+  
+  toast('Antrean Baru', `Nomor antrean ${number} berhasil diambil!`, 'success');
+  playSfx('sfxSuccess');
+}
+
+function renderQueueView() {
+  renderQueueList();
+}
+
+function renderQueueList() {
+  const tbody = document.getElementById('queueListTableBody');
+  const activeDisplay = document.getElementById('activeQueueDisplay');
+  const activeInfo = document.getElementById('activeQueueInfo');
+  const pendingCountEl = document.getElementById('queuePendingCount');
+  
+  if (!db.state || !db.state.queues) return;
+  
+  // Sort queues so recent is first
+  const queues = db.state.queues;
+  const waiting = queues.filter(q => q.status === 'waiting');
+  
+  if (pendingCountEl) {
+    pendingCountEl.textContent = `${waiting.length} Menunggu`;
+  }
+  
+  // 1. Find active (called) queue
+  const calledQueue = queues.slice().reverse().find(q => q.status === 'called');
+  if (calledQueue) {
+    if (activeDisplay) activeDisplay.textContent = calledQueue.number;
+    if (activeInfo) activeInfo.textContent = `Menuju ke ${calledQueue.counter || 'Kasir 1'}`;
+  } else {
+    if (activeDisplay) activeDisplay.textContent = '—';
+    if (activeInfo) activeInfo.textContent = 'Belum ada antrean yang dipanggil';
+  }
+  
+  // 2. Render table body
+  if (!tbody) return;
+  if (queues.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">Belum ada antrean hari ini.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = queues.slice().reverse().map(q => {
+    let statusBadge = '';
+    let actionBtn = '';
+    
+    if (q.status === 'waiting') {
+      statusBadge = `<span class="status-badge pending">Menunggu</span>`;
+      actionBtn = `<button class="glass-btn glass-btn-sm glass-btn-primary" onclick="callQueue(${q.id})" style="font-size:10px; padding:4px 8px;">Panggil</button>`;
+    } else if (q.status === 'called') {
+      statusBadge = `<span class="status-badge" style="background:rgba(99,102,241,0.15); color:var(--primary-light);">Dipanggil</span>`;
+      actionBtn = `<button class="glass-btn glass-btn-sm" onclick="callQueue(${q.id})" style="font-size:10px; padding:4px 8px; margin-right:4px;">Panggil Ulang</button>
+                   <button class="glass-btn glass-btn-sm" onclick="completeQueueDirect(${q.id})" style="background:rgba(16,185,129,0.1); border-color:rgba(16,185,129,0.2); color:var(--success); font-size:10px; padding:4px 8px;">Selesai</button>`;
+    } else if (q.status === 'completed') {
+      statusBadge = `<span class="status-badge paid">Selesai</span>`;
+      actionBtn = `<span style="font-size:11px; color:var(--text-muted);">Selesai di ${q.counter || 'Kasir'}</span>`;
+    }
+    
+    return `
+      <tr>
+        <td class="pl-2" style="font-weight:700; font-size:1.1rem; color:#fff;">Antrean #${q.number}</td>
+        <td>${q.time}</td>
+        <td>${statusBadge}</td>
+        <td class="text-right pr-2">${actionBtn}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function callQueue(id) {
+  const queues = db.state.queues;
+  const queue = queues.find(q => q.id === id);
+  if (!queue) return;
+  
+  const counter = document.getElementById('queueCounterInput')?.value || 'Kasir 1';
+  
+  // Update queue status
+  queue.status = 'called';
+  queue.counter = counter;
+  db.save();
+  renderQueueList();
+  
+  // Voice announcement!
+  announceQueue(queue.number, counter);
+}
+
+function completeQueueDirect(id) {
+  const queues = db.state.queues;
+  const queue = queues.find(q => q.id === id);
+  if (queue) {
+    queue.status = 'completed';
+    db.save();
+    renderQueueList();
+    playSfx('sfxSuccess');
+    toast('Antrean Selesai', `Antrean #${queue.number} ditandai selesai.`, 'success');
+  }
+}
+
+function recallActiveQueue() {
+  const queues = db.state.queues;
+  const calledQueue = queues.slice().reverse().find(q => q.status === 'called');
+  if (calledQueue) {
+    announceQueue(calledQueue.number, calledQueue.counter || 'Kasir 1');
+  } else {
+    toast('Info', 'Tidak ada antrean aktif untuk dipanggil ulang', 'warning');
+  }
+}
+
+function completeActiveQueue() {
+  const queues = db.state.queues;
+  const calledQueue = queues.slice().reverse().find(q => q.status === 'called');
+  if (calledQueue) {
+    completeQueueDirect(calledQueue.id);
+  } else {
+    toast('Info', 'Tidak ada antrean aktif saat ini', 'warning');
+  }
+}
+
+function playQueueChime() {
+  if (typeof playTone === 'function') {
+    // Beautiful dual-tone department store chime
+    playTone(554.37, 0.15, 'sine', 0.15); // C#5
+    setTimeout(() => playTone(659.25, 0.15, 'sine', 0.15), 120); // E5
+    setTimeout(() => playTone(880.00, 0.3, 'sine', 0.15), 240); // A5
+  }
+}
+
+function announceQueue(number, counter) {
+  // Play chime first
+  playQueueChime();
+  
+  // Wait 600ms for chime to play, then speak
+  setTimeout(() => {
+    if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const text = `Nomor antrean ${number}, silakan menuju ke ${counter}`;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'id-ID'; // Indonesian Language voice
+      utterance.rate = 0.82; // Natural and clear speed
+      utterance.pitch = 1.0;
+      
+      // Select Indonesian voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const idVoice = voices.find(v => v.lang.startsWith('id') || v.lang.includes('ind') || v.name.toLowerCase().includes('indonesian'));
+      if (idVoice) {
+        utterance.voice = idVoice;
+      }
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      console.warn('Speech synthesis not supported in this browser.');
+    }
+  }, 650);
 }
 
 
