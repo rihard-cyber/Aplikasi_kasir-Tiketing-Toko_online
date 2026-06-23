@@ -1,0 +1,22 @@
+[
+  {
+    "id": "branch-1",
+    "ownerId": "owner-1",
+    "name": "Senayan Flagship Store",
+    "address": "Senayan City, Jakarta",
+    "phone": "021-1234567",
+    "city": "Jakarta Pusat",
+    "createdAt": "2026-06-23T12:58:18.062Z",
+    "active": true
+  },
+  {
+    "id": "branch-mqqns768",
+    "ownerId": "owner-1",
+    "name": "Ridwan rais Jakpus",
+    "address": "kementerian perdagangan RI",
+    "phone": "0495966999",
+    "city": "Jakarta Pusat",
+    "createdAt": "2026-06-23T13:06:58.256Z",
+    "active": true
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "st1",
+    "name": "Edward Stark",
+    "role": "Admin",
+    "pin": "1234"
+  },
+  {
+    "id": "st2",
+    "name": "John Doe",
+    "role": "Kasir",
+    "pin": "5555"
+  }
+]

@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaPOS — Empire Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #05060a;
+      --surface: rgba(15,17,25,0.85);
+      --surface-hover: rgba(25,28,40,0.9);
+      --border: rgba(245,158,11,0.08);
+      --border-light: rgba(245,158,11,0.15);
+      --text: #f1f5f9;
+      --text-secondary: rgba(241,245,249,0.6);
+      --text-muted: rgba(241,245,249,0.35);
+      --gold: #F59E0B;
+      --gold-light: #FBBF24;
+      --gold-glow: rgba(245,158,11,0.12);
+      --gold-glow-strong: rgba(245,158,11,0.25);
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --blue: #3b82f6;
+      --radius-sm: 8px;
+      --radius: 14px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --shadow-card: 0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.05);
+      --shadow-glow: 0 8px 40px rgba(245,158,11,0.08);
+      --font: 'Inter', -apple-system, sans-serif;
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-serif: 'Playfair Display', serif;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Animated Background ── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .bg-orbs .orb {
+      position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15;
+      animation: orbFloat 20s ease-in-out infinite;
+    }
+    .bg-orbs .orb:nth-child(1) {
+      width: 600px; height: 600px; background: radial-gradient(circle, var(--gold), transparent);
+      top: -15%; left: -10%; animation-delay: 0s;
+    }
+    .bg-orbs .orb:nth-child(2) {
+      width: 400px; height: 400px; background: radial-gradient(circle, #6366f1, transparent);
+      bottom: -10%; right: -5%; animation-delay: -7s;
+    }
+    .bg-orbs .orb:nth-child(3) {
+      width: 350px; height: 350px; background: radial-gradient(circle, #06b6d4, transparent);
+      top: 40%; right: 20%; animation-delay: -14s;
+    }
+    .bg-grain {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      opacity: 0.015; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat; background-size: 256px 256px;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(30px, -40px) scale(1.05); }
+      50% { transform: translate(-20px, 20px) scale(0.95); }
+      75% { transform: translate(40px, 30px) scale(1.02); }
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--gold-glow-strong); border-radius: 2px; }
+
+    /* ── Common ── */
+    .glass {
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .glass-card {
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(1.2);
+      -webkit-backdrop-filter: blur(24px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+      border-color: var(--border-light);
+      box-shadow: var(--shadow-glow), var(--shadow-card);
+      transform: translateY(-1px);
+    }
+    .glass-card:active { transform: translateY(0px) scale(0.995); }
+
+    .gold-text {
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 50%, #d97706 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 10px 22px; border-radius: var(--radius-sm); font-weight: 600; font-size: 13px;
+      cursor: pointer; border: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none; position: relative; overflow: hidden;
+      letter-spacing: 0.3px;
+    }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      color: #000; font-weight: 700;
+      box-shadow: 0 4px 20px var(--gold-glow);
+    }
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--gold-glow-strong);
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { border-color: var(--border-light); color: var(--text); background: rgba(255,255,255,0.06); }
+    .btn-rose { background: var(--rose); color: #fff; }
+    .btn-rose:hover { opacity: 0.9; transform: translateY(-2px); }
+    .btn-sm { padding: 7px 16px; font-size: 12px; border-radius: 6px; }
+    .btn-xs { padding: 4px 10px; font-size: 10px; border-radius: 4px; letter-spacing: 0.5px; }
+
+    .input {
+      width: 100%; padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(245,158,11,0.1);
+      border-radius: var(--radius-sm);
+      color: var(--text); font-size: 14px; font-family: var(--font);
+      transition: all 0.3s; outline: none;
+    }
+    .input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px var(--gold-glow), 0 0 20px rgba(245,158,11,0.05);
+      background: rgba(255,255,255,0.05);
+    }
+    .input::placeholder { color: var(--text-muted); }
+    label {
+      display: block; font-size: 10px; font-weight: 700; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 6px; letter-spacing: 1px;
+    }
+
+    /* ── Auth Page ── */
+    #authPage {
+      align-items: center; justify-content: center; flex-direction: column;
+      min-height: 100vh; position: relative; z-index: 2;
+    }
+    .auth-box {
+      width: 420px; max-width: 92vw; padding: 48px 40px 40px;
+      text-align: center; position: relative;
+      background: rgba(12,14,22,0.9);
+      backdrop-filter: blur(40px) saturate(1.3);
+      -webkit-backdrop-filter: blur(40px) saturate(1.3);
+      border: 1px solid rgba(245,158,11,0.12);
+      border-radius: var(--radius-xl);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(245,158,11,0.03);
+    }
+    .auth-box::before {
+      content: ''; position: absolute; inset: -1px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, rgba(245,158,11,0.2), transparent 40%, transparent 60%, rgba(245,158,11,0.1));
+      z-index: -1; mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude; -webkit-mask-composite: xor;
+      padding: 1px;
+    }
+    .auth-emoji { font-size: 56px; margin-bottom: 12px; display: block; filter: drop-shadow(0 0 20px rgba(245,158,11,0.2)); }
+    .auth-box h1 {
+      font-family: var(--font-display); font-size: 30px; font-weight: 800;
+      background: linear-gradient(135deg, #fff 20%, var(--gold-light) 50%, var(--gold) 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 4px;
+    }
+    .auth-box .subtitle {
+      color: var(--text-secondary); font-size: 13px; margin-bottom: 32px; font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+    .auth-box .form-group { text-align: left; margin-bottom: 18px; }
+
+    .auth-divider {
+      width: 60px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 24px;
+    }
+
+    .auth-toggle { font-size: 13px; color: var(--text-muted); margin-top: 24px; }
+    .auth-toggle a { color: var(--gold-light); cursor: pointer; font-weight: 600; transition: color 0.2s; }
+    .auth-toggle a:hover { color: var(--gold); text-decoration: underline; }
+
+    /* ── Dashboard ── */
+    #dashPage {
+      padding: 32px 40px; flex-direction: column; gap: 24px;
+      position: relative; z-index: 2; min-height: 100vh;
+    }
+
+    .dash-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px; padding: 8px 0;
+    }
+    .dash-brand { display: flex; align-items: center; gap: 14px; }
+    .dash-brand-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 4px 16px var(--gold-glow);
+    }
+    .dash-brand h1 {
+      font-family: var(--font-display); font-size: 22px; font-weight: 800;
+    }
+    .dash-brand h1 span { color: var(--gold-light); }
+    .dash-brand .badge {
+      font-size: 9px; font-weight: 700; text-transform: uppercase;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(245,158,11,0.12); color: var(--gold-light);
+      letter-spacing: 1px; border: 1px solid rgba(245,158,11,0.1);
+    }
+
+    .dash-user {
+      display: flex; align-items: center; gap: 14px;
+      padding: 6px 16px 6px 6px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+    }
+    .dash-user .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), #d97706);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; box-shadow: 0 2px 8px var(--gold-glow);
+    }
+    .dash-user-info { text-align: right; }
+    .dash-user-info .name { font-weight: 600; font-size: 13px; }
+    .dash-user-info .email { font-size: 11px; color: var(--text-muted); }
+    .dash-logout {
+      font-size: 10px; color: var(--text-muted); cursor: pointer; transition: color 0.2s;
+      padding: 4px 8px; border-radius: 4px;
+    }
+    .dash-logout:hover { color: var(--rose); background: rgba(244,63,94,0.1); }
+
+    /* ── Welcome ── */
+    .welcome-section { margin-bottom: 4px; }
+    .welcome-section h2 {
+      font-family: var(--font-display); font-size: 28px; font-weight: 700;
+    }
+    .welcome-section h2 span { color: var(--gold-light); }
+    .welcome-section p { color: var(--text-secondary); font-size: 14px; margin-top: 2px; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .stat-card {
+      padding: 24px; position: relative; overflow: hidden;
+      background: rgba(12,14,22,0.7);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .stat-card:hover {
+      border-color: var(--border-light);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-glow), var(--shadow-card);
+    }
+    .stat-card .stat-icon {
+      font-size: 28px; margin-bottom: 12px; display: block;
+    }
+    .stat-card .stat-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      color: var(--text-muted); letter-spacing: 0.8px; margin-bottom: 6px;
+    }
+    .stat-card .stat-value {
+      font-family: var(--font-display); font-size: 32px; font-weight: 800;
+      line-height: 1.1;
+    }
+    .stat-card .stat-sub {
+      font-size: 12px; color: var(--text-secondary); margin-top: 6px;
+    }
+    .stat-card .stat-glow {
+      position: absolute; top: -50%; right: -30%;
+      width: 120px; height: 120px; border-radius: 50%;
+      filter: blur(40px); opacity: 0.08; pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .stat-card:hover .stat-glow { opacity: 0.15; }
+
+    /* ── Chart ── */
+    .chart-section {
+      padding: 24px; position: relative;
+      background: rgba(12,14,22,0.7);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .chart-section .chart-title {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    }
+
+    .chart-container {
+      height: 220px; display: flex; align-items: flex-end; gap: 6px;
+      padding-bottom: 4px;
+    }
+    .chart-bar {
+      flex: 1; position: relative;
+      background: linear-gradient(to top, var(--gold), var(--gold-light));
+      border-radius: 4px 4px 0 0; min-height: 2px;
+      transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .chart-bar::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(255,255,255,0.1), transparent);
+      border-radius: 4px 4px 0 0;
+    }
+    .chart-bar .tooltip {
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.9); backdrop-filter: blur(12px);
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      font-size: 11px; white-space: nowrap;
+      opacity: 0; transition: opacity 0.2s;
+      margin-bottom: 6px; border: 1px solid var(--border);
+      pointer-events: none; z-index: 5;
+    }
+    .chart-bar:hover .tooltip { opacity: 1; }
+    .chart-labels {
+      display: flex; gap: 6px; margin-top: 10px;
+    }
+    .chart-labels span {
+      flex: 1; font-size: 9px; color: var(--text-muted);
+      text-align: center; font-weight: 500;
+    }
+
+    /* ── Branches Section ── */
+    .branches-section {
+      padding: 24px;
+      background: rgba(12,14,22,0.7);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .branches-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+    }
+    .branches-header h2 {
+      font-family: var(--font-display); font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .branch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 14px;
+    }
+    .branch-card {
+      padding: 20px; cursor: pointer; position: relative; overflow: hidden;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .branch-card:hover {
+      border-color: var(--border-light);
+      background: rgba(255,255,255,0.04);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    }
+    .branch-card:active { transform: translateY(0) scale(0.995); }
+    .branch-card .branch-top {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+    }
+    .branch-card .branch-indicator {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .branch-card .branch-indicator.active { background: var(--emerald); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+    .branch-card .branch-indicator.inactive { background: var(--text-muted); }
+    .branch-card .branch-name {
+      font-family: var(--font-display); font-weight: 700; font-size: 15px;
+    }
+    .branch-card .branch-city { font-size: 12px; color: var(--text-secondary); }
+    .branch-card .branch-stats {
+      display: flex; gap: 20px; flex-wrap: wrap;
+    }
+    .branch-card .branch-stats > div { font-size: 12px; color: var(--text-secondary); }
+    .branch-card .branch-stats .num { font-weight: 700; color: var(--gold-light); font-size: 14px; }
+    .branch-card .branch-actions {
+      position: absolute; top: 14px; right: 14px;
+      display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s;
+    }
+    .branch-card:hover .branch-actions { opacity: 1; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+      animation: modalFadeIn 0.2s ease;
+    }
+    .modal-overlay.active { display: flex; }
+    @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .modal {
+      background: rgba(12,14,22,0.95);
+      backdrop-filter: blur(40px) saturate(1.3);
+      -webkit-backdrop-filter: blur(40px) saturate(1.3);
+      border: 1px solid rgba(245,158,11,0.12);
+      border-radius: var(--radius-xl);
+      padding: 36px; width: 480px; max-width: 92vw;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+      animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: scale(0.95) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal h2 {
+      font-family: var(--font-display); font-size: 20px; font-weight: 700;
+      margin-bottom: 24px;
+    }
+    .modal .form-group { margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 99999;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      padding: 14px 20px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      background: rgba(12,14,22,0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      pointer-events: auto;
+      animation: toastIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      max-width: 380px;
+    }
+    .toast.success { border-left: 3px solid var(--emerald); }
+    .toast.error { border-left: 3px solid var(--rose); }
+    .toast.info { border-left: 3px solid var(--blue); }
+    @keyframes toastIn {
+      from { transform: translateX(100%) scale(0.9); opacity: 0; }
+      to { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    /* ── Sidebar Navigation ── */
+    .dash-layout {
+      display: flex; gap: 24px; flex: 1; min-height: 0;
+    }
+    .dash-sidebar {
+      width: 180px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px;
+      padding: 16px 12px; height: fit-content; position: sticky; top: 24px;
+      background: rgba(12,14,22,0.6);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .dash-sidebar .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+      border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 500;
+      color: var(--text-secondary); transition: all 0.25s; border: 1px solid transparent;
+    }
+    .dash-sidebar .nav-item:hover {
+      background: rgba(255,255,255,0.03); color: var(--text);
+    }
+    .dash-sidebar .nav-item.active {
+      background: rgba(245,158,11,0.08); color: var(--gold-light);
+      border-color: rgba(245,158,11,0.1);
+      box-shadow: 0 0 20px rgba(245,158,11,0.03);
+    }
+    .dash-sidebar .nav-divider {
+      height: 1px; background: var(--border); margin: 6px 14px;
+    }
+
+    .dash-content {
+      flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px;
+    }
+    .dash-view { display: none; }
+    .dash-view.active { display: block; }
+    .dash-view.active.fade-enter { animation: viewEnter 0.35s ease; }
+    @keyframes viewEnter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Branch Detail ── */
+    .detail-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .detail-back {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px; transition: all 0.2s; color: var(--text-secondary);
+    }
+    .detail-back:hover { border-color: var(--border-light); color: var(--text); background: rgba(255,255,255,0.06); }
+    .detail-info {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;
+    }
+    .detail-info-item {
+      padding: 16px; border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    }
+    .detail-info-item .lbl { font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-bottom: 4px; }
+    .detail-info-item .val { font-size: 14px; font-weight: 600; }
+
+    .detail-orders { margin-top: 16px; }
+    .detail-orders table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .detail-orders th { text-align: left; padding: 10px 12px; font-size: 10px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; border-bottom: 1px solid var(--border); font-weight: 600; }
+    .detail-orders td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .detail-orders tr:hover td { background: rgba(255,255,255,0.02); }
+    .status-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; }
+    .status-badge.pending { background: rgba(245,158,11,0.12); color: var(--gold-light); }
+    .status-badge.paid { background: rgba(16,185,129,0.12); color: var(--emerald); }
+    .status-badge.shipped { background: rgba(59,130,246,0.12); color: var(--blue); }
+
+    /* ── Analytics ── */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .analytics-card {
+      padding: 20px; border-radius: var(--radius);
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+    }
+    .analytics-card h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-secondary); }
+
+    /* ── Empty / Loading ── */
+    .empty-state {
+      text-align: center; padding: 48px 20px; color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 56px; margin-bottom: 16px; display: block; }
+    .empty-state h3 { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+    .empty-state p { font-size: 13px; }
+
+    .loading-state {
+      text-align: center; padding: 40px; color: var(--text-muted);
+    }
+    .loading-spinner {
+      width: 20px; height: 20px; border: 2px solid rgba(245,158,11,0.1);
+      border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Page transitions ── */
+    .page { display: none; }
+    .page.active { display: flex; }
+    .page-fade-in { animation: pageIn 0.5s ease; }
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      #dashPage { padding: 20px 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .branch-grid { grid-template-columns: 1fr; }
+      .dash-brand h1 { font-size: 18px; }
+      .welcome-section h2 { font-size: 22px; }
+      .stat-card .stat-value { font-size: 24px; }
+    }
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .dash-header { flex-direction: column; align-items: stretch; }
+      .dash-user { justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-orbs">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+<div class="bg-grain"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ========== AUTH ========== -->
+<div class="page active" id="authPage">
+  <div class="auth-box">
+    <span class="auth-emoji">🏛️</span>
+    <h1>NexaPOS Empire</h1>
+    <p class="subtitle">Premium Multi-Cabang Management Platform</p>
+    <div class="auth-divider"></div>
+
+    <div id="authLogin">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input class="input" id="loginEmail" type="email" placeholder="admin@nexapos.com" value="admin@nexapos.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="input" id="loginPassword" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;" value="admin123">
+      </div>
+      <button class="btn btn-gold" style="width:100%; justify-content:center; margin-top:4px;" onclick="doLogin()">Masuk ke Dashboard</button>
+      <div class="auth-toggle">Belum punya akun? <a onclick="showRegister()">Buat Akun Baru</a></div>
+    </div>
+
+    <div id="authRegister" style="display:none;">
+      <div class="form-group">
+        <label>Nama Lengkap</label>
+        <input class="input" id="regName" placeholder="Nama Anda">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input class="input" id="regEmail" type="email" placeholder="email@domain.com">
+      </div>
+      <div class="form-group">
+        <label>No. WhatsApp</label>
+        <input class="input" id="regPhone" placeholder="08123456789">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input class="input" id="regPassword" type="password" placeholder="Minimal 6 karakter">
+      </div>
+      <button class="btn btn-gold" style="width:100%; justify-content:center; margin-top:4px;" onclick="doRegister()">Daftar Akun</button>
+      <div class="auth-toggle">Sudah punya akun? <a onclick="showLogin()">Masuk</a></div>
+    </div>
+  </div>
+  <div style="margin-top:20px; font-size:11px; color:var(--text-muted); text-align:center;">
+    NexaPOS SaaS v5.0 &mdash; Enterprise Multi-Branch Platform
+  </div>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div class="page" id="dashPage">
+  <div class="dash-header">
+    <div class="dash-brand">
+      <div class="dash-brand-icon">🏛️</div>
+      <div>
+        <h1>Nexa<span>POS</span></h1>
+        <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+          <span class="badge">Enterprise</span>
+          <span style="font-size:10px; color:var(--text-muted);">Multi-Cabang</span>
+        </div>
+      </div>
+    </div>
+    <div class="dash-user">
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
+        <div class="name" id="dashUserEmail">admin@nexapos.com</div>
+        <div class="dash-logout" onclick="doLogout()">Logout</div>
+      </div>
+      <div class="avatar">👑</div>
+    </div>
+  </div>
+
+  <div class="dash-layout">
+    <!-- ===== SIDEBAR NAV ===== -->
+    <div class="dash-sidebar">
+      <div class="nav-item active" data-view="overview" onclick="switchView('overview')">
+        <span>📊</span> Overview
+      </div>
+      <div class="nav-item" data-view="branches" onclick="switchView('branches')">
+        <span>🏪</span> Cabang Saya
+      </div>
+      <div class="nav-item" data-view="analytics" onclick="switchView('analytics')">
+        <span>📈</span> Analytics
+      </div>
+      <div class="nav-item" style="margin-top:auto; opacity:0.5; cursor:default; font-size:10px; color:var(--text-muted); padding:10px 14px;">
+        v5.0 Enterprise
+      </div>
+    </div>
+
+    <!-- ===== CONTENT ===== -->
+    <div class="dash-content">
+
+      <!-- ── VIEW: Overview ── -->
+      <div class="dash-view active" id="viewOverview">
+        <div class="welcome-section">
+          <h2>Selamat Datang, <span id="dashOwnerName">Owner</span></h2>
+          <p>Imperium bisnis Anda dalam satu pandangan</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--gold);"></div>
+            <span class="stat-icon">🏪</span>
+            <div class="stat-label">Total Cabang</div>
+            <div class="stat-value gold-text" id="statBranches">0</div>
+            <div class="stat-sub">Tersebar di seluruh kota</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--emerald);"></div>
+            <span class="stat-icon">💰</span>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-value gold-text" id="statRevenue">Rp 0</div>
+            <div class="stat-sub">Akumulasi semua cabang</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--blue);"></div>
+            <span class="stat-icon">📦</span>
+            <div class="stat-label">Total Pesanan</div>
+            <div class="stat-value gold-text" id="statOrders">0</div>
+            <div class="stat-sub">Menunggu diproses</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--rose);"></div>
+            <span class="stat-icon">💳</span>
+            <div class="stat-label">Total Transaksi</div>
+            <div class="stat-value gold-text" id="statTransactions">0</div>
+            <div class="stat-sub">Riwayat penjualan</div>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <div class="chart-title">📈 Grafik Pendapatan</div>
+          <div id="chartArea">
+            <div class="loading-state"><div class="loading-spinner"></div>Memuat data penjualan...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Branches ── -->
+      <div class="dash-view" id="viewBranches">
+        <div class="branches-section" style="border:none; padding:0; box-shadow:none; background:transparent;">
+          <div class="branches-header">
+            <h2>🏪 Semua Cabang</h2>
+            <button class="btn btn-gold btn-sm" onclick="openBranchModal()">+ Tambah Cabang</button>
+          </div>
+          <div id="branchList">
+            <div class="loading-state"><div class="loading-spinner"></div>Memuat daftar cabang...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Analytics ── -->
+      <div class="dash-view" id="viewAnalytics">
+        <div class="welcome-section">
+          <h2>📈 Analitik Bisnis</h2>
+          <p>Wawasan mendalam performa semua cabang</p>
+        </div>
+        <div class="analytics-grid">
+          <div class="analytics-card">
+            <h3>🏪 Cabang Teratas</h3>
+            <div id="topBranches">
+              <div class="loading-state"><div class="loading-spinner"></div></div>
+            </div>
+          </div>
+          <div class="analytics-card">
+            <h3>📊 Ringkasan</h3>
+            <div id="summaryStats">
+              <div class="loading-state"><div class="loading-spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Branch Detail ── -->
+      <div class="dash-view" id="viewBranchDetail">
+        <div class="detail-header">
+          <div class="detail-back" onclick="switchView('branches')">←</div>
+          <div>
+            <h2 style="font-family:var(--font-display); font-size:20px; font-weight:700;" id="detailBranchName">—</h2>
+            <p style="font-size:13px; color:var(--text-secondary);" id="detailBranchCity">—</p>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:8px;">
+            <button class="btn btn-gold btn-sm" id="detailOpenPOS">🛒 Buka POS</button>
+            <button class="btn btn-ghost btn-sm" onclick="editBranchFromDetail()">✏️ Edit</button>
+          </div>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:16px;">
+          <div class="stat-card" style="padding:16px;">
+            <div class="stat-label">Pendapatan</div>
+            <div class="stat-value gold-text" style="font-size:22px;" id="detailRevenue">Rp 0</div>
+          </div>
+          <div class="stat-card" style="padding:16px;">
+            <div class="stat-label">Pesanan</div>
+            <div class="stat-value gold-text" style="font-size:22px;" id="detailOrders">0</div>
+          </div>
+          <div class="stat-card" style="padding:16px;">
+            <div class="stat-label">Produk</div>
+            <div class="stat-value gold-text" style="font-size:22px;" id="detailProducts">0</div>
+          </div>
+          <div class="stat-card" style="padding:16px;">
+            <div class="stat-label">Staf</div>
+            <div class="stat-value gold-text" style="font-size:22px;" id="detailStaff">0</div>
+          </div>
+        </div>
+        <div class="detail-info" id="detailInfo"></div>
+        <div class="detail-orders">
+          <h3 style="font-size:14px; font-weight:600; margin-bottom:12px;">📋 Pesanan Terbaru</h3>
+          <div id="detailOrdersList"><div class="loading-state"><div class="loading-spinner"></div></div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== BRANCH MODAL ========== -->
+<div class="modal-overlay" id="branchModal">
+  <div class="modal">
+    <h2 id="branchModalTitle">Tambah Cabang Baru</h2>
+    <div class="form-group">
+      <label>Nama Cabang</label>
+      <input class="input" id="branchName" placeholder="Contoh: Senayan Flagship Store">
+    </div>
+    <div class="form-group">
+      <label>Alamat</label>
+      <input class="input" id="branchAddress" placeholder="Alamat lengkap cabang">
+    </div>
+    <div class="form-group">
+      <label>Kota</label>
+      <input class="input" id="branchCity" placeholder="Jakarta Pusat">
+    </div>
+    <div class="form-group">
+      <label>No. Telepon</label>
+      <input class="input" id="branchPhone" placeholder="021-1234567">
+    </div>
+    <input type="hidden" id="branchEditId">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeBranchModal()">Batal</button>
+      <button class="btn btn-gold" onclick="saveBranch()">Simpan Cabang</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = localStorage.getItem('nexapos_owner_token') || '';
+let OWNER = null;
+let BRANCHES = [];
+let ACTIVE_VIEW = 'overview';
+let DETAIL_BRANCH_ID = null;
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function showRegister() {
+  document.getElementById('authLogin').style.display = 'none';
+  document.getElementById('authRegister').style.display = 'block';
+}
+function showLogin() {
+  document.getElementById('authLogin').style.display = 'block';
+  document.getElementById('authRegister').style.display = 'none';
+}
+
+async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
+  const res = await fetch(path, { ...options, headers });
+  return res.json();
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return toast('Isi email dan password', 'error');
+  const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  if (!res.success) return toast(res.error || 'Login gagal', 'error');
+  TOKEN = res.token;
+  localStorage.setItem('nexapos_owner_token', TOKEN);
+  toast('Akses diberikan. Selamat datang!', 'success');
+  loadDashboard();
+}
+
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const phone = document.getElementById('regPhone').value.trim();
+  const password = document.getElementById('regPassword').value;
+  if (!name || !email || !password) return toast('Isi semua field', 'error');
+  if (password.length < 6) return toast('Password minimal 6 karakter', 'error');
+  const res = await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, phone, password }) });
+  if (!res.success) return toast(res.error || 'Daftar gagal', 'error');
+  TOKEN = res.token;
+  localStorage.setItem('nexapos_owner_token', TOKEN);
+  toast('Akun premium berhasil dibuat!', 'success');
+  loadDashboard();
+}
+
+function doLogout() {
+  TOKEN = '';
+  localStorage.removeItem('nexapos_owner_token');
+  document.getElementById('authPage').classList.add('active');
+  document.getElementById('dashPage').classList.remove('active');
+  showLogin();
+}
+
+async function loadDashboard() {
+  if (!TOKEN) {
+    document.getElementById('authPage').classList.add('active');
+    document.getElementById('dashPage').classList.remove('active');
+    return;
+  }
+  document.getElementById('authPage').classList.remove('active');
+  document.getElementById('dashPage').classList.add('active');
+
+  const me = await api('/api/auth/me');
+  if (me.error) { doLogout(); return; }
+  OWNER = me;
+  document.getElementById('dashOwnerName').textContent = me.name;
+  document.getElementById('dashUserEmail').textContent = me.email;
+  await loadDashboardData();
+}
+
+function switchView(view) {
+  ACTIVE_VIEW = view;
+  document.querySelectorAll('.dash-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const targetView = document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1));
+  const targetNav = document.querySelector(`.nav-item[data-view="${view}"]`);
+  if (targetView) { targetView.classList.add('active'); targetView.classList.remove('fade-enter'); void targetView.offsetWidth; targetView.classList.add('fade-enter'); }
+  if (targetNav) targetNav.classList.add('active');
+
+  // Load data on-demand for specific views
+  if (view === 'analytics') renderAnalytics(BRANCHES);
+  if (view === 'branches') renderBranches(BRANCHES);
+}
+
+async function showBranchDetail(branchId) {
+  DETAIL_BRANCH_ID = branchId;
+  const branch = BRANCHES.find(b => b.id === branchId);
+  if (!branch) return;
+  document.getElementById('detailBranchName').textContent = branch.name;
+  document.getElementById('detailBranchCity').textContent = (branch.city || '—') + ' · ' + (branch.active ? '🟢 Aktif' : '🔴 Nonaktif');
+  document.getElementById('detailRevenue').textContent = 'Rp ' + (branch.revenue || 0).toLocaleString('id-ID');
+  document.getElementById('detailOrders').textContent = (branch.orders || 0).toLocaleString('id-ID');
+  document.getElementById('detailProducts').textContent = (branch.products || 0).toLocaleString('id-ID');
+  document.getElementById('detailStaff').textContent = '—';
+
+  document.getElementById('detailOpenPOS').onclick = () => {
+    const posUrl = '/pos?branch=' + branchId + '&token=' + TOKEN;
+    window.open(posUrl, '_blank');
+  };
+
+  // Load detailed data
+  try {
+    const products = await api('/api/branch/products?branch=' + branchId);
+    const staff = await api('/api/branch/staff?branch=' + branchId);
+    const orders = await api('/api/branch/orders?branch=' + branchId);
+
+    document.getElementById('detailStaff').textContent = (staff.length || 0).toString();
+    document.getElementById('detailProducts').textContent = (products.length || 0).toString();
+
+    // Info grid
+    const lowStock = products.filter(p => p.stock <= (p.minStock || 5)).length;
+    const totalValue = products.reduce((s, p) => s + (p.price || 0) * (p.stock || 0), 0);
+    document.getElementById('detailInfo').innerHTML = `
+      <div class="detail-info-item"><div class="lbl">Total Nilai Stok</div><div class="val">Rp ${totalValue.toLocaleString('id-ID')}</div></div>
+      <div class="detail-info-item"><div class="lbl">Stok Menipis</div><div class="val" style="color:${lowStock > 0 ? 'var(--rose)' : 'var(--emerald)'}">${lowStock > 0 ? '⚠️ ' + lowStock + ' produk' : '✅ Aman'}</div></div>
+      <div class="detail-info-item"><div class="lbl">Staf Aktif</div><div class="val">${staff.length} orang</div></div>
+      <div class="detail-info-item"><div class="lbl">Total Produk</div><div class="val">${products.length} item</div></div>
+    `;
+
+    // Orders table
+    if (orders.length === 0) {
+      document.getElementById('detailOrdersList').innerHTML = '<div class="empty-state" style="padding:20px;"><span class="icon" style="font-size:32px;">📋</span><p style="font-size:13px;">Belum ada pesanan</p></div>';
+    } else {
+      const recent = orders.slice(-10).reverse();
+      document.getElementById('detailOrdersList').innerHTML = `
+        <table>
+          <tr><th>Invoice</th><th>Pelanggan</th><th>Total</th><th>Status</th><th>Tanggal</th></tr>
+          ${recent.map(o => `
+            <tr>
+              <td style="font-weight:600;font-size:12px;">${o.invoiceNo || '#'+o.id}</td>
+              <td>${o.customerName || '—'}</td>
+              <td>Rp ${(o.total || 0).toLocaleString('id-ID')}</td>
+              <td><span class="status-badge ${o.status || 'pending'}">${o.status || 'pending'}</span></td>
+              <td style="font-size:11px;color:var(--text-muted);">${o.timestamp ? new Date(o.timestamp).toLocaleDateString('id-ID') : '—'}</td>
+            </tr>
+          `).join('')}
+        </table>
+      `;
+    }
+  } catch (e) {
+    document.getElementById('detailInfo').innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px;">Gagal memuat detail cabang</div>';
+  }
+
+  switchView('branchDetail');
+}
+
+function editBranchFromDetail() {
+  if (DETAIL_BRANCH_ID) editBranch(DETAIL_BRANCH_ID);
+}
+
+function renderAnalytics(branches) {
+  const topEl = document.getElementById('topBranches');
+  const sumEl = document.getElementById('summaryStats');
+
+  if (!branches.length) {
+    topEl.innerHTML = '<div class="empty-state" style="padding:16px;"><p style="font-size:13px;">Belum ada data</p></div>';
+    sumEl.innerHTML = '<div class="empty-state" style="padding:16px;"><p style="font-size:13px;">Belum ada data</p></div>';
+    return;
+  }
+
+  // Top branches by revenue
+  const sorted = [...branches].sort((a, b) => b.revenue - a.revenue);
+  const maxRev = sorted[0]?.revenue || 1;
+  topEl.innerHTML = sorted.map((b, i) => `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;" onclick="showBranchDetail('${b.id}')">
+      <div style="width:22px;height:22px;border-radius:6px;background:${i === 0 ? 'var(--gold)' : i === 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.02)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${i === 0 ? '#000' : 'var(--text-secondary)'}">${i + 1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;">${b.name}</div>
+        <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.05);margin-top:4px;overflow:hidden;">
+          <div style="height:100%;width:${(b.revenue / maxRev) * 100}%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:2px;"></div>
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:700;color:var(--gold-light);">Rp ${(b.revenue || 0).toLocaleString('id-ID')}</div>
+    </div>
+  `).join('');
+
+  // Summary
+  const totalRev = branches.reduce((s, b) => s + (b.revenue || 0), 0);
+  const totalOrd = branches.reduce((s, b) => s + (b.orders || 0), 0);
+  const totalTxn = branches.reduce((s, b) => s + (b.transactions || 0), 0);
+  const avgRev = branches.length ? totalRev / branches.length : 0;
+  sumEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="detail-info-item"><div class="lbl">Rata-rata per Cabang</div><div class="val">Rp ${avgRev.toLocaleString('id-ID')}</div></div>
+      <div class="detail-info-item"><div class="lbl">Total Revenue</div><div class="val">Rp ${totalRev.toLocaleString('id-ID')}</div></div>
+      <div class="detail-info-item"><div class="lbl">Total Pesanan</div><div class="val">${totalOrd.toLocaleString('id-ID')}</div></div>
+      <div class="detail-info-item"><div class="lbl">Total Transaksi</div><div class="val">${totalTxn.toLocaleString('id-ID')}</div></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;border-radius:8px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.08);text-align:center;">
+      <div style="font-size:11px;color:var(--text-muted);">Performa Bisnis</div>
+      <div style="font-size:24px;font-weight:800;" class="gold-text">${totalRev > 0 ? '🟢 Menguntungkan' : '⏳ Belum Ada Data'}</div>
+    </div>
+  `;
+}
+
+async function loadDashboardData() {
+  try {
+    const [dash, history] = await Promise.all([
+      api('/api/owner/dashboard'),
+      api('/api/owner/sales-history')
+    ]);
+    if (dash.error) return toast(dash.error, 'error');
+    document.getElementById('statBranches').textContent = dash.branches.length;
+    document.getElementById('statRevenue').textContent = 'Rp ' + (dash.totalRevenue || 0).toLocaleString('id-ID');
+    document.getElementById('statOrders').textContent = (dash.totalOrders || 0).toLocaleString('id-ID');
+    document.getElementById('statTransactions').textContent = (dash.totalTransactions || 0).toLocaleString('id-ID');
+    BRANCHES = dash.branches;
+    renderBranches(dash.branches);
+    renderChart(history || []);
+    if (ACTIVE_VIEW === 'analytics') renderAnalytics(dash.branches);
+    if (ACTIVE_VIEW === 'branchDetail' && DETAIL_BRANCH_ID) showBranchDetail(DETAIL_BRANCH_ID);
+  } catch (e) {
+    toast('Gagal memuat data dashboard', 'error');
+  }
+}
+
+function renderBranches(branches) {
+  const el = document.getElementById('branchList');
+  if (!branches.length) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">🏪</span><h3>Belum Ada Cabang</h3><p>Tambahkan cabang pertama Anda untuk memulai ekspansi bisnis</p></div>';
+    return;
+  }
+  el.innerHTML = branches.map(b => `
+    <div class="branch-card" onclick="openBranch('${b.id}')">
+      <div class="branch-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-xs" onclick="editBranch('${b.id}')">✏️ Edit</button>
+        <button class="btn btn-rose btn-xs" onclick="deleteBranch('${b.id}')">🗑️</button>
+      </div>
+      <div class="branch-top">
+        <div class="branch-indicator ${b.active ? 'active' : 'inactive'}"></div>
+        <div>
+          <div class="branch-name">${b.name}</div>
+          <div class="branch-city">${b.city || '—'}</div>
+        </div>
+      </div>
+      <div class="branch-stats">
+        <div>📦 <span class="num">${b.orders}</span> Pesanan</div>
+        <div>💳 <span class="num">${b.transactions}</span> Transaksi</div>
+        <div>📋 <span class="num">${b.products}</span> Produk</div>
+        <div>💰 <span class="num">Rp ${(b.revenue || 0).toLocaleString('id-ID')}</span></div>
+      </div>
+    </div>
+  `).join('');
+
+  // Animate branch cards
+  setTimeout(() => {
+    document.querySelectorAll('.branch-card').forEach((card, i) => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(10px)';
+      setTimeout(() => {
+        card.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+        card.style.opacity = '1';
+        card.style.transform = 'translateY(0)';
+      }, i * 70);
+    });
+  }, 50);
+}
+
+function openBranch(branchId) {
+  const branch = BRANCHES.find(b => b.id === branchId);
+  if (!branch) return;
+  showBranchDetail(branchId);
+}
+
+function openBranchModal() {
+  document.getElementById('branchModalTitle').textContent = 'Tambah Cabang Baru';
+  document.getElementById('branchEditId').value = '';
+  document.getElementById('branchName').value = '';
+  document.getElementById('branchAddress').value = '';
+  document.getElementById('branchCity').value = '';
+  document.getElementById('branchPhone').value = '';
+  document.getElementById('branchModal').classList.add('active');
+}
+
+function closeBranchModal() {
+  document.getElementById('branchModal').classList.remove('active');
+}
+
+async function saveBranch() {
+  const editId = document.getElementById('branchEditId').value;
+  const name = document.getElementById('branchName').value.trim();
+  const address = document.getElementById('branchAddress').value.trim();
+  const city = document.getElementById('branchCity').value.trim();
+  const phone = document.getElementById('branchPhone').value.trim();
+  if (!name) return toast('Nama cabang wajib diisi', 'error');
+  const body = { name, address, phone, city };
+  if (editId) {
+    const res = await api('/api/branches/' + editId, { method: 'PUT', body: JSON.stringify(body) });
+    if (!res.success) return toast(res.error || 'Gagal update', 'error');
+    toast('Cabang diperbarui!', 'success');
+  } else {
+    const res = await api('/api/branches', { method: 'POST', body: JSON.stringify(body) });
+    if (!res.success) return toast(res.error || 'Gagal simpan', 'error');
+    toast('Cabang baru ditambahkan!', 'success');
+  }
+  closeBranchModal();
+  loadDashboardData();
+}
+
+function editBranch(branchId) {
+  const branch = BRANCHES.find(b => b.id === branchId);
+  if (!branch) return;
+  document.getElementById('branchModalTitle').textContent = 'Edit: ' + branch.name;
+  document.getElementById('branchEditId').value = branch.id;
+  document.getElementById('branchName').value = branch.name;
+  document.getElementById('branchAddress').value = branch.address || '';
+  document.getElementById('branchCity').value = branch.city || '';
+  document.getElementById('branchPhone').value = branch.phone || '';
+  document.getElementById('branchModal').classList.add('active');
+}
+
+async function deleteBranch(branchId) {
+  if (!confirm('Yakin hapus cabang ini? Data tidak bisa dikembalikan.')) return;
+  const res = await api('/api/branches/' + branchId, { method: 'DELETE' });
+  if (!res.success) return toast(res.error || 'Gagal hapus', 'error');
+  toast('Cabang dihapus', 'info');
+  loadDashboardData();
+}
+
+function renderChart(history) {
+  const el = document.getElementById('chartArea');
+  if (!history || history.length === 0) {
+    el.innerHTML = '<div class="empty-state"><span class="icon">📊</span><h3>Belum Ada Data Penjualan</h3><p>Data akan muncul setelah ada transaksi di cabang Anda</p></div>';
+    return;
+  }
+  const bars = history.slice(-14);
+  const maxVal = Math.max(...bars.map(h => h.total), 1);
+  el.innerHTML = '<div class="chart-container">' +
+    bars.map((h, i) => {
+      const pct = Math.max((h.total / maxVal) * 100, 3);
+      const goldClass = i === bars.length - 1 ? ' style="background:linear-gradient(to top, #10b981, #34d399);"' : '';
+      return '<div class="chart-bar"' + goldClass + ' style="height:' + pct + '%"><div class="tooltip">' + h.date + ': Rp ' + (h.total || 0).toLocaleString('id-ID') + '</div></div>';
+    }).join('') +
+    '</div><div class="chart-labels">' +
+    bars.map(h => '<span>' + h.date.slice(5) + '</span>').join('') +
+    '</div>';
+
+  // Animate chart bars
+  setTimeout(() => {
+    document.querySelectorAll('.chart-bar').forEach((bar, i) => {
+      const targetH = bar.style.height;
+      bar.style.height = '0%';
+      setTimeout(() => { bar.style.height = targetH; }, i * 40);
+    });
+  }, 200);
+}
+
+setInterval(() => {
+  if (TOKEN && document.getElementById('dashPage').classList.contains('active')) {
+    loadDashboardData();
+  }
+}, 15000);
+
+if (TOKEN) loadDashboard();
+</script>
+</body>
+</html>

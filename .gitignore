@@ -1,0 +1,5 @@
+node_modules/
+.agent/
+server.log
+server.err
+server_data.json.backup

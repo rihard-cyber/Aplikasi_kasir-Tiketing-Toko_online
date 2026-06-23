@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexaPOS - Premium Enterprise POS System</title>
+  <meta name="description" content="NexaPOS - Premium Enterprise Point of Sale & Business Management Platform">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+  // Multi-tenant mode: read branch & token from URL
+  const _urlParams = new URLSearchParams(location.search);
+  const BRANCH_ID = _urlParams.get('branch') || '';
+  const OWNER_TOKEN = _urlParams.get('token') || '';
+  if (BRANCH_ID) {
+    // Store for later use
+    sessionStorage.setItem('nexapos_branch', BRANCH_ID);
+    if (OWNER_TOKEN) sessionStorage.setItem('nexapos_token', OWNER_TOKEN);
+    // Override fetch to include auth token
+    const _origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      if (typeof url === 'string' && url.includes('/api/') && OWNER_TOKEN) {
+        opts = opts || {};
+        opts.headers = opts.headers || {};
+        opts.headers['Authorization'] = 'Bearer ' + OWNER_TOKEN;
+      }
+      return _origFetch.call(this, url, opts);
+    };
+    // Override XMLHttpRequest for any legacy XHR usage
+    const _origXHROpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this._reqUrl = url;
+      return _origXHROpen.apply(this, arguments);
+    };
+    const _origXHRSet = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function(header, value) {
+      return _origXHRSet.apply(this, arguments);
+    };
+  }
+  </script>
+</head>
+<body>
+
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="toast-container"></div>
+
+  <div class="app-container">
+
+    <!-- ===== CUSTOMIZABLE SIDEBAR ===== -->
+    <aside class="app-sidebar" id="appSidebar">
+      <div>
+        <div class="sidebar-logo">
+          <div class="logo-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          </div>
+          <span class="logo-title">NexaPOS</span>
+          <span class="logo-badge">v4.0</span>
+        </div>
+        <nav class="sidebar-nav" id="sidebarNav">
+          <a href="#" class="sidebar-nav-link" data-tab="kiosk" data-i18n="kiosk">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span>🛍️ Kiosk</span>
+          </a>
+          <a href="#" class="sidebar-nav-link active" data-tab="dashboard" data-i18n="dashboard">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="pos" data-i18n="pos">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/></svg>
+            <span>POS Terminal</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="produk" data-i18n="products">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="12 22 12 12"/></svg>
+            <span>Produk & Stok</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="pembelian" data-i18n="purchase">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span>Pembelian</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="pelanggan" data-i18n="crm">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>VIP CRM</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="keuangan" data-i18n="finance">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>Keuangan</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="laporan" data-i18n="reports">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Laporan</span>
+          </a>
+          <a href="/store" target="_blank" class="sidebar-nav-link" data-tab="store" data-i18n="store" style="color:var(--success)">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>🌐 Online Store</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="profil" id="navProfilLink" data-i18n="profile">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Profile Saya</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="pengaturan" data-i18n="settings">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Pengaturan</span>
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-theme-toggle" id="themeToggle" title="Toggle Theme">
+          <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </div>
+        <p class="sidebar-version">NexaPOS Enterprise v4.0</p>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="app-content">
+
+      <!-- ===== HEADER ===== -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-menu-btn" id="sidebarToggle" title="Toggle Sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div>
+            <h2 class="header-branch" id="headerBranch">Senayan City Flagship Store</h2>
+            <p class="header-time" id="headerTime">Loading...</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-meta">
+            <div class="header-meta-item" onclick="lockTerminal()" style="cursor:pointer" title="Klik untuk Kunci Terminal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="meta-icon"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span><strong class="text-emerald-300" id="headerShiftName">Edward Stark</strong></span>
+            </div>
+            <div class="header-meta-item">
+              <span class="status-dot online" id="statusDot"></span>
+              <span id="statusText">Online</span>
+            </div>
+            <!-- Quick Language Switcher -->
+            <div class="header-meta-item" style="padding: 0 4px; display:flex; align-items:center;">
+              <select id="headerLanguageSelect" onchange="applyLanguage(this.value)" style="background:transparent; border:none; color:var(--text-secondary); font-weight:700; cursor:pointer; font-size:11px; outline:none; padding:2px; font-family:var(--font-display);">
+                <option value="id" style="background:#111; color:#fff;">🇮🇩 ID</option>
+                <option value="en" style="background:#111; color:#fff;">🇬🇧 EN</option>
+                <option value="zh" style="background:#111; color:#fff;">🇨🇳 中文</option>
+              </select>
+            </div>
+          </div>
+          <button class="header-notif-btn" id="notifBell" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-badge" id="notifCount">0</span>
+          </button>
+          <button class="header-notif-btn" id="lockTerminalBtn" onclick="lockTerminal()" title="Lock Terminal" style="color:var(--danger)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="notif-pane" id="notifPane">
+        <div class="notif-pane-header">
+          <span>Notifications</span>
+          <button id="clearNotifBtn">Clear All</button>
+        </div>
+        <div class="notif-pane-body" id="notifList"></div>
+      </div>
+
+      <!-- ===== VIEWPORT ===== -->
+      <div class="app-viewport">
+
+        <!-- ===== DASHBOARD ===== -->
+        <section class="app-section active-section" id="section-dashboard">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="dashboard">Dashboard</h1>
+              <p class="section-subtitle" data-i18n="dashboard_subtitle">Real-time business intelligence & operational overview</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm" onclick="exportCSV()" data-i18n="export">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export
+              </button>
+              <button class="glass-btn glass-btn-sm glass-btn-primary" onclick="refreshDashboard()" data-i18n="refresh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-card glass-panel" data-delay="0">
+              <div class="stat-glow" style="background:var(--primary)"></div>
+              <div class="stat-icon" style="background:var(--primary)20;color:var(--primary)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span class="stat-label" data-i18n="today_revenue">Today's Revenue</span>
+              <p class="stat-value" id="dashSalesToday">Rp 0</p>
+              <span class="stat-change positive" id="dashOrdersToday">0 Transactions</span>
+            </div>
+            <div class="stat-card glass-panel" data-delay="1">
+              <div class="stat-glow" style="background:var(--success)"></div>
+              <div class="stat-icon" style="background:var(--success)20;color:var(--success)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <span class="stat-label" data-i18n="net_profit_today">Net Profit Today</span>
+              <p class="stat-value" id="dashProfitToday">Rp 0</p>
+              <span class="stat-change positive" id="dashProfitMargin">Margin 45%</span>
+            </div>
+            <div class="stat-card glass-panel" data-delay="2">
+              <div class="stat-glow" style="background:var(--warning)"></div>
+              <div class="stat-icon" style="background:var(--warning)20;color:var(--warning)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <span class="stat-label" data-i18n="monthly_revenue">Monthly Revenue</span>
+              <p class="stat-value" id="dashMonthlySales">Rp 0</p>
+              <span class="stat-change positive" id="dashMonthlyOrders">0 Orders</span>
+            </div>
+            <div class="stat-card glass-panel" data-delay="3">
+              <div class="stat-glow" style="background:var(--secondary)"></div>
+              <div class="stat-icon" style="background:var(--secondary)20;color:var(--secondary)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+              </div>
+              <span class="stat-label" data-i18n="avg_ticket_size">Avg Ticket Size</span>
+              <p class="stat-value" id="dashAvgTicket">Rp 0</p>
+              <span class="stat-change" id="dashAvgTicketLabel" data-i18n="loyalty_driven">Loyalty Driven</span>
+            </div>
+            <div class="stat-card glass-panel" data-delay="4">
+              <div class="stat-glow" style="background:var(--danger)"></div>
+              <div class="stat-icon" style="background:var(--danger)20;color:var(--danger)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <span class="stat-label" data-i18n="low_stock_alert">Low Stock Alert</span>
+              <p class="stat-value" id="dashLowStockCount">0 Items</p>
+              <span class="stat-change negative" data-i18n="restock_required">Restock Required</span>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="glass-panel chart-panel">
+              <div class="panel-header">
+                <h3 data-i18n="sales_profit_trend">Sales & Profit Trend</h3>
+                <span data-i18n="days_7" class="panel-badge">7 Days</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+            <div class="glass-panel chart-panel">
+              <div class="panel-header">
+                <h3 data-i18n="revenue_by_category">Revenue by Category</h3>
+                <span data-i18n="share" class="panel-badge">Share</span>
+              </div>
+              <div class="chart-container">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid thirds">
+            <div class="glass-panel">
+              <div class="panel-header">
+                <h3 data-i18n="top_products">Top Products</h3>
+                <span data-i18n="best_sellers" class="panel-badge">Best Sellers</span>
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead><tr><th>#</th><th data-i18n="th_product">Product</th><th data-i18n="th_sold" class="text-center">Sold</th><th data-i18n="th_revenue" class="text-right">Revenue</th></tr></thead>
+                  <tbody id="dashTopProducts"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="glass-panel">
+              <div class="panel-header">
+                <h3 data-i18n="low_stock_critical">Low Stock Alert</h3>
+                <span data-i18n="critical" class="panel-badge" style="color:var(--danger)">Critical</span>
+              </div>
+              <div id="dashLowStock" class="stock-alerts"></div>
+            </div>
+            <div class="glass-panel">
+              <div class="panel-header">
+                <h3 data-i18n="recent_transactions">Recent Transactions</h3>
+                <span data-i18n="latest" class="panel-badge">Latest</span>
+              </div>
+              <div id="dashRecentTxns" class="recent-txns"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== KIOSK SELF-ORDER ===== -->
+        <section class="app-section" id="section-kiosk">
+          <div class="kiosk-container">
+            <div class="kiosk-header">
+              <div>
+                <h1 class="kiosk-title">🛍️ Self Order</h1>
+                <p class="kiosk-sub">Tap products to add • No login needed</p>
+              </div>
+              <div class="kiosk-actions">
+                <span class="kiosk-badge" id="kioskItemCount">0 items</span>
+                <span class="kiosk-total" id="kioskTotal">Rp 0</span>
+              </div>
+            </div>
+
+            <div class="kiosk-categories" id="kioskCategories"></div>
+
+            <div class="kiosk-grid-scroll">
+              <div class="kiosk-grid" id="kioskGrid"></div>
+            </div>
+
+            <!-- Kiosk Cart Drawer (bottom) -->
+            <div class="kiosk-cart-bar" id="kioskCartBar">
+              <div class="kiosk-cart-items" id="kioskCartItems"></div>
+              <div class="kiosk-cart-actions">
+                <div class="kiosk-wa-input">
+                  <span class="kiosk-wa-icon">📱</span>
+                  <input type="text" id="kioskWaInput" class="kiosk-input" placeholder="No. WA (opsional) — untuk struk" maxlength="15">
+                </div>
+                <div class="kiosk-cart-btns">
+                  <button class="kiosk-btn kiosk-btn-outline" onclick="clearKioskCart()">Reset</button>
+                  <button class="kiosk-btn kiosk-btn-primary" id="kioskSendBtn" onclick="sendKioskOrder()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Pesan Sekarang
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== POS TERMINAL ===== -->
+        <section class="app-section" id="section-pos">
+          <div class="pos-layout">
+            <div class="pos-left">
+              <div class="pos-toolbar">
+                <div class="pos-search-wrapper">
+                  <svg class="pos-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="posSearch" class="pos-search" placeholder="Search product, SKU, or scan barcode..." data-i18n-placeholder="pos_search_placeholder" autofocus>
+                  <kbd class="pos-kbd">F2</kbd>
+                </div>
+                <select id="posCustomerSelect" class="pos-customer-select">
+                  <option value="" data-i18n="walk_in_guest">Walk-in Guest</option>
+                </select>
+                <button class="glass-btn pos-fullscreen-btn" id="posFullscreen" title="Fullscreen POS">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                </button>
+              </div>
+              <div class="pos-categories" id="posCategories"></div>
+              <div class="pos-grid-scroll">
+                <div class="pos-grid" id="posProductGrid"></div>
+              </div>
+            </div>
+            <div class="pos-right glass-panel">
+              <div class="pos-cart-header">
+                <h3>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                  <span data-i18n="cart_title">Cart</span>
+                </h3>
+                <span class="cart-badge" id="cartItemCount">0</span>
+              </div>
+              <div class="pos-cart-items" id="cartItems"></div>
+              <div class="pos-cart-footer">
+                <div class="cart-totals">
+                  <div class="cart-row"><span data-i18n="subtotal">Subtotal</span><span id="cartSubtotal">Rp 0</span></div>
+                  <div class="cart-row"><span data-i18n="discount">Discount</span><span id="cartDiscount" class="text-emerald-300">Rp 0</span></div>
+                  <div class="cart-row"><span data-i18n="tax">PPN (11%)</span><span id="cartTax">Rp 0</span></div>
+                  <div class="cart-row total"><span data-i18n="total">Total</span><span id="cartTotal" class="text-indigo-300">Rp 0</span></div>
+                </div>
+                <div class="cart-actions">
+                  <button class="glass-btn" id="holdCartBtn" data-i18n="hold">Hold</button>
+                  <button class="glass-btn" id="cancelCartBtn" data-i18n="clear">Clear</button>
+                  <button class="glass-btn glass-btn-primary" id="checkoutBtn" data-i18n="pay_btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+                    Pay Rp 0
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PRODUK & STOK ===== -->
+        <section class="app-section" id="section-produk">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="products_title">Products & Inventory</h1>
+              <p class="section-subtitle" data-i18n="products_subtitle">Manage product catalog, stock levels, and inventory movements</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm" id="stockInBtn" data-i18n="stock_in">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Stock Masuk
+              </button>
+              <button class="glass-btn glass-btn-sm" id="stockOutBtn" data-i18n="stock_out">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Stock Keluar
+              </button>
+              <button class="glass-btn glass-btn-sm glass-btn-primary" id="addProductBtn" data-i18n="add_product">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Tambah Produk
+              </button>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="productSearch" class="panel-search-input" placeholder="Search by name, SKU, barcode, category..." data-i18n-placeholder="search_products_placeholder">
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4" data-i18n="th_product_sku">Product / SKU</th><th data-i18n="th_category">Category</th><th data-i18n="th_barcode">Barcode</th><th data-i18n="th_cost">Cost</th><th data-i18n="th_retail">Retail Price</th><th class="text-center" data-i18n="th_stock">Stock</th><th class="text-right pr-4" data-i18n="th_actions">Actions</th></tr></thead>
+                <tbody id="productsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PEMBELIAN ===== -->
+        <section class="app-section" id="section-pembelian">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="purchase_title">Purchasing & Procurement</h1>
+              <p class="section-subtitle" data-i18n="purchase_subtitle">Manage purchase orders, supplier records, and procurement workflows</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm" id="addSupplierBtn" data-i18n="add_supplier">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Tambah Supplier
+              </button>
+              <button class="glass-btn glass-btn-sm glass-btn-primary" id="addPurchaseBtn" data-i18n="add_purchase">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                Purchase Order Baru
+              </button>
+            </div>
+          </div>
+          <div class="dashboard-grid thirds">
+            <div class="glass-panel">
+              <div class="panel-header"><h3 data-i18n="suppliers">Suppliers</h3><span class="panel-badge" id="supplierCount">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead><tr><th class="pl-4" data-i18n="th_name">Name</th><th data-i18n="th_contact">Contact</th><th class="text-right pr-4" data-i18n="th_actions">Actions</th></tr></thead>
+                  <tbody id="suppliersTbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="glass-panel" style="grid-column:span 2">
+              <div class="panel-header"><h3 data-i18n="purchase_orders">Purchase Orders</h3><span class="panel-badge" id="poCount">0</span></div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead><tr><th class="pl-4" data-i18n="th_po">PO #</th><th data-i18n="th_supplier">Supplier</th><th data-i18n="th_date">Date</th><th data-i18n="th_status">Status</th><th class="text-right pr-4" data-i18n="th_total">Total</th></tr></thead>
+                  <tbody id="purchaseTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== VIP CRM ===== -->
+        <section class="app-section" id="section-pelanggan">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="crm_title">VIP CRM & Loyalty</h1>
+              <p class="section-subtitle" data-i18n="crm_subtitle">Manage premium members, reward tiers, and loyalty analytics</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm glass-btn-primary" id="addCustomerBtn" data-i18n="register_vip">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="23" y2="14"/><line x1="23" y1="17" x2="23" y2="17.01"/></svg>
+                Register VIP Member
+              </button>
+            </div>
+          </div>
+          <div class="vip-cards" id="vipCards"></div>
+          <div class="glass-panel">
+            <div class="panel-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="customerSearch" class="panel-search-input" placeholder="Search by name, phone, tier..." data-i18n-placeholder="search_customers_placeholder">
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4" data-i18n="th_name">Name</th><th data-i18n="th_card_no">Card No</th><th data-i18n="th_tier">Tier</th><th data-i18n="th_phone">Phone</th><th data-i18n="th_points">Points</th><th data-i18n="th_ltv">LTV</th><th class="text-right pr-4" data-i18n="th_actions">Actions</th></tr></thead>
+                <tbody id="customersTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== KEUANGAN ===== -->
+        <section class="app-section" id="section-keuangan">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="finance_title">Finance & Treasury</h1>
+              <p class="section-subtitle" data-i18n="finance_subtitle">Cash flow monitoring, expense tracking, and financial analytics</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm glass-btn-primary" id="addExpenseBtn" data-i18n="add_expense">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Tambah Pengeluaran
+              </button>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--primary)"></div>
+              <span class="stat-label" data-i18n="total_revenue">Total Revenue</span>
+              <p class="stat-value" id="finTotalRevenue">Rp 0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--warning)"></div>
+              <span class="stat-label" data-i18n="total_cogs_expenses">Total COGS & Expenses</span>
+              <p class="stat-value" id="finTotalCosts">Rp 0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--success)"></div>
+              <span class="stat-label" data-i18n="net_profit">Net Profit</span>
+              <p class="stat-value" id="finNetProfit">Rp 0</p>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-header"><h3 data-i18n="expense_log">Expense Log</h3><span class="panel-badge" data-i18n="operational">Operational</span></div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4" data-i18n="th_date">Date</th><th data-i18n="th_description">Description</th><th data-i18n="th_category">Category</th><th class="text-right pr-4" data-i18n="th_amount">Amount</th></tr></thead>
+                <tbody id="financeTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== LAPORAN ===== -->
+        <section class="app-section" id="section-laporan">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="reports_title">Reports & Analytics</h1>
+              <p class="section-subtitle" data-i18n="reports_subtitle">Complete transaction history, audit trails, and business intelligence</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm" onclick="exportCSV()" data-i18n="export_csv">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Export CSV
+              </button>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="reportSearch" class="panel-search-input" placeholder="Search by invoice, customer, or payment method..." data-i18n-placeholder="search_reports_placeholder">
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4" data-i18n="th_invoice">Invoice</th><th data-i18n="th_datetime">Date/Time</th><th data-i18n="th_customer">Customer</th><th data-i18n="th_payment">Payment</th><th class="text-right" data-i18n="th_total">Total</th><th class="text-right pr-4" data-i18n="th_actions">Actions</th></tr></thead>
+                <tbody id="reportTbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PENGATURAN ===== -->
+        <section class="app-section" id="section-pengaturan">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="settings_title">System Settings</h1>
+              <p class="section-subtitle" data-i18n="settings_subtitle">Configure store profile, tax rates, printers, and system preferences</p>
+            </div>
+          </div>
+          <div class="dashboard-grid thirds">
+            <div class="glass-panel">
+              <div class="panel-header"><h3 data-i18n="store_config">Store Configuration</h3></div>
+              <form id="settingsForm" class="settings-form">
+                <div class="form-group">
+                  <label data-i18n="company_name">Company Name</label>
+                  <input type="text" id="setCompany" class="glass-input">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="branch_store_name">Branch / Store Name</label>
+                  <input type="text" id="setBranch" class="glass-input">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="tax_rate">Tax Rate (PPN %)</label>
+                  <input type="number" id="setTax" class="glass-input" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="currency">Currency</label>
+                  <input type="text" id="setCurrency" class="glass-input" value="IDR">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="language_label">Language / Bahasa</label>
+                  <select id="setLanguage" class="glass-input" style="background:#111; color:#fff;" onchange="applyLanguage(this.value)">
+                    <option value="id">Bahasa Indonesia</option>
+                    <option value="en">English (US)</option>
+                    <option value="zh">中文 (Chinese)</option>
+                  </select>
+                </div>
+                <div class="form-check">
+                  <input type="checkbox" id="setWhatsapp">
+                  <label for="setWhatsapp" data-i18n="auto_whatsapp">Auto WhatsApp Receipt</label>
+                </div>
+                <button type="submit" class="glass-btn glass-btn-primary w-full justify-center" data-i18n="save_settings">Save Settings</button>
+              </form>
+            </div>
+            <div class="glass-panel">
+              <div class="panel-header"><h3 data-i18n="keyboard_shortcuts">Keyboard Shortcuts</h3></div>
+              <div class="shortcuts-list">
+                <div class="shortcut-item"><kbd>F2</kbd><span data-i18n="shortcut_focus">Focus Search</span></div>
+                <div class="shortcut-item"><kbd>F3</kbd><span data-i18n="shortcut_new_txn">New Transaction</span></div>
+                <div class="shortcut-item"><kbd>F4</kbd><span data-i18n="shortcut_checkout">Checkout</span></div>
+                <div class="shortcut-item"><kbd>F5</kbd><span data-i18n="shortcut_refresh">Refresh</span></div>
+                <div class="shortcut-item"><kbd>F6</kbd><span data-i18n="shortcut_print">Print Receipt</span></div>
+                <div class="shortcut-item"><kbd>F11</kbd><span data-i18n="shortcut_fs">Fullscreen POS</span></div>
+                <div class="shortcut-item"><kbd>ESC</kbd><span data-i18n="shortcut_close">Close Modal</span></div>
+                <div class="shortcut-item"><kbd>+ / -</kbd><span data-i18n="shortcut_qty">Qty Adjust</span></div>
+              </div>
+            </div>
+            <div class="glass-panel" id="serverPanel">
+              <div class="panel-header"><h3>🔗 <span data-i18n="server_connection">Server Connection</span></h3></div>
+              <div class="form-group">
+                <label data-i18n="server_status">Server Status</label>
+                <p class="text-sm" id="serverStatus">⏳ Menghubungkan...</p>
+              </div>
+              <div class="form-check" style="margin-bottom:8px">
+                <input type="checkbox" id="setServerEnabled" checked>
+                <label for="setServerEnabled" data-i18n="server_enabled">Aktifkan koneksi server</label>
+              </div>
+              <div class="form-group">
+                <label data-i18n="ws_url">WebSocket URL</label>
+                <input type="text" id="setServerUrl" class="glass-input" value="ws://localhost:3000">
+              </div>
+              <div class="form-group">
+                <label data-i18n="http_url">HTTP API URL</label>
+                <input type="text" id="setHttpUrl" class="glass-input" value="http://localhost:3000">
+              </div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="testServerBtn" class="glass-btn w-full justify-center" style="flex:1" data-i18n="test_conn">Test Koneksi</button>
+                <button id="syncServerBtn" class="glass-btn glass-btn-primary w-full justify-center" style="flex:1" data-i18n="sync_data">Sync Data</button>
+              </div>
+            </div>
+            <div class="glass-panel" id="storeSettingsPanel">
+              <div class="panel-header"><h3>🌐 <span data-i18n="online_store_settings">Online Store</span></h3></div>
+              <div class="form-group">
+                <label data-i18n="online_store_name">Nama Toko Online</label>
+                <input type="text" id="setStoreName" class="glass-input" placeholder="NexaStore" data-i18n-placeholder="store_name_placeholder">
+              </div>
+              <div class="form-group">
+                <label data-i18n="store_wa">No. WA Toko (untuk customer)</label>
+                <input type="text" id="setStoreWa" class="glass-input" placeholder="6281234567890" data-i18n-placeholder="store_wa_placeholder">
+              </div>
+              <div class="form-group">
+                <label data-i18n="rajaongkir_key">RajaOngkir API Key</label>
+                <input type="text" id="setRajaOngkirKey" class="glass-input" placeholder="Masukkan API key RajaOngkir" data-i18n-placeholder="rajaongkir_key_placeholder">
+              </div>
+              <div class="form-group">
+                <label data-i18n="origin_city">Kota Asal (origin) — ID Kota RajaOngkir</label>
+                <input type="text" id="setOriginCity" class="glass-input" placeholder="151 (Jakarta)" data-i18n-placeholder="origin_city_placeholder">
+              </div>
+              <div class="form-group">
+                <label data-i18n="payment_info_settings">Info Pembayaran Transfer</label>
+                <input type="text" id="setBankName" class="glass-input" placeholder="BCA" data-i18n-placeholder="bank_name_placeholder" style="margin-bottom:4px">
+                <input type="text" id="setBankAccount" class="glass-input" placeholder="1234567890" data-i18n-placeholder="bank_acc_placeholder" style="margin-bottom:4px">
+                <input type="text" id="setBankHolder" class="glass-input" placeholder="Atas Nama" data-i18n-placeholder="bank_holder_placeholder">
+              </div>
+            </div>
+            <div class="glass-panel" style="border-color:rgba(239,68,68,0.3)">
+              <div class="panel-header"><h3 style="color:var(--danger)" data-i18n="danger_zone_title">Danger Zone</h3></div>
+              <p class="text-xs text-gray-400 mb-4" data-i18n="danger_zone_subtitle">Reset database to factory defaults. This will erase all transactions, products, and settings.</p>
+              <button id="resetDbBtn" class="glass-btn glass-btn-danger w-full justify-center" data-i18n="reset_db_btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+                Reset Database
+              </button>
+            </div>
+          </div>
+
+          <!-- ===== KELOLA STAFF & KASIR (ADMIN ONLY) ===== -->
+          <div class="glass-panel" id="staffManagementPanel" style="margin-top: 24px; display: none;">
+            <div class="panel-header">
+              <h3 data-i18n="staff_panel_title">👥 Kelola Staff & Kasir</h3>
+              <span class="panel-badge" style="background:var(--accent); color:#000; font-weight:700;">ADMIN ACCESS ONLY</span>
+            </div>
+            <div class="staff-manage-container" style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px; padding:20px;">
+              <!-- Form Pendaftaran -->
+              <div style="border-right: 1px solid var(--border-subtle); padding-right:24px;">
+                <h4 data-i18n="add_staff_title" style="margin:0 0 16px 0; font-family:'Space Grotesk',sans-serif; color:var(--text-primary)">Daftarkan Staff Baru</h4>
+                <form id="addStaffForm" style="display:flex; flex-direction:column; gap:16px;" onsubmit="event.preventDefault(); addNewStaff();">
+                  <div class="form-group">
+                    <label data-i18n="staff_name_label">Nama Lengkap Staff</label>
+                    <input type="text" id="newStaffName" class="glass-input" placeholder="Contoh: Sarah Connor" required>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="staff_role_label">Role / Akses</label>
+                    <select id="newStaffRole" class="glass-input" style="background:#111; color:#fff;">
+                      <option value="Kasir">Kasir (Akses Terbatas)</option>
+                      <option value="Admin">Admin (Akses Penuh)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label data-i18n="staff_pin_label">PIN Awal</label>
+                    <div style="display:flex; gap:8px;">
+                      <input type="text" id="newStaffPin" class="glass-input" maxlength="4" style="font-weight:800; text-align:center; font-family:monospace; letter-spacing:4px;" readonly placeholder="----">
+                      <button type="button" class="glass-btn" onclick="generateRandomPin()" data-i18n="generate_pin_btn" style="flex-shrink:0;">🎲 Acak</button>
+                    </div>
+                  </div>
+                  <button type="submit" class="glass-btn glass-btn-primary w-full justify-center" data-i18n="register_staff_btn">Daftarkan Staff</button>
+                </form>
+              </div>
+              <!-- Tabel Staff -->
+              <div>
+                <h4 data-i18n="staff_list_title" style="margin:0 0 12px 0; font-family:'Space Grotesk',sans-serif; color:var(--text-primary)">Daftar Staff Aktif</h4>
+                <div class="table-scroll" style="max-height: 280px; overflow-y: auto;">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th class="pl-2">Nama</th>
+                        <th>Akses</th>
+                        <th>PIN</th>
+                        <th class="text-right pr-2">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody id="staffListTableBody">
+                      <!-- Populated dynamically via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== PROFILE SAYA ===== -->
+        <section class="app-section" id="section-profil">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title" data-i18n="profile_title">Profile Saya</h1>
+              <p class="section-subtitle" data-i18n="profile_subtitle">Shift aktif, statistik penjualan personal, dan kelola PIN keamanan Anda</p>
+            </div>
+          </div>
+          <div class="dashboard-grid halves" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:24px;">
+            <!-- Detail Shift & Personal -->
+            <div class="glass-panel" id="personalProfileCard">
+              <div class="panel-header"><h3 data-i18n="profile_details">💼 Detail Personal & Shift</h3></div>
+              <div style="padding: 20px; display: flex; align-items: center; gap: 20px; border-bottom: 1px solid var(--border-subtle)">
+                <div id="profileAvatar" style="font-size: 2.2rem; width: 64px; height: 64px; border-radius: 50%; background: rgba(99,102,241,0.1); border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(99,102,241,0.2);">🧑‍💻</div>
+                <div>
+                  <h2 id="profileName" style="margin: 0 0 4px 0; font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: #fff;">Edward Stark</h2>
+                  <span id="profileRole" style="font-size: 10px; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase;">ADMIN</span>
+                </div>
+              </div>
+              <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div class="flex justify-between text-sm" style="display:flex; justify-content:space-between;"><span style="color: var(--text-muted)" data-i18n="profile_shift_start">Shift Dimulai:</span><strong id="profileShiftStart">-</strong></div>
+                <div class="flex justify-between text-sm" style="display:flex; justify-content:space-between;"><span style="color: var(--text-muted)" data-i18n="profile_shift_txn">Transaksi Shift Ini:</span><strong id="profileShiftTxn">0 Transaksi</strong></div>
+                <div class="flex justify-between text-sm" style="display:flex; justify-content:space-between;"><span style="color: var(--text-muted)" data-i18n="profile_shift_sales">Total Omset Shift Ini:</span><strong id="profileShiftSales" style="color: var(--success)">Rp 0</strong></div>
+              </div>
+            </div>
+            
+            <!-- Ubah PIN -->
+            <div class="glass-panel">
+              <div class="panel-header"><h3 data-i18n="security_title">🔐 Ubah PIN Keamanan</h3></div>
+              <form id="changePinForm" style="padding: 20px; display: flex; flex-direction: column; gap: 16px;" onsubmit="event.preventDefault(); changePersonalPin();">
+                <div class="form-group">
+                  <label data-i18n="current_pin">PIN Saat Ini</label>
+                  <input type="password" id="currentPinInput" class="glass-input" maxlength="4" placeholder="Masukkan 4 digit PIN lama" required style="-webkit-text-security: disc;">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="new_pin">PIN Baru</label>
+                  <input type="password" id="newPinInput" class="glass-input" maxlength="4" placeholder="Masukkan 4 digit PIN baru" required style="-webkit-text-security: disc;">
+                </div>
+                <div class="form-group">
+                  <label data-i18n="confirm_pin">Konfirmasi PIN Baru</label>
+                  <input type="password" id="confirmNewPinInput" class="glass-input" maxlength="4" placeholder="Konfirmasi 4 digit PIN baru" required style="-webkit-text-security: disc;">
+                </div>
+                <button type="submit" class="glass-btn glass-btn-primary w-full justify-center" data-i18n="update_pin_btn">Update PIN Baru</button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /app-viewport -->
+    </main>
+
+    <!-- ===== AI FLOATING BUTTON ===== -->
+    <button class="ai-fab" id="aiFab" title="AI Business Assistant">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M20 12v4a8 8 0 0 1-16 0v-4"/><line x1="12" y1="22" x2="12" y2="17"/></svg>
+    </button>
+
+    <!-- ===== AI CHAT DRAWER ===== -->
+    <div class="ai-drawer glass-panel" id="aiDrawer">
+      <div class="ai-drawer-header">
+        <div class="ai-drawer-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M20 12v4a8 8 0 0 1-16 0v-4"/><line x1="12" y1="22" x2="12" y2="17"/></svg>
+          <div><h3>Nexa AI Analyst</h3><span>Decision Intelligence</span></div>
+        </div>
+        <button id="aiCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="ai-messages" id="aiMessages">
+        <div class="ai-msg ai-bot">
+          <div class="ai-bubble">
+            Welcome to <b>NexaPOS AI</b>! I can help analyze your business data.<br><br>
+            Try asking:<br>
+            <i>"What's our profit this week?"</i><br>
+            <i>"Which products need restock?"</i><br>
+            <i>"Show sales forecast"</i>
+          </div>
+          <span class="ai-label">Nexa AI</span>
+        </div>
+      </div>
+      <div class="ai-input-bar">
+        <input type="text" id="aiInput" placeholder="Ask about your business..." class="ai-input">
+        <button id="aiSendBtn" class="glass-btn glass-btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /app-container -->
+
+  <!-- ===== MODAL: PRODUCT ===== -->
+  <div class="modal-overlay" id="productModal">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h3 id="prodModalTitle">Add Product</h3>
+        <button class="modal-close" onclick="closeModal('productModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="productForm" class="modal-body form-grid">
+        <input type="hidden" id="prodId">
+        <div class="form-group"><label>Product Name</label><input type="text" id="prodName" class="glass-input" required></div>
+        <div class="form-group"><label>SKU</label><input type="text" id="prodSku" class="glass-input" required></div>
+        <div class="form-group"><label>Barcode</label><input type="text" id="prodBarcode" class="glass-input" required></div>
+        <div class="form-group"><label>Category</label>
+          <select id="prodCategory" class="glass-input">
+            <option value="Gadgets">Gadgets</option>
+            <option value="Luxury Accessories">Luxury Accessories</option>
+            <option value="Lifestyle">Lifestyle</option>
+            <option value="Office & Creative">Office & Creative</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Brand</label><input type="text" id="prodBrand" class="glass-input"></div>
+        <div class="form-group"><label>Cost Price</label><input type="number" id="prodCost" class="glass-input" required></div>
+        <div class="form-group"><label>Retail Price</label><input type="number" id="prodPrice" class="glass-input" required></div>
+        <div class="form-group"><label>Member Price</label><input type="number" id="prodMemberPrice" class="glass-input" required></div>
+        <div class="form-group"><label>Stock</label><input type="number" id="prodStock" class="glass-input" required></div>
+        <div class="form-group"><label>Min Stock</label><input type="number" id="prodMinStock" class="glass-input" required></div>
+        <div class="form-group full-width"><label>Description</label><textarea id="prodDesc" class="glass-input" rows="2"></textarea></div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('productModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CUSTOMER ===== -->
+  <div class="modal-overlay" id="customerModal">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h3 id="custModalTitle">Register VIP Member</h3>
+        <button class="modal-close" onclick="closeModal('customerModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="customerForm" class="modal-body form-grid">
+        <input type="hidden" id="custId">
+        <div class="form-group full-width"><label>Full Name</label><input type="text" id="custName" class="glass-input" required></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="custPhone" class="glass-input" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="custEmail" class="glass-input" required></div>
+        <div class="form-group"><label>VIP Tier</label>
+          <select id="custTier" class="glass-input">
+            <option value="Silver">Silver (3% Discount)</option>
+            <option value="Gold">Gold (5% Discount)</option>
+            <option value="Platinum">Platinum (7% Discount)</option>
+            <option value="Diamond">Diamond (10% Discount)</option>
+          </select>
+        </div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('customerModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary">Save Member</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: EXPENSE ===== -->
+  <div class="modal-overlay" id="expenseModal">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h3>Add Expense</h3>
+        <button class="modal-close" onclick="closeModal('expenseModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="expenseForm" class="modal-body form-grid">
+        <div class="form-group full-width"><label>Description</label><input type="text" id="expDesc" class="glass-input" required></div>
+        <div class="form-group"><label>Category</label>
+          <select id="expCategory" class="glass-input">
+            <option value="Operational">Operational</option>
+            <option value="Salary">Salary</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Utilities">Utilities</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Amount (Rp)</label><input type="number" id="expAmount" class="glass-input" required></div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('expenseModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: STOCK IN/OUT ===== -->
+  <div class="modal-overlay" id="stockModal">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h3 id="stockModalTitle">Stock Adjustment</h3>
+        <button class="modal-close" onclick="closeModal('stockModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="stockForm" class="modal-body form-grid">
+        <input type="hidden" id="stockType">
+        <div class="form-group full-width"><label>Product</label>
+          <select id="stockProduct" class="glass-input" required></select>
+        </div>
+        <div class="form-group"><label>Quantity</label><input type="number" id="stockQty" class="glass-input" min="1" required></div>
+        <div class="form-group"><label>Reference</label><input type="text" id="stockRef" class="glass-input" placeholder="PO / Transfer / Adjustment"></div>
+        <div class="form-group full-width"><label>Notes</label><textarea id="stockNotes" class="glass-input" rows="2"></textarea></div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('stockModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary" id="stockSubmitBtn">Process</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: SUPPLIER ===== -->
+  <div class="modal-overlay" id="supplierModal">
+    <div class="glass-panel modal-content">
+      <div class="modal-header">
+        <h3>Add Supplier</h3>
+        <button class="modal-close" onclick="closeModal('supplierModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="supplierForm" class="modal-body form-grid">
+        <div class="form-group full-width"><label>Supplier Name</label><input type="text" id="supName" class="glass-input" required></div>
+        <div class="form-group"><label>Contact Person</label><input type="text" id="supContact" class="glass-input"></div>
+        <div class="form-group"><label>Phone</label><input type="text" id="supPhone" class="glass-input" required></div>
+        <div class="form-group full-width"><label>Address</label><textarea id="supAddress" class="glass-input" rows="2"></textarea></div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('supplierModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary">Save Supplier</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: PURCHASE ORDER ===== -->
+  <div class="modal-overlay" id="purchaseModal">
+    <div class="glass-panel modal-content" style="max-width:600px">
+      <div class="modal-header">
+        <h3>New Purchase Order</h3>
+        <button class="modal-close" onclick="closeModal('purchaseModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="purchaseForm" class="modal-body form-grid">
+        <div class="form-group"><label>Supplier</label>
+          <select id="poSupplier" class="glass-input" required></select>
+        </div>
+        <div class="form-group"><label>Product</label>
+          <select id="poProduct" class="glass-input" required></select>
+        </div>
+        <div class="form-group"><label>Quantity</label><input type="number" id="poQty" class="glass-input" min="1" required></div>
+        <div class="form-group"><label>Unit Price</label><input type="number" id="poPrice" class="glass-input" required></div>
+        <div class="form-group full-width"><label>Notes</label><textarea id="poNotes" class="glass-input" rows="2"></textarea></div>
+        <div class="form-actions full-width">
+          <button type="button" class="glass-btn" onclick="closeModal('purchaseModal')">Cancel</button>
+          <button type="submit" class="glass-btn glass-btn-primary">Create PO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: CHECKOUT ===== -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="glass-panel modal-content" style="max-width:750px">
+      <div class="modal-header">
+        <h3 data-i18n="payment_title">Payment</h3>
+        <button class="modal-close" onclick="closeCheckoutModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="checkout-body">
+        <div class="checkout-left">
+          <div class="checkout-total">
+            <span data-i18n="total_bill">Total Bill</span>
+            <h2 id="checkoutTotal">Rp 0</h2>
+          </div>
+          <div class="pay-methods">
+            <button class="pay-method active" data-method="Cash" onclick="selectPayMethod('Cash')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/></svg>
+              <span data-i18n="cash">Cash</span>
+            </button>
+            <button class="pay-method" data-method="QRIS" onclick="selectPayMethod('QRIS')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              <span data-i18n="qris">QRIS</span>
+            </button>
+            <button class="pay-method" data-method="Debit" onclick="selectPayMethod('Debit')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+              <span data-i18n="debit">Debit</span>
+            </button>
+            <button class="pay-method" data-method="Split" onclick="selectPayMethod('Split')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 7l-5-5-5 5"/><path d="M17 17l-5 5-5-5"/></svg>
+              <span data-i18n="split">Split</span>
+            </button>
+          </div>
+        </div>
+        <div class="checkout-right">
+          <div id="checkoutPaneCash" class="checkout-pane">
+            <div class="form-group">
+              <label data-i18n="amount_received">Amount Received</label>
+              <input type="number" id="cashReceived" class="glass-input text-lg font-bold" oninput="calcChange()">
+            </div>
+            <div class="quick-cash">
+              <button onclick="setCash(50000)" class="glass-btn glass-btn-sm">Rp50K</button>
+              <button onclick="setCash(100000)" class="glass-btn glass-btn-sm">Rp100K</button>
+              <button onclick="setCash(200000)" class="glass-btn glass-btn-sm">Rp200K</button>
+              <button onclick="setCash(500000)" class="glass-btn glass-btn-sm">Rp500K</button>
+              <button onclick="setCash(1000000)" class="glass-btn glass-btn-sm">Rp1M</button>
+              <button onclick="setCash('exact')" class="glass-btn glass-btn-sm" data-i18n="exact">Exact</button>
+            </div>
+            <div class="change-display">
+              <span data-i18n="change_label">Change:</span>
+              <span id="checkoutChange" class="text-2xl font-black text-emerald-300">Rp 0</span>
+            </div>
+          </div>
+          <div id="checkoutPaneQris" class="checkout-pane" style="display:none">
+            <div class="qris-display" id="qrisDisplay">
+              <div class="qris-mock">
+                <div class="qris-grid" id="qrisGrid"></div>
+                <span class="qris-badge">QRIS</span>
+              </div>
+              <p class="qris-label" data-i18n="qris_gateway">NexaPay Premium Gateway</p>
+              <span class="qris-timer" id="qrisTimer">Expires in 04:59</span>
+            </div>
+          </div>
+          <div id="checkoutPaneSplit" class="checkout-pane" style="display:none">
+            <div class="split-form">
+              <div class="form-group"><label data-i18n="cash_portion">Cash Portion</label><input type="number" id="splitCash" class="glass-input" oninput="calcSplit()"></div>
+              <div class="form-group"><label data-i18n="qris_portion">QRIS Portion</label><input type="number" id="splitQris" class="glass-input" oninput="calcSplit()"></div>
+              <div class="split-total">
+                <span><span data-i18n="allocated_label">Allocated:</span> <span id="splitAllocated">Rp 0</span></span>
+                <span id="splitStatus" class="text-emerald-300" data-i18n="balanced">Balanced</span>
+              </div>
+            </div>
+          </div>
+          <div id="checkoutPaneDebit" class="checkout-pane" style="display:none">
+            <div class="form-group"><label data-i18n="card_number">Card Number</label><input type="text" class="glass-input" placeholder="**** **** **** 1234"></div>
+            <div class="flex gap-2">
+              <div class="form-group flex-1"><label data-i18n="amount">Amount</label><input type="number" id="debitAmount" class="glass-input" value="0"></div>
+            </div>
+          </div>
+          <div class="pay-actions">
+            <button class="glass-btn" onclick="closeCheckoutModal()" data-i18n="cancel">Cancel</button>
+            <button class="glass-btn glass-btn-primary" id="payNowBtn" onclick="submitPayment()" data-i18n="pay_now">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+              Pay Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RECEIPT OVERLAY ===== -->
+  <div class="modal-overlay" id="receiptOverlay" style="z-index:2000">
+    <div class="receipt-container">
+      <div class="receipt-actions">
+        <button class="glass-btn glass-btn-primary" onclick="printReceipt()" data-i18n="print_receipt">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Thermal
+        </button>
+        <button class="glass-btn" onclick="downloadReceipt()" data-i18n="download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </button>
+        <button class="glass-btn glass-btn-danger" onclick="closeReceipt()" data-i18n="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Close
+        </button>
+      </div>
+      <div class="receipt-paper" id="receiptPaper">
+        <div class="receipt-content" id="receiptContent"></div>
+      </div>
+    </div>
+  </div>
+  <!-- ===== TERMINAL LOCK SCREEN (CASHIER AUTHORIZATION) ===== -->
+  <div class="lock-screen-overlay" id="lockScreen" style="position:fixed; inset:0; z-index:999999; background:rgba(7,8,13,0.92); backdrop-filter:blur(40px); display:none; align-items:center; justify-content:center; flex-direction:column; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
+    <div class="glass-panel lock-container" style="width:380px; padding:32px; text-align:center; border:1px solid rgba(245,158,11,0.2); box-shadow:0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(245,158,11,0.05); border-radius:24px; position:relative;">
+      <div style="font-size:3rem; margin-bottom:16px; animation: pulse 2s infinite;">🔐</div>
+      <h2 data-i18n="locked_title" style="font-family:'Space Grotesk',sans-serif; font-weight:800; background:linear-gradient(135deg, #fff 40%, #F59E0B 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; font-size:1.6rem;">NexaPOS Locked</h2>
+      <p data-i18n="locked_subtitle" style="color:var(--text-secondary); font-size:12px; margin-bottom:24px;">Pilih Kasir & Masukkan 4-Digit PIN Prioritas</p>
+      
+      <!-- Cashier Select -->
+      <div class="form-group" style="margin-bottom:16px; text-align:left;">
+        <label data-i18n="active_cashier" style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; display:block; margin-bottom:6px;">Kasir Aktif</label>
+        <select id="lockCashierSelect" class="glass-input" style="width:100%; padding:12px; font-weight:600; background:#111; color:#fff; border:1px solid var(--border-default); border-radius:8px;">
+          <option value="Edward Stark">Edward Stark (Owner / Administrator)</option>
+          <option value="John Doe">John Doe (Kasir Staff / Operator)</option>
+        </select>
+      </div>
+
+      <!-- PIN Code Indicator Dots -->
+      <div style="display:flex; justify-content:center; gap:16px; margin:20px 0 24px 0;">
+        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
+        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
+        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
+        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
+      </div>
+
+      <!-- Numpad -->
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:280px; margin:0 auto;">
+        <button class="numpad-btn" onclick="pressPin('1')">1</button>
+        <button class="numpad-btn" onclick="pressPin('2')">2</button>
+        <button class="numpad-btn" onclick="pressPin('3')">3</button>
+        <button class="numpad-btn" onclick="pressPin('4')">4</button>
+        <button class="numpad-btn" onclick="pressPin('5')">5</button>
+        <button class="numpad-btn" onclick="pressPin('6')">6</button>
+        <button class="numpad-btn" onclick="pressPin('7')">7</button>
+        <button class="numpad-btn" onclick="pressPin('8')">8</button>
+        <button class="numpad-btn" onclick="pressPin('9')">9</button>
+        <button class="numpad-btn" onclick="clearPin()" style="font-size:11px; font-weight:700; color:var(--danger);">CLR</button>
+        <button class="numpad-btn" onclick="pressPin('0')">0</button>
+        <button class="numpad-btn" onclick="submitPin()" style="font-size:11px; font-weight:700; color:var(--success);">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
