@@ -668,9 +668,12 @@
 
           <!-- ===== KELOLA STAFF & KASIR (ADMIN ONLY) ===== -->
           <div class="glass-panel" id="staffManagementPanel" style="margin-top: 24px; display: none;">
-            <div class="panel-header">
-              <h3 data-i18n="staff_panel_title">👥 Kelola Staff & Kasir</h3>
-              <span class="panel-badge" style="background:var(--accent); color:#000; font-weight:700;">ADMIN ACCESS ONLY</span>
+            <div class="panel-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <h3 data-i18n="staff_panel_title">👥 Kelola Staff & Kasir</h3>
+                <span class="panel-badge" style="background:var(--accent); color:#000; font-weight:700;">ADMIN</span>
+              </div>
+              <button class="glass-btn glass-btn-sm glass-btn-primary" onclick="showSystemBarcodes()" style="font-size: 11px;">🖨️ Barcode Pintasan</button>
             </div>
             <div class="staff-manage-container" style="display:grid; grid-template-columns: 1fr 1.5fr; gap:24px; padding:20px;">
               <!-- Form Pendaftaran -->
@@ -1130,6 +1133,70 @@
         <button class="numpad-btn" onclick="clearPin()" style="font-size:11px; font-weight:700; color:var(--danger);">CLR</button>
         <button class="numpad-btn" onclick="pressPin('0')">0</button>
         <button class="numpad-btn" onclick="submitPin()" style="font-size:11px; font-weight:700; color:var(--success);">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: SYSTEM BARCODES ===== -->
+  <div class="modal-overlay" id="systemBarcodeModal" style="z-index:9999999;">
+    <div class="glass-panel modal-content" style="max-width: 650px; max-height: 90vh; display: flex; flex-direction: column; padding: 0;">
+      <div class="modal-header" style="padding: 20px; border-bottom: 1px solid var(--border-subtle);">
+        <h3>Barcode Pintasan Sistem (System Command Barcodes)</h3>
+        <button class="modal-close" onclick="closeModal('systemBarcodeModal')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; flex: 1;">
+        <p style="color:var(--text-secondary); font-size:12px; margin:0;">
+          Cetak lembar barcode ini untuk diletakkan di kasir Anda. Scan barcode ini menggunakan barcode scanner Anda untuk menjalankan perintah kasir secara cepat tanpa menyentuh keyboard/layar.
+        </p>
+        
+        <div id="barcodePrintArea" style="background:#fff; color:#000; padding:30px; border-radius:12px; display:flex; flex-direction:column; gap:20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.1);">
+          <!-- Header for printing -->
+          <div class="print-only-header" style="text-align:center; border-bottom:2px solid #000; padding-bottom:15px; margin-bottom:15px; display:none;">
+            <h2 style="margin:0; font-family:sans-serif; color:#000;">Lembar Barcode Pintasan POS</h2>
+            <p style="margin:5px 0 0 0; font-size:12px; color:#555;">NexaPOS System Barcodes Sheet</p>
+          </div>
+
+          <!-- Section 1: Lock/Login Screen -->
+          <div style="border-bottom:1px dashed #ccc; padding-bottom:15px; display:flex; flex-direction:column; gap:8px;">
+            <h4 style="margin:0; font-family:sans-serif; color:#111; font-weight:700; font-size:14px;">1. Buka Lock Screen (Kunci POS)</h4>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=CMD-LOGIN&scale=2&rotate=N&includeText=true" alt="CMD-LOGIN Barcode" style="height:70px; filter: contrast(200%);" />
+              <div style="font-size:11px; color:#444; line-height:1.4;">
+                <strong>Aksi:</strong> Kunci layar terminal POS & buka halaman login PIN.<br>
+                <strong>Barcode Value:</strong> <code>CMD-LOGIN</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Staff Selection and PINs -->
+          <div style="border-bottom:1px dashed #ccc; padding-bottom:15px; display:flex; flex-direction:column; gap:12px;">
+            <h4 style="margin:0; font-family:sans-serif; color:#111; font-weight:700; font-size:14px;">2. Pilih Kasir & Masuk PIN</h4>
+            <div id="staffBarcodesContainer" style="display:flex; flex-direction:column; gap:16px;">
+              <!-- Populated via Javascript -->
+            </div>
+          </div>
+
+          <!-- Section 3: View Orders -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <h4 style="margin:0; font-family:sans-serif; color:#111; font-weight:700; font-size:14px;">3. Lihat Pesanan Masuk (Kios / Toko Online)</h4>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=CMD-VIEW-ORDERS&scale=2&rotate=N&includeText=true" alt="CMD-VIEW-ORDERS Barcode" style="height:70px; filter: contrast(200%);" />
+              <div style="font-size:11px; color:#444; line-height:1.4;">
+                <strong>Aksi:</strong> Pindah ke tab POS Terminal & sorot panel "Pesanan Masuk".<br>
+                <strong>Barcode Value:</strong> <code>CMD-VIEW-ORDERS</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid var(--border-subtle); display:flex; gap:10px; justify-content:flex-end;">
+        <button class="glass-btn" onclick="closeModal('systemBarcodeModal')">Tutup</button>
+        <button class="glass-btn glass-btn-primary" onclick="printBarcodeSheet()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right:6px;"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8z"/></svg>
+          Cetak Lembar Barcode
+        </button>
       </div>
     </div>
   </div>

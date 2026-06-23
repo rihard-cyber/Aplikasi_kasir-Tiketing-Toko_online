@@ -2122,7 +2122,7 @@ function initBarcodeScanner() {
     const tag = e.target.tagName;
     const isInput = (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT');
     // Barcode scanners type very fast (< 50ms between chars)
-    // We only capture in POS mode or when no input is focused
+    // We only capture in POS mode, lock screen, or when no input is focused
     
     if (e.key === 'Enter' && barcodeBuffer.length >= 6) {
       // Barcode complete!
@@ -2130,7 +2130,82 @@ function initBarcodeScanner() {
       barcodeBuffer = '';
       barcodeTimer = null;
       
-      // Search for product with this barcode
+      // 1. Scan Login (Lock / Lock Screen command)
+      if (barcode === 'CMD-LOCK' || barcode === 'CMD-LOGIN') {
+        sfxScan();
+        lockTerminal();
+        toast('Command Scanned', 'Terminal Terkunci', 'info');
+        return;
+      }
+      
+      // 2. Select Employee (Scan masuk login/pilih kasir)
+      if (barcode.startsWith('CMD-USER-')) {
+        sfxScan();
+        const rawName = barcode.substring(9).replace(/_/g, ' ');
+        if (db.state && db.state.staffList) {
+          let staff = db.state.staffList.find(s => s.name.toLowerCase() === rawName.toLowerCase());
+          if (!staff) {
+            staff = db.state.staffList.find(s => s.name.toLowerCase().includes(rawName.toLowerCase()));
+          }
+          if (staff) {
+            // Lock screen if not open
+            const lockScreen = document.getElementById('lockScreen');
+            if (!lockScreen || lockScreen.style.display === 'none') {
+              lockTerminal();
+            }
+            const select = document.getElementById('lockCashierSelect');
+            if (select) {
+              select.value = staff.name;
+            }
+            enteredPin = '';
+            updatePinIndicator();
+            toast('Kasir Terpilih', `Pegawai: ${staff.name}`, 'info');
+          } else {
+            toast('Pegawai Tidak Ditemukan', `Nama: ${rawName}`, 'warning');
+          }
+        }
+        return;
+      }
+      
+      // 3. Scan PIN (Scan masuk Pin)
+      if (barcode.startsWith('CMD-PIN-')) {
+        sfxScan();
+        const pin = barcode.substring(8);
+        const lockScreen = document.getElementById('lockScreen');
+        if (!lockScreen || lockScreen.style.display === 'none') {
+          lockTerminal();
+        }
+        enteredPin = pin;
+        updatePinIndicator();
+        setTimeout(submitPin, 200);
+        return;
+      }
+      
+      // 4. Scan View Messages/Orders (Scan liat pesan)
+      if (barcode === 'CMD-VIEW-ORDERS' || barcode === 'CMD-PESANAN') {
+        sfxScan();
+        const posLink = document.querySelector('[data-tab="pos"]');
+        if (posLink) posLink.click();
+        
+        // Highlight pending orders panel
+        setTimeout(() => {
+          const panel = document.querySelector('.pending-orders-panel');
+          if (panel) {
+            panel.scrollIntoView({ behavior: 'smooth' });
+            panel.style.outline = '3px solid var(--primary)';
+            panel.style.boxShadow = '0 0 20px var(--primary)';
+            setTimeout(() => {
+              panel.style.outline = 'none';
+              panel.style.boxShadow = 'none';
+            }, 2000);
+          } else {
+            toast('Info Pesanan', 'Tidak ada pesanan masuk yang pending', 'info');
+          }
+        }, 300);
+        return;
+      }
+      
+      // 5. Default: Search for product with this barcode
       const product = db.state.products.find(p => p.barcode === barcode);
       if (product) {
         sfxScan();
@@ -2157,9 +2232,12 @@ function initBarcodeScanner() {
       return;
     }
     
-    // Only capture barcode input when POS section is active
+    // Capture barcode input globally if POS is active, lock screen is active, or if not inside inputs
     const posActive = document.getElementById('section-pos')?.classList.contains('active-section');
-    if (posActive && (!isInput || e.target.id === 'posSearch')) {
+    const lockActive = document.getElementById('lockScreen')?.style.display === 'flex';
+    const shouldCapture = (posActive && (!isInput || e.target.id === 'posSearch')) || lockActive || !isInput;
+    
+    if (shouldCapture) {
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         barcodeBuffer += e.key;
         clearTimeout(barcodeTimer);
@@ -4919,6 +4997,85 @@ toast = function(title, msg, type = 'info') {
     _origToastLang(tTitle, tMsg, type);
   }
 };
+
+// =============================================
+// SYSTEM SHORTCUT BARCODES
+// =============================================
+function showSystemBarcodes() {
+  const container = document.getElementById('staffBarcodesContainer');
+  if (!container) return;
+  
+  if (!db.state || !db.state.staffList || !db.state.staffList.length) {
+    container.innerHTML = '<p style="color:#666; font-size:12px; margin:0;">Tidak ada staff terdaftar. Silakan daftarkan staff terlebih dahulu.</p>';
+  } else {
+    container.innerHTML = db.state.staffList.map(s => {
+      const sanitizedName = s.name.toUpperCase().replace(/\s+/g, '_');
+      const selectBarcodeText = `CMD-USER-${sanitizedName}`;
+      const pinBarcodeText = `CMD-PIN-${s.pin}`;
+      
+      return `
+        <div style="padding: 12px; border: 1px solid #eee; border-radius: 8px; display: flex; flex-direction: column; gap: 12px; background: #fafafa;">
+          <div style="font-weight: bold; color: #111; font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 4px; display:flex; justify-content:space-between;">
+            <span>👤 ${s.name} (${s.role})</span>
+            <span style="font-family:monospace; color:#666; font-size:11px;">PIN: ${s.pin}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 10px; font-weight: bold; color: #555;">SCAN UNTUK PILIH KASIR:</span>
+              <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(selectBarcodeText)}&scale=2&rotate=N&includeText=true" alt="${selectBarcodeText} Barcode" style="height:60px; max-width:200px; display:block;" />
+            </div>
+            <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 10px; font-weight: bold; color: #555;">SCAN MASUK PIN:</span>
+              <img src="https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(pinBarcodeText)}&scale=2&rotate=N&includeText=true" alt="${pinBarcodeText} Barcode" style="height:60px; max-width:200px; display:block;" />
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // Show modal
+  const modal = document.getElementById('systemBarcodeModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function printBarcodeSheet() {
+  const printContent = document.getElementById('barcodePrintArea').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html>
+      <head>
+        <title>Print Barcode Pintasan POS</title>
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; padding: 20px; color: #000; background: #fff; }
+          .print-only-header { display: block !important; text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+          code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 11px; }
+          h4 { margin-top: 15px; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 14px; font-weight: bold; }
+          img { display: block; margin: 5px 0; max-height: 70px; }
+          @media print {
+            body { padding: 0; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-only-header">
+          <h2 style="margin:0;">Lembar Barcode Pintasan POS</h2>
+          <p style="margin:5px 0 0 0; font-size:12px; color:#555;">NexaPOS System Barcodes Sheet</p>
+        </div>
+        ${printContent}
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(() => { window.close(); }, 500);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  win.document.close();
+}
 
 
 
