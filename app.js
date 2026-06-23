@@ -257,6 +257,21 @@ function initSidebar() {
       storeLink.href = base;
     }
   }
+
+  // Owner Portal redirection with authentication token
+  const ownerLink = document.getElementById('sidebarOwnerPortalLink');
+  if (ownerLink) {
+    ownerLink.addEventListener('click', e => {
+      e.preventDefault();
+      const token = sessionStorage.getItem('nexapos_token') || localStorage.getItem('nexapos_owner_token') || '';
+      const isFile = window.location.protocol === 'file:';
+      let url = isFile ? 'owner.html' : '/owner';
+      if (token) {
+        url += `?token=${encodeURIComponent(token)}`;
+      }
+      window.open(url, '_blank');
+    });
+  }
 }
 
 // =============================================
@@ -3808,6 +3823,12 @@ function applyRoleBasedAccess(cashier) {
     }
   });
 
+  // Hide/Show Owner Portal sidebar link
+  const ownerLink = document.getElementById('sidebarOwnerPortalLink');
+  if (ownerLink) {
+    ownerLink.style.display = isAdmin ? 'flex' : 'none';
+  }
+
   // Hide/Show staff management panel inside Settings
   const staffPanel = document.getElementById('staffManagementPanel');
   if (staffPanel) {
@@ -4119,6 +4140,7 @@ const TRANSLATIONS = {
     profile: "🧑‍💻 Profile Saya",
     settings: "⚙️ Pengaturan",
     queue_tab: "🎫 Antrean",
+    owner_portal: "👑 Dashboard Owner",
     
     // Header
     locked_title: "NexaPOS Terkunci",
@@ -4392,6 +4414,7 @@ const TRANSLATIONS = {
     profile: "🧑‍💻 My Profile",
     settings: "⚙️ Settings",
     queue_tab: "🎫 Queue",
+    owner_portal: "👑 Owner Dashboard",
     
     // Header
     locked_title: "NexaPOS Locked",
@@ -4665,6 +4688,7 @@ const TRANSLATIONS = {
     profile: "🧑‍💻 个人中心",
     settings: "⚙️ 系统设置",
     queue_tab: "🎫 排队取号",
+    owner_portal: "👑 老板仪表盘",
     
     // Header
     locked_title: "NexaPOS 已锁定",
