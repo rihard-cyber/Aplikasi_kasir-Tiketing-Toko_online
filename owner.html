@@ -693,6 +693,12 @@
       <div class="nav-item" data-view="analytics" onclick="switchView('analytics')">
         <span>📈</span> Analytics
       </div>
+      <div class="nav-item" data-view="monitoring" onclick="switchView('monitoring')">
+        <span>🖥️</span> Live Monitor
+      </div>
+      <div class="nav-item" data-view="barcodes" onclick="switchView('barcodes')">
+        <span>🏷️</span> Barcode Gen
+      </div>
       <div class="nav-item" style="margin-top:auto; opacity:0.5; cursor:default; font-size:10px; color:var(--text-muted); padding:10px 14px;">
         v5.0 Enterprise
       </div>
@@ -782,6 +788,92 @@
         </div>
       </div>
 
+      <!-- ── VIEW: Live Monitor ── -->
+      <div class="dash-view" id="viewMonitoring">
+        <div class="welcome-section" style="margin-bottom: 16px;">
+          <h2>🖥️ Live Monitor Terminal Cabang</h2>
+          <p>Pantau, cek, dan kelola terminal kasir dari setiap cabang secara langsung</p>
+        </div>
+        <div class="glass-panel" style="padding: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <label style="font-weight: 600; font-size: 13px;">Pilih Cabang untuk Dimonitor:</label>
+          <select id="monitorBranchSelect" class="input" style="width: auto; min-width: 220px; background: #111; color: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px;" onchange="loadMonitorIframe(this.value)">
+            <!-- Populated via Javascript -->
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="refreshMonitorIframe()">🔄 Muat Ulang</button>
+          <button class="btn btn-gold btn-sm" onclick="openMonitorInNewTab()">🌐 Buka di Tab Baru</button>
+        </div>
+        <div class="glass-panel" style="position: relative; padding: 0; overflow: hidden; border-radius: var(--radius-lg); height: 70vh; border: 1px solid rgba(245,158,11,0.15); background: #000;">
+          <iframe id="monitorIframe" src="" style="width: 100%; height: 100%; border: none;" allow="fullscreen"></iframe>
+          <div id="monitorPlaceholder" class="empty-state" style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(12,14,22,0.95); z-index: 10;">
+            <span class="icon" style="font-size: 48px;">🖥️</span>
+            <h3>Belum Ada Cabang Terpilih</h3>
+            <p>Silakan pilih cabang di atas untuk memulai pemantauan live terminal kasir</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Barcode Generator ── -->
+      <div class="dash-view" id="viewBarcodes">
+        <div class="welcome-section" style="margin-bottom: 20px;">
+          <h2>🏷️ Barcode Generator</h2>
+          <p>Buat barcode kustom untuk produk atau pintasan sistem (Code 128 & QR Code)</p>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+          <!-- Left side: Form -->
+          <div class="glass-panel" style="padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+            <h3 style="margin-top:0;">Konfigurasi Barcode</h3>
+            <div class="form-group">
+              <label>Jenis Barcode</label>
+              <select id="genType" class="input" style="background:#111; color:#fff;" onchange="toggleBarcodeParams()">
+                <option value="code128">1D Barcode (Code 128 - Umum untuk Scanner)</option>
+                <option value="qr">2D QR Code (Bisa discan HP / Scanner 2D)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Isi/Teks Barcode (Barcode Value)</label>
+              <input type="text" id="genText" class="input" placeholder="Contoh: AETH-ONYX-01 atau CMD-LOGIN" value="CMD-LOGIN">
+            </div>
+            <div class="form-group">
+              <label>Label Deskripsi (Opsional)</label>
+              <input type="text" id="genLabel" class="input" placeholder="Contoh: Kunci Layar POS" value="Kunci Layar POS">
+            </div>
+            
+            <button class="btn btn-gold" style="width: 100%; justify-content: center; margin-top: 10px;" onclick="generateCustomBarcode()">Buat Barcode</button>
+            
+            <div style="border-top: 1px solid var(--border); padding-top: 15px; margin-top: 5px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 13px;">💡 Templat Kode Pintasan Sistem</h4>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <button class="btn btn-ghost btn-xs" onclick="applyBarcodeTemplate('CMD-LOGIN', 'Kunci Layar POS')">🔐 Kunci Layar</button>
+                <button class="btn btn-ghost btn-xs" onclick="applyBarcodeTemplate('CMD-VIEW-ORDERS', 'Lihat Pesanan')">🔔 Lihat Pesanan</button>
+                <button class="btn btn-ghost btn-xs" onclick="applyBarcodeTemplate('CMD-PIN-1234', 'PIN: 1234')">🔑 PIN 1234</button>
+                <button class="btn btn-ghost btn-xs" onclick="applyBarcodeTemplate('CMD-PIN-5555', 'PIN: 5555')">🔑 PIN 5555</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Right side: Preview & Actions -->
+          <div class="glass-panel" style="padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; text-align: center; background: rgba(255,255,255,0.01);">
+            <div id="barcodePreviewArea" style="background: #fff; color: #000; padding: 24px; border-radius: 12px; display: none; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+              <div id="barcodePreviewLabel" style="font-family: sans-serif; font-weight: bold; font-size: 14px; color: #111; word-break: break-all;">Kunci Layar POS</div>
+              <img id="barcodePreviewImage" src="" alt="Barcode Preview" style="max-height: 100px; display: block;" />
+              <div id="barcodePreviewCode" style="font-family: monospace; font-size: 12px; color: #555; word-break: break-all;">CMD-LOGIN</div>
+            </div>
+            
+            <div id="barcodePreviewPlaceholder" class="empty-state">
+              <span class="icon" style="font-size: 48px;">🏷️</span>
+              <h3>Preview Barcode</h3>
+              <p>Isi form di samping lalu klik "Buat Barcode" untuk melihat hasilnya di sini</p>
+            </div>
+            
+            <div id="barcodeActions" style="display: none; gap: 10px; width: 100%;">
+              <button class="btn btn-ghost" style="flex: 1; justify-content: center;" onclick="printPreviewBarcode()">🖨️ Cetak</button>
+              <button class="btn btn-gold" style="flex: 1; justify-content: center;" onclick="downloadPreviewBarcode()">📥 Simpan</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ── VIEW: Branch Detail ── -->
       <div class="dash-view" id="viewBranchDetail">
         <div class="detail-header">
@@ -792,6 +884,7 @@
           </div>
           <div style="margin-left:auto; display:flex; gap:8px;">
             <button class="btn btn-gold btn-sm" id="detailOpenPOS">🛒 Buka POS</button>
+            <button class="btn btn-gold btn-sm" id="detailMonitorLive" style="background:#4f46e5; border-color:#4338ca;">🖥️ Monitor Live</button>
             <button class="btn btn-ghost btn-sm" onclick="editBranchFromDetail()">✏️ Edit</button>
           </div>
         </div>
@@ -947,6 +1040,7 @@ function switchView(view) {
   // Load data on-demand for specific views
   if (view === 'analytics') renderAnalytics(BRANCHES);
   if (view === 'branches') renderBranches(BRANCHES);
+  if (view === 'monitoring') populateMonitorBranches();
 }
 
 async function showBranchDetail(branchId) {
@@ -963,6 +1057,17 @@ async function showBranchDetail(branchId) {
   document.getElementById('detailOpenPOS').onclick = () => {
     const posUrl = '/pos?branch=' + branchId + '&token=' + TOKEN;
     window.open(posUrl, '_blank');
+  };
+
+  document.getElementById('detailMonitorLive').onclick = () => {
+    switchView('monitoring');
+    const select = document.getElementById('monitorBranchSelect');
+    if (select) {
+      setTimeout(() => {
+        select.value = branchId;
+        loadMonitorIframe(branchId);
+      }, 50);
+    }
   };
 
   // Load detailed data
@@ -1090,6 +1195,7 @@ function renderBranches(branches) {
   el.innerHTML = branches.map(b => `
     <div class="branch-card" onclick="openBranch('${b.id}')">
       <div class="branch-actions" onclick="event.stopPropagation()">
+        <button class="btn btn-gold btn-xs" onclick="monitorBranchDirect('${b.id}')">🖥️ Monitor</button>
         <button class="btn btn-ghost btn-xs" onclick="editBranch('${b.id}')">✏️ Edit</button>
         <button class="btn btn-rose btn-xs" onclick="deleteBranch('${b.id}')">🗑️</button>
       </div>
@@ -1217,6 +1323,165 @@ setInterval(() => {
     loadDashboardData();
   }
 }, 15000);
+
+// =============================================
+// MONITORING & BARCODE GENERATOR FUNCTIONS
+// =============================================
+function monitorBranchDirect(branchId) {
+  switchView('monitoring');
+  setTimeout(() => {
+    const select = document.getElementById('monitorBranchSelect');
+    if (select) {
+      select.value = branchId;
+      loadMonitorIframe(branchId);
+    }
+  }, 50);
+}
+
+function populateMonitorBranches() {
+  const select = document.getElementById('monitorBranchSelect');
+  if (!select) return;
+  
+  if (BRANCHES.length === 0) {
+    select.innerHTML = '<option value="">Tidak ada cabang</option>';
+    document.getElementById('monitorPlaceholder').style.display = 'flex';
+    document.getElementById('monitorIframe').src = '';
+    return;
+  }
+  
+  select.innerHTML = BRANCHES.map(b => `<option value="${b.id}">${b.name} (${b.city || '—'})</option>`).join('');
+  
+  const iframe = document.getElementById('monitorIframe');
+  if (!iframe.src || iframe.src === window.location.href) {
+    loadMonitorIframe(BRANCHES[0].id);
+  }
+}
+
+function loadMonitorIframe(branchId) {
+  const placeholder = document.getElementById('monitorPlaceholder');
+  const iframe = document.getElementById('monitorIframe');
+  if (!branchId) {
+    if (placeholder) placeholder.style.display = 'flex';
+    if (iframe) iframe.src = '';
+    return;
+  }
+  
+  if (placeholder) placeholder.style.display = 'none';
+  if (iframe) {
+    iframe.src = '/pos?branch=' + branchId + '&token=' + TOKEN;
+  }
+}
+
+function refreshMonitorIframe() {
+  const iframe = document.getElementById('monitorIframe');
+  if (iframe && iframe.src) {
+    iframe.src = iframe.src;
+    toast('Terminal kasir dimuat ulang', 'info');
+  }
+}
+
+function openMonitorInNewTab() {
+  const select = document.getElementById('monitorBranchSelect');
+  if (select && select.value) {
+    window.open('/pos?branch=' + select.value + '&token=' + TOKEN, '_blank');
+  }
+}
+
+function toggleBarcodeParams() {
+  const type = document.getElementById('genType').value;
+  const placeholderText = type === 'code128' ? 'Contoh: AETH-ONYX-01 atau CMD-LOGIN' : 'Contoh: https://nexapos.com atau teks kustom';
+  document.getElementById('genText').placeholder = placeholderText;
+}
+
+function applyBarcodeTemplate(val, label) {
+  document.getElementById('genText').value = val;
+  document.getElementById('genLabel').value = label;
+  generateCustomBarcode();
+}
+
+function generateCustomBarcode() {
+  const type = document.getElementById('genType').value;
+  const text = document.getElementById('genText').value.trim();
+  const label = document.getElementById('genLabel').value.trim();
+  
+  if (!text) {
+    toast('Silakan isi teks barcode terlebih dahulu', 'error');
+    return;
+  }
+  
+  const previewArea = document.getElementById('barcodePreviewArea');
+  const placeholder = document.getElementById('barcodePreviewPlaceholder');
+  const actions = document.getElementById('barcodeActions');
+  const previewImg = document.getElementById('barcodePreviewImage');
+  const previewLabel = document.getElementById('barcodePreviewLabel');
+  const previewCode = document.getElementById('barcodePreviewCode');
+  
+  let url = '';
+  if (type === 'code128') {
+    url = `https://bwipjs-api.metafloor.com/?bcid=code128&text=${encodeURIComponent(text)}&scale=2&rotate=N&includeText=true`;
+  } else {
+    url = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
+  }
+  
+  previewImg.src = url;
+  previewLabel.textContent = label || 'Tanpa Label';
+  previewCode.textContent = text;
+  
+  placeholder.style.display = 'none';
+  previewArea.style.display = 'flex';
+  actions.style.display = 'flex';
+  
+  toast('Barcode berhasil dibuat!', 'success');
+}
+
+function printPreviewBarcode() {
+  const label = document.getElementById('barcodePreviewLabel').textContent;
+  const code = document.getElementById('barcodePreviewCode').textContent;
+  const src = document.getElementById('barcodePreviewImage').src;
+  
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html>
+      <head>
+        <title>Cetak Barcode - ${label}</title>
+        <style>
+          body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fff; color: #000; }
+          .container { text-align: center; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+          h2 { margin: 0 0 10px 0; font-size: 16px; }
+          code { font-family: monospace; font-size: 14px; color: #333; margin-top: 10px; display: block; }
+          img { max-height: 120px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h2>${label}</h2>
+          <img src="${src}" />
+          <code>${code}</code>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(() => { window.close(); }, 500);
+          }
+        <\/script>
+      </body>
+    </html>
+  `);
+  win.document.close();
+}
+
+function downloadPreviewBarcode() {
+  const src = document.getElementById('barcodePreviewImage').src;
+  const code = document.getElementById('barcodePreviewCode').textContent;
+  
+  const a = document.createElement('a');
+  a.href = src;
+  a.download = `barcode_${code}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('Unduhan dimulai (atau klik kanan pada gambar untuk menyimpan)', 'success');
+}
 
 if (TOKEN) loadDashboard();
 </script>
