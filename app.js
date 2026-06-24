@@ -632,7 +632,24 @@ function renderCart() {
     container.innerHTML=`<div class="cart-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><p>${t('empty_cart')}</p><span>${t('select_products_to_start')}</span></div>`;
     updateTotals(); return;
   }
-  container.innerHTML=cart.map(item=>`<div class="cart-item"><div class="cart-item-img" style="background:${item.imgBg}"><span>${item.imgEmoji}</span></div><div class="cart-item-info"><div class="cart-item-name">${item.name}</div><div class="cart-item-price">${rp(item.price)}</div></div><div class="cart-item-qty"><button class="cart-qty-btn" onclick="updateCartQty('${item.productId}',${item.qty-1})">−</button><span class="cart-qty-val">${item.qty}</span><button class="cart-qty-btn" onclick="updateCartQty('${item.productId}',${item.qty+1})">+</button></div></div>`).join('');
+  // Show active promos bar
+  let promoBar = '';
+  if (typeof NexaPromo !== 'undefined') {
+    NexaPromo.init();
+    const cartData = { subtotal: cart.reduce((s, i) => {
+      const p = db.state.products.find(x => x.id === i.productId);
+      return s + ((p ? (selectedCustomer && p.memberPrice ? p.memberPrice : p.price) : 0) * i.qty);
+    }, 0), items: cart.map(i => ({ id: i.productId, name: i.name, qty: i.qty })) };
+    const promoResult = NexaPromo.apply(cartData, selectedCustomer);
+    if (promoResult.discounts.length) {
+      promoBar = `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;">
+        <div style="font-weight:600;color:var(--accent);margin-bottom:4px;">🏷️ Promo Aktif</div>
+        ${promoResult.discounts.map(d => `<div style="display:flex;justify-content:space-between;font-size:10px;"><span>${d.name}</span><span style="color:var(--success);">-${rp(d.amount)}</span></div>`).join('')}
+        ${promoResult.totalDiscount > 0 ? `<div style="border-top:1px solid rgba(245,158,11,0.1);margin-top:4px;padding-top:4px;display:flex;justify-content:space-between;font-weight:600;">Total Diskon Promo <span style="color:var(--success);">-${rp(promoResult.totalDiscount)}</span></div>` : ''}
+      </div>`;
+    }
+  }
+  container.innerHTML=promoBar + cart.map(item=>`<div class="cart-item"><div class="cart-item-img" style="background:${item.imgBg}"><span>${item.imgEmoji}</span></div><div class="cart-item-info"><div class="cart-item-name">${item.name}</div><div class="cart-item-price">${rp(item.price)}</div></div><div class="cart-item-qty"><button class="cart-qty-btn" onclick="updateCartQty('${item.productId}',${item.qty-1})">−</button><span class="cart-qty-val">${item.qty}</span><button class="cart-qty-btn" onclick="updateCartQty('${item.productId}',${item.qty+1})">+</button></div></div>`).join('');
   updateTotals();
 }
 
@@ -705,7 +722,19 @@ function selectPayMethod(m) {
   document.getElementById('checkoutPaneQris').style.display=m==='QRIS'?'flex':'none';
   document.getElementById('checkoutPaneSplit').style.display=m==='Split'?'flex':'none';
   document.getElementById('checkoutPaneDebit').style.display=m==='Debit'?'flex':'none';
-  if(m==='Split') initSplit();
+    if(m==='QRIS' && typeof NexaPay !== 'undefined') {
+      const totalTxt=document.getElementById('checkoutTotal').textContent;
+      const total=parseInt(totalTxt.replace(/[^0-9]/g,''))||0;
+      document.getElementById('qrisPayWithNexaBtn')?.addEventListener('click', () => {
+        NexaPay.showQRModal(total, (result) => {
+          if (result.success) {
+            toast('✅ Pembayaran QRIS berhasil!', '', 'success');
+            submitPayment();
+          }
+        });
+      });
+    }
+    if(m==='Split') initSplit();
 }
 
 function calcChange() {
@@ -771,8 +800,9 @@ function closeCheckoutModal() {
 }
 
 function submitPayment() {
-  let sub=0, disc=0;
+  let sub=0, disc=0, promoDiscount=0;
   const items=[];
+  const cartForPromo = { subtotal: 0, items: [] };
   cart.forEach(item=>{
     const p=db.state.products.find(x=>x.id===item.productId);
     if(!p) return;
@@ -789,7 +819,22 @@ function submitPayment() {
     items.push({productId:item.productId,name:item.name,qty:item.qty,price,discount:itemDisc,subtotal:final*item.qty});
     sub+=final*item.qty;
     disc+=itemDisc*item.qty;
+    cartForPromo.items.push({ id: item.productId, name: item.name, qty: item.qty });
   });
+  cartForPromo.subtotal = sub;
+
+  // Apply promo engine
+  let appliedPromos = [];
+  if (typeof NexaPromo !== 'undefined') {
+    NexaPromo.init();
+    const promoResult = NexaPromo.apply(cartForPromo, selectedCustomer);
+    if (promoResult.totalDiscount > 0) {
+      promoDiscount = promoResult.totalDiscount;
+      appliedPromos = promoResult.discounts;
+      sub = Math.max(0, sub - promoDiscount);
+    }
+  }
+
   const tax=Math.round(sub*db.state.settings.taxRate);
   const total=sub+tax;
 
@@ -824,15 +869,35 @@ function submitPayment() {
   });
 
   const invNo=`NXP-INV-${1000+db.state.transactions.length+1}`;
-  const txn={ id:uid('txn'), invoiceNo:invNo, date:new Date().toISOString(), items, subtotal:sub, tax, total, paymentMethod:payMethod, status:'Paid', cashier:db.state.activeCashier||'Edward Stark', customerId:selectedCustomer?selectedCustomer.id:null, customerName:selectedCustomer?selectedCustomer.name:'Walk-in Guest' };
+  const txn={ id:uid('txn'), invoiceNo:invNo, date:new Date().toISOString(), items, subtotal:sub, tax, total, promoDiscount, appliedPromos: appliedPromos.map(a => a.name), paymentMethod:payMethod, status:'Paid', cashier:db.state.activeCashier||'Edward Stark', customerId:selectedCustomer?selectedCustomer.id:null, customerName:selectedCustomer?selectedCustomer.name:'Walk-in Guest' };
   db.state.transactions.push(txn);
 
   const shift=db.state.shifts.find(s=>s.status==='Active');
   if(shift) shift.totalSales+=total;
 
   db.save();
+
+  // Offline save via NexaDB
+  if (typeof NexaDB !== 'undefined') {
+    NexaDB.open().then(() => {
+      NexaDB.save('transactions', txn).catch(() => {});
+    }).catch(() => {});
+  }
+
   closeCheckoutModal();
   showReceipt(txn);
+
+  // Thermal print via NexaPrint
+  if (typeof NexaPrint !== 'undefined') {
+    setTimeout(() => {
+      NexaPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
+    }, 500);
+  }
+
+  // WhatsApp notification (if customer has WA number)
+  if (typeof NexaWA !== 'undefined' && selectedCustomer && selectedCustomer.phone) {
+    NexaWA.sendReceipt(txn, selectedCustomer.phone);
+  }
 
   cart=[]; selectedCustomer=null;
   const sel=document.getElementById('posCustomerSelect');
@@ -847,6 +912,7 @@ function submitPayment() {
 function showReceipt(txn) {
   const overlay=document.getElementById('receiptOverlay');
   const content=document.getElementById('receiptContent');
+  const actions=document.getElementById('receiptActions');
   if(!overlay||!content) return;
 
   const items=txn.items.map(i=>`<div class="receipt-row"><span>${i.name} x${i.qty}</span><span>${rp(i.subtotal)}</span></div>`).join('');
@@ -854,10 +920,37 @@ function showReceipt(txn) {
 
   const noteHtml = txn.note ? `<div class="receipt-divider"></div><div class="receipt-row"><span>Note:</span><span>${txn.note}</span></div>` : '';
   const customerNameTranslated = txn.customerName === 'Walk-in Guest' ? t('walk_in_guest') : txn.customerName;
-  content.innerHTML=`<div class="receipt-header"><h3>${db.state.settings.companyName}</h3><p>${db.state.settings.branchName}</p><p>${txn.invoiceNo} | ${date}</p></div><div class="receipt-divider"></div><div class="receipt-row"><span>${t('receipt_cashier')}</span><span>${txn.cashier}</span></div><div class="receipt-row"><span>${t('receipt_customer')}</span><span>${customerNameTranslated}</span></div><div class="receipt-divider"></div>${items}${noteHtml}<div class="receipt-divider"></div><div class="receipt-row"><span>${t('subtotal')}</span><span>${rp(txn.subtotal)}</span></div><div class="receipt-row"><span>${t('tax')} (${Math.round(db.state.settings.taxRate*100)}%)</span><span>${rp(txn.tax)}</span></div><div class="receipt-total"><span>${t('total')}</span><span>${rp(txn.total)}</span></div><div class="receipt-divider"></div><div class="receipt-footer"><p>${t('th_payment')}: ${txn.paymentMethod}</p><p class="thanks">${t('receipt_thanks')}</p><p>NexaPOS • Enterprise Suite</p></div>`;
+  const promoHtml = txn.promoDiscount > 0 ? `<div class="receipt-row" style="color:var(--accent);"><span>🏷️ Promo</span><span>-${rp(txn.promoDiscount)}</span></div>` : '';
+  content.innerHTML=`<div class="receipt-header"><h3>${db.state.settings.companyName}</h3><p>${db.state.settings.branchName}</p><p>${txn.invoiceNo} | ${date}</p></div><div class="receipt-divider"></div><div class="receipt-row"><span>${t('receipt_cashier')}</span><span>${txn.cashier}</span></div><div class="receipt-row"><span>${t('receipt_customer')}</span><span>${customerNameTranslated}</span></div><div class="receipt-divider"></div>${items}${noteHtml}<div class="receipt-divider"></div><div class="receipt-row"><span>${t('subtotal')}</span><span>${rp(txn.subtotal)}</span></div>${promoHtml}<div class="receipt-row"><span>${t('tax')} (${Math.round(db.state.settings.taxRate*100)}%)</span><span>${rp(txn.tax)}</span></div><div class="receipt-total"><span>${t('total')}</span><span>${rp(txn.total)}</span></div><div class="receipt-divider"></div><div class="receipt-footer"><p>${t('th_payment')}: ${txn.paymentMethod}</p><p class="thanks">${t('receipt_thanks')}</p><p>NexaPOS • Enterprise Suite</p></div>`;
+
+  // Add WA send button in receipt actions
+  const receiptActions = document.querySelector('.receipt-actions');
+  if (receiptActions) {
+    const waBtn = receiptActions.querySelector('.wa-send-btn');
+    if (!waBtn && txn.customerName !== 'Walk-in Guest') {
+      const waBtnHtml = `<button class="glass-btn glass-btn-sm wa-send-btn" onclick="sendReceiptWA()" style="background:rgba(37,211,102,0.1);border-color:rgba(37,211,102,0.2);color:#25D366;font-size:10px;">💬 Kirim via WA</button>`;
+      receiptActions.insertAdjacentHTML('afterbegin', waBtnHtml);
+    }
+  }
 
   overlay.style.display='flex';
   window.receiptTxn=txn;
+}
+
+function sendReceiptWA() {
+  const txn = window.receiptTxn;
+  if (!txn) return;
+  if (typeof NexaWA !== 'undefined') {
+    const phone = txn.customerPhone || (selectedCustomer && selectedCustomer.phone) || '';
+    if (phone) {
+      NexaWA.sendReceipt(txn, phone);
+      toast('Struk dikirim via WhatsApp', '', 'success');
+    } else {
+      toast('No. HP pelanggan tidak tersedia', '', 'warning');
+    }
+  } else {
+    toast('Modul WhatsApp tidak tersedia', '', 'warning');
+  }
 }
 
 function closeReceipt() {
@@ -865,6 +958,11 @@ function closeReceipt() {
 }
 
 function printReceipt() {
+  const txn = window.receiptTxn;
+  if (typeof NexaPrint !== 'undefined' && txn) {
+    NexaPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
+    return;
+  }
   window.print();
 }
 
