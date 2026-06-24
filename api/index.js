@@ -26,6 +26,13 @@ function seed() {
     orders: [],
     transactions: [],
     staff: [{ id:'st1', name:'Edward Stark', role:'Admin', pin:'1234' }, { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }],
+    customers: [
+      { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
+      { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
+      { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
+      { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 }
+    ],
+    shifts: [],
     settings: { companyName: 'Senayan Flagship Store', branchName: 'Senayan Flagship Store', taxRate: 0.11, currency: 'IDR', whatsappNotif: true }
   };
   store.seeded = true;
@@ -278,6 +285,10 @@ module.exports = (req, res) => {
 
   if (method === 'GET' && pathname === '/api/branch/products') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'products') || []); }
   if (method === 'POST' && pathname === '/api/branch/products') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'products', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
+  if (method === 'GET' && pathname === '/api/branch/customers') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'customers') || []); }
+  if (method === 'POST' && pathname === '/api/branch/customers') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'customers', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
+  if (method === 'GET' && pathname === '/api/branch/shifts') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'shifts') || []); }
+  if (method === 'POST' && pathname === '/api/branch/shifts') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'shifts', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
   if (method === 'GET' && pathname === '/api/branch/orders') {
     const branchParam = new URL(req.url, 'http://localhost').searchParams.get('branch');
     if (branchParam === 'all') {
@@ -396,8 +407,16 @@ module.exports = (req, res) => {
     return (async () => {
       try {
         const data = JSON.parse(await readBody());
-        const id = firstBranch();
-        if (id) { if (data.products) saveBranchFile(id, 'products', data.products); if (data.settings) saveBranchFile(id, 'settings', data.settings); if (data.staffList) saveBranchFile(id, 'staff', data.staffList); }
+        const queryBranch = new URL(req.url, 'http://localhost').searchParams.get('branch');
+        const id = queryBranch || firstBranch();
+        if (id) {
+          if (data.products) saveBranchFile(id, 'products', data.products);
+          if (data.settings) saveBranchFile(id, 'settings', data.settings);
+          if (data.staffList) saveBranchFile(id, 'staff', data.staffList);
+          if (data.transactions) saveBranchFile(id, 'transactions', data.transactions);
+          if (data.customers) saveBranchFile(id, 'customers', data.customers);
+          if (data.shifts) saveBranchFile(id, 'shifts', data.shifts);
+        }
         respond(200, { success: true });
       } catch (e) { respond(400, { error: e.message }); }
     })();

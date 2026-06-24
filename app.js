@@ -25,10 +25,10 @@ const SEED_PRODUCTS = [
 ];
 
 const SEED_CUSTOMERS = [
-  { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001' },
-  { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034' },
-  { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051' },
-  { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092' },
+  { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 },
 ];
 
 const SEED_EXPENSES = [
@@ -77,6 +77,7 @@ class Database {
         if (this.state.products) localStorage.setItem('pos_products', JSON.stringify(this.state.products));
         if (this.state.settings) localStorage.setItem('pos_settings', JSON.stringify(this.state.settings));
       }
+      if (typeof syncStateToServer === 'function') syncStateToServer();
     } catch(e){}
   }
 
@@ -722,19 +723,40 @@ function selectPayMethod(m) {
   document.getElementById('checkoutPaneQris').style.display=m==='QRIS'?'flex':'none';
   document.getElementById('checkoutPaneSplit').style.display=m==='Split'?'flex':'none';
   document.getElementById('checkoutPaneDebit').style.display=m==='Debit'?'flex':'none';
-    if(m==='QRIS' && typeof NexaPay !== 'undefined') {
-      const totalTxt=document.getElementById('checkoutTotal').textContent;
-      const total=parseInt(totalTxt.replace(/[^0-9]/g,''))||0;
-      document.getElementById('qrisPayWithNexaBtn')?.addEventListener('click', () => {
-        NexaPay.showQRModal(total, '', (result) => {
-          if (result && result.success) {
-            toast('✅ Pembayaran QRIS berhasil!', '', 'success');
-            submitPayment();
-          }
-        });
-      }, { once: true });
+  document.getElementById('checkoutPaneKasbon').style.display=m==='Kasbon'?'flex':'none';
+  
+  if (m === 'Kasbon') {
+    const infoEl = document.getElementById('kasbonCustomerInfo');
+    if (!selectedCustomer) {
+      infoEl.innerHTML = `<span style="color:var(--danger); font-weight:700;">⚠️ Walk-in Guest tidak bisa menggunakan Kasbon.</span><br>Silakan pilih pelanggan terlebih dahulu di POS.`;
+    } else {
+      const limit = selectedCustomer.maxDebtLimit != null ? selectedCustomer.maxDebtLimit : 2000000;
+      const debt = selectedCustomer.currentDebt || 0;
+      const remaining = Math.max(0, limit - debt);
+      const totalTxt = document.getElementById('checkoutTotal').textContent;
+      const total = parseInt(totalTxt.replace(/[^0-9]/g,''))||0;
+      
+      infoEl.innerHTML = `
+        Pelanggan: <strong>${selectedCustomer.name}</strong><br>
+        Batas Limit Kasbon: <strong>${rp(limit)}</strong><br>
+        Kasbon Saat Ini: <strong style="color:var(--rose);">${rp(debt)}</strong><br>
+        Sisa Limit Tersedia: <strong style="color:var(--success);">${rp(remaining)}</strong><br>
+        ------------------------------------------------<br>
+        Belanja Sekarang: <strong>${rp(total)}</strong><br>
+        ${total > remaining ? `<span style="color:var(--danger); font-weight:700;">⚠️ Saldo Kasbon Tidak Mencukupi!</span>` : `<span style="color:var(--success); font-weight:700;">✓ Batas Kasbon Aman</span>`}
+      `;
     }
-    if(m==='Split') initSplit();
+  }
+  if(m==='QRIS') {
+    const btn = document.getElementById('qrisPayWithNexaBtn');
+    if (btn) {
+      btn.onclick = () => {
+        toast('✅ Pembayaran QRIS terkonfirmasi!', '', 'success');
+        submitPayment();
+      };
+    }
+  }
+  if(m==='Split') initSplit();
 }
 
 function calcChange() {
@@ -757,9 +779,20 @@ function setCash(v) {
 }
 
 function renderQRIS() {
-  const el=document.getElementById('qrisGrid');
-  if(!el) return;
-  el.innerHTML=Array.from({length:150}).map(()=>`<div style="background:${Math.random()>0.4?'#111':'transparent'}"></div>`).join('');
+  const totalTxt=document.getElementById('checkoutTotal').textContent;
+  const total=parseInt(totalTxt.replace(/[^0-9]/g,''))||0;
+  
+  const amtEl = document.getElementById('qrisTotalAmount');
+  if (amtEl) amtEl.textContent = rp(total);
+  
+  const container = document.getElementById('qrisImgContainer');
+  if (container) {
+    const branch = sessionStorage.getItem('nexapos_branch') || 'main';
+    const qrData = `NEXAPOS-BRANCH-${branch}-TOTAL-${total}-${Date.now()}`;
+    container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}" style="width:160px; height:160px; border-radius:8px;" alt="QRIS Dinamis">`;
+  }
+  
+  if (window._qrisInterval) clearInterval(window._qrisInterval);
   let sec=299;
   const timer=document.getElementById('qrisTimer');
   if(timer){
@@ -850,7 +883,19 @@ function submitPayment() {
   } else if(activePayMethod==='Debit'){
     payMethod='Debit Card';
   } else if (activePayMethod === 'QRIS') {
-    // QRIS validated via modal callback; skip amount check
+    // QRIS validated manually/dynamically; skip amount check
+  } else if (activePayMethod === 'Kasbon') {
+    if (!selectedCustomer) { toast('Error', 'Silakan pilih pelanggan terlebih dahulu.', 'danger'); return; }
+    const limit = selectedCustomer.maxDebtLimit != null ? selectedCustomer.maxDebtLimit : 2000000;
+    const debt = selectedCustomer.currentDebt || 0;
+    const remaining = limit - debt;
+    if (total > remaining) { toast('Batas Terlampaui', `Kasbon melebihi limit. Sisa limit: ${rp(remaining)}`, 'danger'); return; }
+    
+    selectedCustomer.currentDebt = (selectedCustomer.currentDebt || 0) + total;
+    const cIdx = db.state.customers.findIndex(c => c.id === selectedCustomer.id);
+    if (cIdx !== -1) db.state.customers[cIdx] = selectedCustomer;
+    
+    payMethod = 'Kasbon';
   }
 
   if(selectedCustomer){
@@ -874,8 +919,17 @@ function submitPayment() {
   const txn={ id:uid('txn'), invoiceNo:invNo, date:new Date().toISOString(), items, subtotal:sub, tax, total, promoDiscount, appliedPromos: appliedPromos.map(a => a.name), paymentMethod:payMethod, status:'Paid', cashier:db.state.activeCashier||'Edward Stark', customerId:selectedCustomer?selectedCustomer.id:null, customerName:selectedCustomer?selectedCustomer.name:'Walk-in Guest' };
   db.state.transactions.push(txn);
 
-  const shift=db.state.shifts.find(s=>s.status==='Active');
-  if(shift) shift.totalSales+=total;
+  const shift=db.state.shifts.find(s=>s.status==='Active' && s.cashier === (db.state.activeCashier || 'Edward Stark'));
+  if(shift) {
+    shift.totalSales = (shift.totalSales || 0) + total;
+    let cashPortion = 0;
+    if (activePayMethod === 'Cash') {
+      cashPortion = total;
+    } else if (activePayMethod === 'Split') {
+      cashPortion = parseInt(document.getElementById('splitCash').value) || 0;
+    }
+    shift.expectedCash = (shift.expectedCash || shift.startingCash) + cashPortion;
+  }
 
   db.save();
 
@@ -1129,6 +1183,8 @@ function openCustomerModal(id){
   const form=document.getElementById('customerForm');
   form.reset();
   document.getElementById('custId').value='';
+  document.getElementById('custDebtLimit').value = 2000000;
+  document.getElementById('custCurrentDebt').value = 0;
   title.textContent=t('register_vip');
   if(id){
     const c=db.state.customers.find(x=>x.id===id);
@@ -1139,6 +1195,8 @@ function openCustomerModal(id){
       document.getElementById('custPhone').value=c.phone;
       document.getElementById('custEmail').value=c.email;
       document.getElementById('custTier').value=c.tier;
+      document.getElementById('custDebtLimit').value = c.maxDebtLimit != null ? c.maxDebtLimit : 2000000;
+      document.getElementById('custCurrentDebt').value = c.currentDebt || 0;
     }
   }
   modal.style.display='flex';
@@ -1150,12 +1208,14 @@ function saveCustomer(){
   const phone=document.getElementById('custPhone').value;
   const email=document.getElementById('custEmail').value;
   const tier=document.getElementById('custTier').value;
+  const maxDebtLimit = parseInt(document.getElementById('custDebtLimit').value) || 0;
+  const currentDebt = parseInt(document.getElementById('custCurrentDebt').value) || 0;
 
   if(id){
     const idx=db.state.customers.findIndex(c=>c.id===id);
-    if(idx!==-1) Object.assign(db.state.customers[idx],{name,phone,email,tier});
+    if(idx!==-1) Object.assign(db.state.customers[idx],{name,phone,email,tier,maxDebtLimit,currentDebt});
   } else {
-    db.state.customers.push({id:uid('c'),name,phone,email,tier,points:0,ltv:0,joinDate:new Date().toISOString().split('T')[0],cardNo:`NXP-${tier.substring(0,4).toUpperCase()}-${Math.floor(1000+Math.random()*9000)}`});
+    db.state.customers.push({id:uid('c'),name,phone,email,tier,points:0,ltv:0,joinDate:new Date().toISOString().split('T')[0],cardNo:`NXP-${tier.substring(0,4).toUpperCase()}-${Math.floor(1000+Math.random()*9000)}`,maxDebtLimit,currentDebt});
   }
   db.save();
   closeModal('customerModal');
@@ -3720,6 +3780,15 @@ function connectWebSocket() {
             if (typeof renderStaffList === 'function') renderStaffList();
             if (typeof populateLockScreenCashiers === 'function') populateLockScreenCashiers();
           }
+          if (msg.customers && msg.customers.length) {
+            db.state.customers = msg.customers;
+            db.save();
+            if (typeof renderCustomers === 'function') renderCustomers();
+          }
+          if (msg.shifts && msg.shifts.length) {
+            db.state.shifts = msg.shifts;
+            db.save();
+          }
           if (msg.settings) {
             db.state.settings = Object.assign(db.state.settings || {}, msg.settings);
             db.save();
@@ -3737,6 +3806,15 @@ function connectWebSocket() {
             db.save();
             if (typeof renderStaffList === 'function') renderStaffList();
             if (typeof populateLockScreenCashiers === 'function') populateLockScreenCashiers();
+          }
+          if (msg.data.customers) {
+            db.state.customers = msg.data.customers;
+            db.save();
+            if (typeof renderCustomers === 'function') renderCustomers();
+          }
+          if (msg.data.shifts) {
+            db.state.shifts = msg.data.shifts;
+            db.save();
           }
           if (msg.data.settings) {
             db.state.settings = Object.assign(db.state.settings || {}, msg.data.settings);
@@ -3883,6 +3961,15 @@ function submitPin() {
   if (enteredPin === correctPin) {
     // Authentication successful
     playSfx('sfxSuccess');
+    
+    // Check if cashier has active shift
+    if (!db.state.shifts) db.state.shifts = [];
+    const activeShift = db.state.shifts.find(s => s.status === 'Active' && s.cashier === cashier);
+    if (!activeShift) {
+      openBukaShiftModal(cashier);
+      return;
+    }
+
     const screen = document.getElementById('lockScreen');
     if (screen) {
       screen.style.transform = 'translateY(-100%)';
@@ -3900,9 +3987,6 @@ function submitPin() {
 
     // Trigger toast notification
     toast('Access Granted', `Selamat bertugas, ${cashier}!`, 'success');
-
-    // Create or update shift
-    updateShiftCashier(cashier);
 
     // Apply RBAC: Show/Hide tabs based on Role
     applyRoleBasedAccess(cashier);
@@ -5745,6 +5829,262 @@ function announceQueue(number, counter) {
       console.warn('Speech synthesis not supported in this browser.');
     }
   }, 650);
+}
+
+// =============================================
+// CASHIER SHIFT MANAGEMENT & SYNC FUNCTIONS
+// =============================================
+function openBukaShiftModal(cashier) {
+  const modal = document.getElementById('bukaShiftModal');
+  const cashierInput = document.getElementById('bukaShiftCashier');
+  const modalAwalInput = document.getElementById('bukaShiftModalAwal');
+  
+  if (cashierInput) cashierInput.value = cashier;
+  if (modalAwalInput) modalAwalInput.value = 200000; // default starting cash
+  
+  if (modal) modal.style.display = 'flex';
+}
+
+function submitBukaShift() {
+  const cashier = document.getElementById('bukaShiftCashier').value;
+  const startingCash = parseFloat(document.getElementById('bukaShiftModalAwal').value) || 0;
+  
+  if (!db.state.shifts) db.state.shifts = [];
+  
+  // Close any existing active shifts for this cashier
+  db.state.shifts.forEach(s => {
+    if (s.cashier === cashier && s.status === 'Active') {
+      s.status = 'Closed';
+      s.endTime = new Date().toISOString();
+    }
+  });
+
+  const newShift = {
+    id: uid('sh'),
+    cashier: cashier,
+    startTime: new Date().toISOString(),
+    endTime: null,
+    startingCash: startingCash,
+    expectedCash: startingCash,
+    actualCash: 0,
+    discrepancy: 0,
+    status: 'Active',
+    notes: ''
+  };
+  
+  db.state.shifts.push(newShift);
+  
+  // Set active cashier
+  db.state.activeCashier = cashier;
+  db.save();
+
+  // Hide bukaShiftModal
+  const modal = document.getElementById('bukaShiftModal');
+  if (modal) modal.style.display = 'none';
+
+  // Hide lockScreen
+  const screen = document.getElementById('lockScreen');
+  if (screen) {
+    screen.style.transform = 'translateY(-100%)';
+    setTimeout(() => { screen.style.display = 'none'; }, 400);
+  }
+
+  // Update header shift cashier name
+  const cashierEl = document.getElementById('headerShiftName');
+  if (cashierEl) cashierEl.textContent = cashier;
+
+  toast('Shift Dimulai', `Shift untuk ${cashier} dibuka dengan modal awal ${rp(startingCash)}.`, 'success');
+  playSfx('sfxSuccess');
+  applyRoleBasedAccess(cashier);
+  switchTab('profil');
+  renderProfilePage();
+}
+
+function openCloseShiftModal() {
+  const cashier = db.state.activeCashier || 'Edward Stark';
+  if (!db.state.shifts) db.state.shifts = [];
+  const activeShift = db.state.shifts.find(s => s.status === 'Active' && s.cashier === cashier);
+  
+  if (!activeShift) {
+    toast('Error', 'Tidak ada shift aktif untuk kasir ini.', 'danger');
+    return;
+  }
+  
+  // Calculate cash sales in this shift
+  const startTimeISO = activeShift.startTime;
+  const cashTxns = db.state.transactions.filter(t => t.cashier === cashier && t.date >= startTimeISO && t.paymentMethod === 'Cash');
+  const cashSales = cashTxns.reduce((sum, t) => sum + (t.total || 0), 0);
+  
+  const startingCash = parseFloat(activeShift.startingCash) || 0;
+  const expectedCash = startingCash + cashSales;
+  
+  // Populate Tutup Shift Modal fields
+  document.getElementById('tutupShiftCashier').value = cashier;
+  document.getElementById('tutupShiftStart').value = new Date(activeShift.startTime).toLocaleTimeString('id-ID') + ' (' + new Date(activeShift.startTime).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) + ')';
+  document.getElementById('tutupShiftModalAwalVal').value = rp(startingCash);
+  document.getElementById('tutupShiftCashSales').value = rp(cashSales);
+  document.getElementById('tutupShiftExpected').value = rp(expectedCash);
+  
+  // Reset actual cash input & diff UI
+  document.getElementById('tutupShiftActual').value = '';
+  const diffEl = document.getElementById('tutupShiftDifference');
+  if (diffEl) {
+    diffEl.textContent = 'Rp 0';
+    diffEl.style.background = 'rgba(255,255,255,0.03)';
+    diffEl.style.color = 'var(--text-secondary)';
+  }
+  document.getElementById('tutupShiftNotes').value = '';
+  
+  // Show modal
+  const modal = document.getElementById('tutupShiftModal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function calcShiftDiscrepancy() {
+  const cashier = db.state.activeCashier || 'Edward Stark';
+  const activeShift = db.state.shifts.find(s => s.status === 'Active' && s.cashier === cashier);
+  if (!activeShift) return;
+  
+  const startTimeISO = activeShift.startTime;
+  const cashTxns = db.state.transactions.filter(t => t.cashier === cashier && t.date >= startTimeISO && t.paymentMethod === 'Cash');
+  const cashSales = cashTxns.reduce((sum, t) => sum + (t.total || 0), 0);
+  
+  const startingCash = parseFloat(activeShift.startingCash) || 0;
+  const expectedCash = startingCash + cashSales;
+  
+  const actualCash = parseFloat(document.getElementById('tutupShiftActual').value) || 0;
+  const discrepancy = actualCash - expectedCash;
+  
+  const diffEl = document.getElementById('tutupShiftDifference');
+  if (diffEl) {
+    if (discrepancy === 0) {
+      diffEl.textContent = 'Rp 0 (SEIMBANG)';
+      diffEl.style.background = 'rgba(16,185,129,0.15)';
+      diffEl.style.color = 'var(--success)';
+    } else if (discrepancy > 0) {
+      diffEl.textContent = '+ ' + rp(discrepancy) + ' (SURPLUS)';
+      diffEl.style.background = 'rgba(59,130,246,0.15)';
+      diffEl.style.color = 'var(--blue)';
+    } else {
+      diffEl.textContent = '- ' + rp(Math.abs(discrepancy)) + ' (DEFISIT / SELISIH)';
+      diffEl.style.background = 'rgba(244,63,94,0.15)';
+      diffEl.style.color = 'var(--rose)';
+    }
+  }
+}
+
+function submitTutupShift() {
+  const cashier = db.state.activeCashier || 'Edward Stark';
+  const activeShift = db.state.shifts.find(s => s.status === 'Active' && s.cashier === cashier);
+  if (!activeShift) return;
+  
+  const startTimeISO = activeShift.startTime;
+  const cashTxns = db.state.transactions.filter(t => t.cashier === cashier && t.date >= startTimeISO && t.paymentMethod === 'Cash');
+  const cashSales = cashTxns.reduce((sum, t) => sum + (t.total || 0), 0);
+  
+  const startingCash = parseFloat(activeShift.startingCash) || 0;
+  const expectedCash = startingCash + cashSales;
+  
+  const actualCash = parseFloat(document.getElementById('tutupShiftActual').value) || 0;
+  const discrepancy = actualCash - expectedCash;
+  const notes = document.getElementById('tutupShiftNotes').value;
+  
+  // Update shift state
+  activeShift.endTime = new Date().toISOString();
+  activeShift.expectedCash = expectedCash;
+  activeShift.actualCash = actualCash;
+  activeShift.discrepancy = discrepancy;
+  activeShift.status = 'Closed';
+  activeShift.notes = notes;
+  
+  db.save();
+
+  // Hide tutupShiftModal
+  const modal = document.getElementById('tutupShiftModal');
+  if (modal) modal.style.display = 'none';
+  
+  toast('Shift Ditutup', `Shift kasir ${cashier} berhasil ditutup dengan status ${discrepancy === 0 ? 'Seimbang' : discrepancy > 0 ? 'Surplus' : 'Defisit'}.`, 'success');
+  playSfx('sfxSuccess');
+  
+  // Show lockScreen to force login/new shift opening
+  const screen = document.getElementById('lockScreen');
+  if (screen) {
+    screen.style.display = 'flex';
+    screen.style.transform = 'translateY(0)';
+  }
+  
+  // Clear active cashier
+  db.state.activeCashier = '';
+  db.save();
+  
+  // Generate Laporan Tutup Shift for WhatsApp share
+  const closingReportText = `🔐 *LAPORAN TUTUP SHIFT KASIR* 🔐\n` +
+    `---------------------------------------\n` +
+    `👤 *Kasir:* ${cashier}\n` +
+    `📅 *Mulai Shift:* ${new Date(activeShift.startTime).toLocaleString('id-ID')}\n` +
+    `📅 *Tutup Shift:* ${new Date(activeShift.endTime).toLocaleString('id-ID')}\n` +
+    `---------------------------------------\n` +
+    `💵 *Modal Awal:* ${rp(startingCash)}\n` +
+    `📈 *Penjualan Tunai:* ${rp(cashSales)}\n` +
+    `💸 *Uang Seharusnya:* ${rp(expectedCash)}\n` +
+    `📥 *Uang Aktual Laci:* ${rp(actualCash)}\n` +
+    `⚠️ *Selisih Kas:* ${discrepancy === 0 ? 'Rp 0 (SEIMBANG)' : (discrepancy > 0 ? '+' : '-') + rp(Math.abs(discrepancy))}\n` +
+    `📝 *Catatan:* ${notes || '-'}\n` +
+    `---------------------------------------\n` +
+    `*NexaPOS Enterprise* - Terverifikasi`;
+
+  // Pre-load inside a confirmation toast or copy to clipboard
+  navigator.clipboard.writeText(closingReportText).then(() => {
+    toast('Laporan Disalin', 'Laporan tutup shift telah disalin ke clipboard untuk WhatsApp.', 'info');
+  }).catch(() => {});
+  
+  // Trigger WhatsApp share using settings WhatsApp number if enabled
+  const companyPhone = (db.state.settings && db.state.settings.whatsappPhone) || '';
+  if (companyPhone) {
+    const formattedPhone = companyPhone.replace(/[^0-9]/g, '');
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(closingReportText)}`, '_blank');
+  } else {
+    // Just open WhatsApp blank or prompt owner share
+    window.open(`https://wa.me/?text=${encodeURIComponent(closingReportText)}`, '_blank');
+  }
+}
+
+function syncStateToServer() {
+  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || 'branch-1';
+  const syncData = {
+    type: 'sync',
+    branchId: branch,
+    data: {
+      customers: db.state.customers,
+      shifts: db.state.shifts,
+      transactions: db.state.transactions
+    }
+  };
+
+  // If websocket is open, send via websocket
+  if (wsClient && wsClient.readyState === WebSocket.OPEN) {
+    wsClient.send(JSON.stringify(syncData));
+  }
+
+  // Also sync via REST API to ensure Vercel / serverless is updated!
+  const httpUrl = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
+  const branchAuthToken = sessionStorage.getItem('nexapos_token') || 'demo-token';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + branchAuthToken
+  };
+
+  fetch(httpUrl + '/api/branch/customers?branch=' + branch, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(db.state.customers || [])
+  }).catch(e => console.error('Error syncing customers:', e));
+
+  fetch(httpUrl + '/api/branch/shifts?branch=' + branch, {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify(db.state.shifts || [])
+  }).catch(e => console.error('Error syncing shifts:', e));
 }
 
 

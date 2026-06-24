@@ -757,6 +757,9 @@
       <div class="nav-item" data-view="reports" onclick="switchView('reports')">
         <span>📊</span> Laporan Keuangan
       </div>
+      <div class="nav-item" data-view="kasbon" onclick="switchView('kasbon')">
+        <span>💳</span> Buku Kasbon
+      </div>
       <div class="nav-item" style="margin-top:auto; opacity:0.5; cursor:default; font-size:10px; color:var(--text-muted); padding:10px 14px;">
         v5.0 Enterprise
       </div>
@@ -1004,6 +1007,30 @@
   </div>
 </div>
 
+<!-- ========== KASBON PAY MODAL ========== -->
+<div class="modal-overlay" id="kasbonPayModal">
+  <div class="modal" style="max-width: 400px; width: 90%; background: #0c0d14; border: 1px solid var(--border-light); border-radius: 12px; padding: 24px; position: relative;">
+    <h2 id="kasbonPayModalTitle" style="font-family: var(--font-display); font-weight: 700; color: #fff; margin-bottom: 16px;">Pelunasan Kasbon</h2>
+    <button class="modal-close" onclick="closeKasbonPayModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
+    <div class="form-group" style="margin-bottom: 12px;">
+      <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:6px;">Nama Pelanggan</label>
+      <input type="text" id="kasbonPayName" class="glass-input" readonly style="width:100%; opacity:0.7; background:#111; color:#fff; border:1px solid var(--border); padding:10px; border-radius:6px;">
+    </div>
+    <div class="form-group" style="margin-bottom: 12px;">
+      <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:6px;">Total Hutang Berjalan</label>
+      <input type="text" id="kasbonPayTotalDebt" class="glass-input" readonly style="width:100%; opacity:0.7; font-weight:bold; color:var(--rose); background:#111; border:1px solid var(--border); padding:10px; border-radius:6px;">
+    </div>
+    <div class="form-group" style="margin-bottom: 12px;">
+      <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:6px;">Jumlah Pembayaran (Rp)</label>
+      <input type="number" id="kasbonPayAmount" class="glass-input" style="width:100%; font-weight:bold; color:var(--emerald); font-size: 16px; background:#111; border:1px solid var(--border); padding:10px; border-radius:6px;" placeholder="Masukkan nominal pelunasan...">
+    </div>
+    <div class="modal-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+      <button class="btn btn-ghost" onclick="closeKasbonPayModal()">Batal</button>
+      <button class="btn btn-gold" onclick="submitKasbonPayment()">Simpan Pembayaran</button>
+    </div>
+  </div>
+</div>
+
       <!-- ── VIEW: Laporan Keuangan ── -->
       <div class="dash-view" id="viewReports">
         <div class="welcome-section">
@@ -1062,6 +1089,69 @@
         </div>
         <div id="ownerStaffCommission">
           <div class="loading-state"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Kasbon ── -->
+      <div class="dash-view" id="viewKasbon">
+        <div class="welcome-section">
+          <h2>💳 Buku Kasbon & Piutang Pelanggan</h2>
+          <p>Monitor limit kasbon, jatuh tempo pembayaran, dan pencatatan pelunasan hutang pelanggan</p>
+        </div>
+        
+        <div class="glass-card" style="padding: 20px; margin-bottom: 20px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div class="form-group" style="margin: 0; min-width: 250px;">
+              <label style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); display:block; margin-bottom:6px;">Pilih Cabang</label>
+              <select id="kasbonBranchSelect" class="glass-input" style="width:100%; background:#111; color:#fff;" onchange="loadKasbonData(this.value)">
+                <option value="">Memuat cabang...</option>
+              </select>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="refreshKasbonData()">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--rose);"></div>
+            <span class="stat-label">Total Piutang Berjalan</span>
+            <div class="stat-value gold-text" id="kasbonTotalPiutang">Rp 0</div>
+            <div class="stat-sub">Hutang aktif yang belum dibayar</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--blue);"></div>
+            <span class="stat-label">Jumlah Debitur Aktif</span>
+            <div class="stat-value gold-text" id="kasbonDebtorCount">0 Orang</div>
+            <div class="stat-sub">Pelanggan dengan kasbon aktif</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--gold);"></div>
+            <span class="stat-label">Rata-rata Limit Kasbon</span>
+            <div class="stat-value gold-text" id="kasbonAvgLimit">Rp 0</div>
+            <div class="stat-sub">Batas pinjaman maksimal member</div>
+          </div>
+        </div>
+
+        <div class="glass-card detail-orders" style="padding: 24px; overflow-x: auto;">
+          <h3 style="font-family:var(--font-display); font-weight:700; margin-bottom:16px; color:#fff;">Daftar Piutang Member VIP</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Member</th>
+                <th>Kontak & Email</th>
+                <th>Tier</th>
+                <th>Limit Kasbon</th>
+                <th>Total Kasbon</th>
+                <th>Sisa Limit</th>
+                <th style="text-align: right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="kasbonTbody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Pilih cabang terlebih dahulu untuk melihat data kasbon.</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -1185,6 +1275,7 @@ function switchView(view) {
   if (view === 'monitoring') populateMonitorBranches();
   if (view === 'reports') renderOwnerReports('all');
   if (view === 'staff') renderOwnerStaff();
+  if (view === 'kasbon') populateKasbonBranches();
 }
 
 async function showBranchDetail(branchId) {
@@ -1279,6 +1370,10 @@ function renderOwnerReports(period) {
   api('/api/transactions').then(data => {
     const allTx = Array.isArray(data) ? data : (data.transactions || transactions);
     if (typeof NexaReports !== 'undefined') {
+      if (!NexaReports.profitLoss) {
+        document.getElementById('reportPnL').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Modul Laporan Keuangan belum siap. Muat ulang halaman.</div>';
+        return;
+      }
       const pnl = NexaReports.profitLoss(allTx, [], period || _ownerReportPeriod);
       document.getElementById('reportPnL').innerHTML = `
         <div style="padding:12px;">
@@ -1354,20 +1449,22 @@ function printOwnerReports() {
 function renderOwnerStaff() {
   const attendanceEl = document.getElementById('ownerStaffAttendance');
   const commissionEl = document.getElementById('ownerStaffCommission');
+  if (!attendanceEl || !commissionEl) return;
 
   (async function loadStaff() {
-    const allStaff = [];
-    const allTransactions = [];
-    for (const b of BRANCHES) {
-      try {
-        const staff = await api('/api/branch/staff?branch=' + b.id);
-        if (Array.isArray(staff)) allStaff.push(...staff);
-        const tx = await api('/api/branch/transactions?branch=' + b.id);
-        if (Array.isArray(tx)) allTransactions.push(...tx);
-      } catch(e) {}
-    }
-    const staffList = allStaff;
-    const transactions = allTransactions;
+    try {
+      const allStaff = [];
+      const allTransactions = [];
+      for (const b of BRANCHES) {
+        try {
+          const staff = await api('/api/branch/staff?branch=' + b.id);
+          if (Array.isArray(staff)) allStaff.push(...staff);
+          const tx = await api('/api/branch/transactions?branch=' + b.id);
+          if (Array.isArray(tx)) allTransactions.push(...tx);
+        } catch(e) {}
+      }
+      const staffList = allStaff;
+      const transactions = allTransactions;
 
       if (typeof NexaStaff !== 'undefined') {
         NexaStaff.init();
@@ -1405,7 +1502,7 @@ function renderOwnerStaff() {
         });
         document.getElementById('ownerStaffCommission').textContent = 'Rp ' + totalComm.toLocaleString('id-ID');
       } else {
-        attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Muat ulang halaman untuk mengaktifkan modul Karyawan</div>';
+        attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Modul Karyawan tidak tersedia. Muat ulang halaman.</div>';
       }
     } catch(e) {
       attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data karyawan. Pastikan server terhubung.</div>';
@@ -1811,6 +1908,226 @@ function initParticles() {
   draw();
   window.addEventListener('resize',()=>{ w=window.innerWidth; h=window.innerHeight; canvas.width=w; canvas.height=h; });
 }
+initParticles();
+
+// =============================================
+// BUKU KASBON & PIUTANG FUNCTIONS
+// =============================================
+let KASBON_ACTIVE_BRANCH = '';
+let KASBON_ACTIVE_CUSTOMER = null;
+let KASBON_CUSTOMERS_LIST = [];
+
+function populateKasbonBranches() {
+  const select = document.getElementById('kasbonBranchSelect');
+  if (!select) return;
+  
+  if (BRANCHES.length === 0) {
+    select.innerHTML = '<option value="">Tidak ada cabang</option>';
+    document.getElementById('kasbonTbody').innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Tidak ada cabang tersedia.</td></tr>`;
+    return;
+  }
+  
+  select.innerHTML = BRANCHES.map(b => `<option value="${b.id}">${b.name} (${b.city || '—'})</option>`).join('');
+  
+  // Load the first branch automatically
+  loadKasbonData(BRANCHES[0].id);
+}
+
+async function refreshKasbonData() {
+  const select = document.getElementById('kasbonBranchSelect');
+  if (select && select.value) {
+    await loadKasbonData(select.value);
+    toast('Data kasbon berhasil direfresh', 'success');
+  }
+}
+
+async function loadKasbonData(branchId) {
+  if (!branchId) return;
+  KASBON_ACTIVE_BRANCH = branchId;
+  const tbody = document.getElementById('kasbonTbody');
+  if (tbody) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px;"><div class="loading-spinner" style="margin: 0 auto;"></div></td></tr>`;
+  }
+  
+  try {
+    const customers = await api('/api/branch/customers?branch=' + branchId);
+    KASBON_CUSTOMERS_LIST = Array.isArray(customers) ? customers : [];
+    
+    // Calculate stats
+    let totalPiutang = 0;
+    let debtorCount = 0;
+    let totalLimit = 0;
+    
+    KASBON_CUSTOMERS_LIST.forEach(c => {
+      const debt = parseFloat(c.currentDebt) || 0;
+      const limit = parseFloat(c.maxDebtLimit) || 0;
+      totalPiutang += debt;
+      if (debt > 0) debtorCount++;
+      totalLimit += limit;
+    });
+    
+    const avgLimit = KASBON_CUSTOMERS_LIST.length ? (totalLimit / KASBON_CUSTOMERS_LIST.length) : 0;
+    
+    // Update stats UI
+    document.getElementById('kasbonTotalPiutang').textContent = 'Rp ' + totalPiutang.toLocaleString('id-ID');
+    document.getElementById('kasbonDebtorCount').textContent = `${debtorCount} Orang`;
+    document.getElementById('kasbonAvgLimit').textContent = 'Rp ' + Math.round(avgLimit).toLocaleString('id-ID');
+    
+    // Render list
+    if (KASBON_CUSTOMERS_LIST.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--text-muted);">Tidak ada data member VIP di cabang ini.</td></tr>`;
+      return;
+    }
+    
+    const rpLocal = val => 'Rp ' + (val || 0).toLocaleString('id-ID');
+    
+    tbody.innerHTML = KASBON_CUSTOMERS_LIST.map(c => {
+      const limit = parseFloat(c.maxDebtLimit) || 0;
+      const debt = parseFloat(c.currentDebt) || 0;
+      const remainingLimit = Math.max(0, limit - debt);
+      
+      const payButton = debt > 0 
+        ? `<button class="btn btn-gold btn-sm" onclick="payCustomerDebt('${branchId}', '${c.id}', ${debt})" style="margin-right: 6px;">Pelunasan Hutang</button>`
+        : `<button class="btn btn-ghost btn-sm" disabled style="opacity: 0.5; margin-right: 6px;">Lunas</button>`;
+        
+      const waButton = debt > 0
+        ? `<button class="btn btn-ghost btn-sm" onclick="sendWAReminder('${c.name.replace(/'/g, "\\'")}', '${c.phone}', ${debt}, ${limit})">💬 Tagih WA</button>`
+        : '';
+        
+      return `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+          <td style="padding: 12px 8px; font-weight: 600; color: #fff;">${c.name}</td>
+          <td style="padding: 12px 8px; color: var(--text-secondary); font-size: 12px;">${c.phone || '-'}<br><span style="opacity: 0.6;">${c.email || '-'}</span></td>
+          <td style="padding: 12px 8px;"><span class="status-badge paid" style="background: rgba(245,158,11,0.12); color: var(--gold-light);">${c.tier}</span></td>
+          <td style="padding: 12px 8px;">${rpLocal(limit)}</td>
+          <td style="padding: 12px 8px; font-weight: 700; color: ${debt > 0 ? 'var(--rose)' : 'var(--text-muted)'};">${rpLocal(debt)}</td>
+          <td style="padding: 12px 8px; color: var(--emerald);">${rpLocal(remainingLimit)}</td>
+          <td style="padding: 12px 8px; text-align: right;">
+            <div style="display: inline-flex; align-items: center;">
+              ${payButton}
+              ${waButton}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+    
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 24px; color: var(--rose);">Gagal memuat data kasbon dari server.</td></tr>`;
+  }
+}
+
+function payCustomerDebt(branchId, customerId, currentDebt) {
+  const cust = KASBON_CUSTOMERS_LIST.find(c => c.id === customerId);
+  if (!cust) return;
+  
+  KASBON_ACTIVE_CUSTOMER = cust;
+  
+  document.getElementById('kasbonPayName').value = cust.name;
+  document.getElementById('kasbonPayTotalDebt').value = 'Rp ' + currentDebt.toLocaleString('id-ID');
+  document.getElementById('kasbonPayAmount').value = currentDebt;
+  
+  document.getElementById('kasbonPayModal').classList.add('active');
+}
+
+function closeKasbonPayModal() {
+  document.getElementById('kasbonPayModal').classList.remove('active');
+}
+
+async function submitKasbonPayment() {
+  if (!KASBON_ACTIVE_CUSTOMER || !KASBON_ACTIVE_BRANCH) return;
+  
+  const payAmount = parseFloat(document.getElementById('kasbonPayAmount').value) || 0;
+  if (payAmount <= 0) {
+    toast('Nominal pembayaran harus lebih dari 0', 'error');
+    return;
+  }
+  
+  const currentDebt = parseFloat(KASBON_ACTIVE_CUSTOMER.currentDebt) || 0;
+  if (payAmount > currentDebt) {
+    toast('Jumlah pembayaran melebihi total hutang berjalan', 'error');
+    return;
+  }
+  
+  KASBON_ACTIVE_CUSTOMER.currentDebt = currentDebt - payAmount;
+  
+  // Find customer in list and update
+  const idx = KASBON_CUSTOMERS_LIST.findIndex(c => c.id === KASBON_ACTIVE_CUSTOMER.id);
+  if (idx !== -1) {
+    KASBON_CUSTOMERS_LIST[idx] = KASBON_ACTIVE_CUSTOMER;
+  }
+  
+  try {
+    // Save updated customers list to server
+    const res = await api('/api/branch/customers?branch=' + KASBON_ACTIVE_BRANCH, {
+      method: 'POST',
+      body: JSON.stringify(KASBON_CUSTOMERS_LIST)
+    });
+    
+    if (res.success) {
+      toast(`Pembayaran Rp ${payAmount.toLocaleString('id-ID')} berhasil dicatat.`, 'success');
+      closeKasbonPayModal();
+      
+      // Update UI
+      loadKasbonData(KASBON_ACTIVE_BRANCH);
+      
+      // Optional: Update branch transaction list to record this cash inflow
+      try {
+        const txns = await api('/api/branch/transactions?branch=' + KASBON_ACTIVE_BRANCH);
+        if (Array.isArray(txns)) {
+          const newTxn = {
+            id: 'txn-in-' + Date.now(),
+            invoiceNo: 'PAY-KASBON-' + Date.now().toString(36).toUpperCase(),
+            date: new Date().toISOString(),
+            cashier: 'Owner Portal',
+            customerName: KASBON_ACTIVE_CUSTOMER.name,
+            customerId: KASBON_ACTIVE_CUSTOMER.id,
+            paymentMode: 'Cash',
+            subtotal: payAmount,
+            tax: 0,
+            discount: 0,
+            total: payAmount,
+            status: 'success',
+            items: [{ name: 'Pelunasan Kasbon', qty: 1, price: payAmount, total: payAmount }]
+          };
+          txns.push(newTxn);
+          await api('/api/branch/transactions?branch=' + KASBON_ACTIVE_BRANCH, {
+            method: 'POST',
+            body: JSON.stringify(txns)
+          });
+        }
+      } catch (errTxn) {
+        console.warn('Gagal mencatat transaksi kas masuk:', errTxn);
+      }
+      
+    } else {
+      toast(res.error || 'Gagal menyimpan pembayaran', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    toast('Gagal menghubungi server untuk menyimpan pembayaran', 'error');
+  }
+}
+
+function sendWAReminder(name, phone, debt, limit) {
+  if (!phone) {
+    toast('Nomor WhatsApp tidak tersedia', 'error');
+    return;
+  }
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const formattedPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.substring(1) : cleanPhone;
+  
+  const rpLocal = val => 'Rp ' + (val || 0).toLocaleString('id-ID');
+  
+  const message = `Halo Kak *${name}*,\n\nKami dari *NexaPOS* ingin menginformasikan rincian tagihan kasbon aktif Kakak:\n\n` +
+    `▪️ *Total Hutang:* ${rpLocal(debt)}\n` +
+    `▪️ *Batas Limit:* ${rpLocal(limit)}\n\n` +
+    `Mohon kesediaannya untuk melakukan pembayaran pelunasan kasbon. Pembayaran dapat dilakukan langsung di kasir toko kami. Terima kasih atas kerja samanya! 🙏😊`;
+  
+  window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+}
+
 initParticles();
 
   if (TOKEN) loadDashboard();

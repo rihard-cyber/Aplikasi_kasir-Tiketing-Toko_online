@@ -111,6 +111,13 @@ function seed() {
         companyName:'Nexa Luxury Group', branchName:'Senayan Flagship Store',
         taxRate:0.11, currency:'IDR', whatsappNotif:true
       });
+      saveBranchFile('branch-1', 'customers', [
+        { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 }
+      ]);
+      saveBranchFile('branch-1', 'shifts', []);
     }
     console.log('  Default branch: Senayan Flagship Store');
   }
@@ -399,8 +406,61 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Branch customers
+  if (method === 'GET' && pathname === '/api/branch/customers') {
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    respond(200, getBranchFile(ctx.branch.id, 'customers') || []);
+    return;
+  }
+  if (method === 'POST' && pathname === '/api/branch/customers') {
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    (async () => {
+      try {
+        const customers = JSON.parse(await readBody());
+        saveBranchFile(ctx.branch.id, 'customers', customers);
+        respond(200, { success: true });
+      } catch (e) { respond(400, { error: e.message }); }
+    })();
+    return;
+  }
+
+  // Branch shifts
+  if (method === 'GET' && pathname === '/api/branch/shifts') {
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    respond(200, getBranchFile(ctx.branch.id, 'shifts') || []);
+    return;
+  }
+  if (method === 'POST' && pathname === '/api/branch/shifts') {
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    (async () => {
+      try {
+        const shifts = JSON.parse(await readBody());
+        saveBranchFile(ctx.branch.id, 'shifts', shifts);
+        respond(200, { success: true });
+      } catch (e) { respond(400, { error: e.message }); }
+    })();
+    return;
+  }
+
   // Branch orders
   if (method === 'GET' && pathname === '/api/branch/orders') {
+    const branchParam = url.searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allOrders = [];
+      branches.forEach(b => {
+        const orders = getBranchFile(b.id, 'orders') || [];
+        orders.forEach(o => allOrders.push({ ...o, branchId: b.id, branchName: b.name }));
+      });
+      respond(200, allOrders);
+      return;
+    }
     const ctx = requireBranchAuth();
     if (!ctx) return respond(401, { error: 'Unauthorized' });
     respond(200, getBranchFile(ctx.branch.id, 'orders') || []);
@@ -421,6 +481,19 @@ const server = http.createServer((req, res) => {
 
   // Branch transactions
   if (method === 'GET' && pathname === '/api/branch/transactions') {
+    const branchParam = url.searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allTx = [];
+      branches.forEach(b => {
+        const txns = getBranchFile(b.id, 'transactions') || [];
+        txns.forEach(t => allTx.push({ ...t, branchId: b.id, branchName: b.name }));
+      });
+      respond(200, allTx);
+      return;
+    }
     const ctx = requireBranchAuth();
     if (!ctx) return respond(401, { error: 'Unauthorized' });
     respond(200, getBranchFile(ctx.branch.id, 'transactions') || []);
@@ -441,6 +514,19 @@ const server = http.createServer((req, res) => {
 
   // Branch staff
   if (method === 'GET' && pathname === '/api/branch/staff') {
+    const branchParam = url.searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allStaff = [];
+      branches.forEach(b => {
+        const staff = getBranchFile(b.id, 'staff') || [];
+        staff.forEach(s => allStaff.push({ ...s, branchId: b.id, branchName: b.name }));
+      });
+      respond(200, allStaff);
+      return;
+    }
     const ctx = requireBranchAuth();
     if (!ctx) return respond(401, { error: 'Unauthorized' });
     respond(200, getBranchFile(ctx.branch.id, 'staff') || []);
@@ -651,14 +737,18 @@ const server = http.createServer((req, res) => {
     (async () => {
       try {
         const data = JSON.parse(await readBody());
+        const queryBranch = url.searchParams.get('branch');
         const branches = getBranches();
-        const mainBranch = branches[0];
-        if (mainBranch) {
-          if (data.products) saveBranchFile(mainBranch.id, 'products', data.products);
-          if (data.settings) saveBranchFile(mainBranch.id, 'settings', data.settings);
-          if (data.staffList) saveBranchFile(mainBranch.id, 'staff', data.staffList);
+        const branchId = queryBranch || (branches.length ? branches[0].id : null);
+        if (branchId) {
+          if (data.products) saveBranchFile(branchId, 'products', data.products);
+          if (data.settings) saveBranchFile(branchId, 'settings', data.settings);
+          if (data.staffList) saveBranchFile(branchId, 'staff', data.staffList);
+          if (data.transactions) saveBranchFile(branchId, 'transactions', data.transactions);
+          if (data.customers) saveBranchFile(branchId, 'customers', data.customers);
+          if (data.shifts) saveBranchFile(branchId, 'shifts', data.shifts);
         }
-        broadcast({ type: 'sync', data });
+        broadcast({ type: 'sync', data, branchId });
         respond(200, { success: true });
       } catch (e) { respond(400, { error: e.message }); }
     })();
@@ -846,6 +936,8 @@ wss.on('connection', (ws, req) => {
     initData.orders = (getBranchFile(branchId, 'orders') || []).filter(o => o.status === 'pending');
     initData.staffList = getBranchFile(branchId, 'staff') || [];
     initData.settings = getBranchFile(branchId, 'settings') || {};
+    initData.customers = getBranchFile(branchId, 'customers') || [];
+    initData.shifts = getBranchFile(branchId, 'shifts') || [];
     initData.branchId = branchId;
   } else {
     // Legacy mode
@@ -856,6 +948,8 @@ wss.on('connection', (ws, req) => {
       initData.orders = (getBranchFile(b.id, 'orders') || []).filter(o => o.status === 'pending');
       initData.staffList = getBranchFile(b.id, 'staff') || [];
       initData.settings = getBranchFile(b.id, 'settings') || {};
+      initData.customers = getBranchFile(b.id, 'customers') || [];
+      initData.shifts = getBranchFile(b.id, 'shifts') || [];
     }
   }
   ws.send(JSON.stringify(initData));
@@ -883,6 +977,8 @@ wss.on('connection', (ws, req) => {
         if (msg.data.settings) { const s = getBranchFile(brId, 'settings') || {}; Object.assign(s, msg.data.settings); saveBranchFile(brId, 'settings', s); }
         if (msg.data.staffList) { saveBranchFile(brId, 'staff', msg.data.staffList); }
         if (msg.data.transactions) { saveBranchFile(brId, 'transactions', msg.data.transactions); }
+        if (msg.data.customers) { saveBranchFile(brId, 'customers', msg.data.customers); }
+        if (msg.data.shifts) { saveBranchFile(brId, 'shifts', msg.data.shifts); }
         broadcast({ type: 'sync', data: msg.data, branchId: brId }, ws);
       }
     } catch (e) {}

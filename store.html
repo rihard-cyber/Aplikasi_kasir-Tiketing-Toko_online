@@ -2254,6 +2254,18 @@
       document.getElementById('pay-details-cc').style.display = mode === 'cc' ? 'block' : 'none';
       document.getElementById('pay-details-qris').style.display = mode === 'qris' ? 'block' : 'none';
       document.getElementById('pay-details-transfer').style.display = mode === 'transfer' ? 'block' : 'none';
+
+      if (mode === 'qris') {
+        const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + (selectedService.cost || 0);
+        const totalEl = document.getElementById('qrisTotalDisplay');
+        if (totalEl) totalEl.textContent = formatRupiah(total);
+        
+        const qrisEl = document.querySelector('#qrisPlaceholder');
+        if (qrisEl) {
+          const qrData = `NEXAPOS-STORE-TOTAL-${total}-${Date.now()}`;
+          qrisEl.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}" style="width:150px; height:150px; border-radius:8px;" alt="QRIS Toko Online">`;
+        }
+      }
     }
 
     function flipCC(back) {
@@ -2602,12 +2614,9 @@
           }
         });
       } else {
-        // Fallback QRIS simulation
-        const qrisEl = document.querySelector('#qrisPlaceholder');
-        if (qrisEl) {
-          qrisEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#000;font-size:11px;font-weight:700;text-align:center;">✓ QRIS GENERATED<br><span style="font-size:9px;font-weight:400;">Scan to pay</span></div>';
-        }
-        showToast('QRIS siap - Lanjutkan checkout');
+        // Simulate QRIS payment success directly
+        showToast('✅ Pembayaran QRIS disimulasikan berhasil!');
+        submitOrderWithPayment('qris', { success: true, txnId: 'NXP-QRIS-' + Date.now() });
       }
     }
 
