@@ -203,15 +203,23 @@
       width: 700px; max-width: 90vw; position: relative;
     }
     .laptop-screen {
-      width: 100%; aspect-ratio: 16/10;
+      width: 100%; aspect-ratio: 2/1;
       border: 2px solid rgba(0,240,255,0.15);
       border-radius: 14px 14px 0 0;
       overflow: hidden; position: relative;
       background: #08080e;
       box-shadow: 0 0 40px rgba(0,240,255,0.06), 0 20px 60px rgba(0,0,0,0.5);
+      perspective: 1200px;
     }
     .laptop-screen img {
       width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.8s ease, opacity 0.8s ease;
+      transform-style: preserve-3d;
+    }
+    .laptop-screen.switching img {
+      transform: rotateY(-90deg) scale(0.9) translateZ(100px);
+      opacity: 0;
+      filter: blur(12px) brightness(2) drop-shadow(0 0 25px var(--neon-cyan));
     }
     .laptop-screen .glow-overlay {
       position: absolute; inset: 0;
@@ -251,6 +259,7 @@
       overflow: hidden; position: relative;
       box-shadow: 0 0 30px rgba(0,240,255,0.06), 0 20px 50px rgba(0,0,0,0.5);
       padding: 0;
+      perspective: 1000px;
     }
     .phone-body .notch {
       position: absolute; top: 0; left: 50%; transform: translateX(-50%);
@@ -266,6 +275,13 @@
     }
     .phone-body img {
       width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.8s ease, opacity 0.8s ease;
+      transform-style: preserve-3d;
+    }
+    .phone-body.switching img {
+      transform: rotateY(90deg) scale(0.9) translateZ(50px);
+      opacity: 0;
+      filter: blur(12px) brightness(2) drop-shadow(0 0 25px var(--neon-cyan));
     }
     .phone-body .glow-overlay {
       position: absolute; inset: 0;
@@ -861,27 +877,73 @@
     if (heroInstallBtn) heroInstallBtn.addEventListener('click', installApp);
     if (closeBtn && pwaBanner) closeBtn.addEventListener('click', () => { pwaBanner.style.display = 'none'; });
 
-    // Screenshot navigation
-    function initScreenNav(navId, imgId) {
+    // Screenshot 3D navigation & auto-play carousel
+    function initCarousel3D(navId, imgId, intervalTime = 4000) {
       const nav = document.getElementById(navId);
       const img = document.getElementById(imgId);
       if (!nav || !img) return;
-      const dots = nav.querySelectorAll('.screen-dot');
-      dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-          dots.forEach(d => d.classList.remove('active'));
-          dot.classList.add('active');
-          img.style.opacity = '0';
-          img.style.transition = 'opacity 0.3s';
+
+      const screen = img.closest('.laptop-screen') || img.closest('.phone-body');
+      const dots = Array.from(nav.querySelectorAll('.screen-dot'));
+      let currentIndex = 0;
+      let timer = null;
+
+      function showImage(index) {
+        if (index === currentIndex) return;
+        const nextDot = dots[index];
+        if (!nextDot) return;
+
+        dots.forEach(d => d.classList.remove('active'));
+        nextDot.classList.add('active');
+
+        if (screen) {
+          screen.classList.add('switching');
           setTimeout(() => {
-            img.src = dot.dataset.img;
-            img.style.opacity = '1';
-          }, 150);
+            img.src = nextDot.dataset.img;
+            setTimeout(() => {
+              screen.classList.remove('switching');
+            }, 50);
+          }, 400);
+        } else {
+          img.src = nextDot.dataset.img;
+        }
+        currentIndex = index;
+      }
+
+      function next() {
+        const nextIndex = (currentIndex + 1) % dots.length;
+        showImage(nextIndex);
+      }
+
+      function startTimer() {
+        if (timer) clearInterval(timer);
+        timer = setInterval(next, intervalTime);
+      }
+
+      function stopTimer() {
+        if (timer) clearInterval(timer);
+      }
+
+      // Click event for dots
+      dots.forEach((dot, idx) => {
+        dot.addEventListener('click', () => {
+          stopTimer();
+          showImage(idx);
+          startTimer();
         });
       });
+
+      // Pause on hover
+      if (screen) {
+        screen.addEventListener('mouseenter', stopTimer);
+        screen.addEventListener('mouseleave', startTimer);
+      }
+
+      startTimer();
     }
-    initScreenNav('laptopNav', 'heroLaptopImg');
-    initScreenNav('phoneNav', 'heroPhoneImg');
+
+    initCarousel3D('laptopNav', 'heroLaptopImg', 4000);
+    initCarousel3D('phoneNav', 'heroPhoneImg', 5000);
   });
 
   // Feature card mouse tracking
