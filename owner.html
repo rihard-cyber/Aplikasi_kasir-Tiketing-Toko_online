@@ -760,6 +760,15 @@
       <div class="nav-item" data-view="kasbon" onclick="switchView('kasbon')">
         <span>💳</span> Buku Kasbon
       </div>
+
+      <!-- ===== QUICK SWITCH TO POS ===== -->
+      <div style="margin: 20px 14px 10px 14px; padding-top: 15px; border-top: 1px solid rgba(245,158,11,0.08);">
+        <label style="font-size: 9px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; display: block; margin-bottom: 6px;">⚡ Switch ke POS Kasir</label>
+        <select id="quickBranchPOSSelect" class="input" style="background: rgba(0,0,0,0.4); border: 1px solid var(--border); color: #fff; padding: 8px 12px; font-size: 12px; border-radius: 8px; width: 100%; cursor: pointer;" onchange="quickSwitchToPOS(this.value)">
+          <option value="">Pilih Cabang...</option>
+        </select>
+      </div>
+
       <div class="nav-item" style="margin-top:auto; opacity:0.5; cursor:default; font-size:10px; color:var(--text-muted); padding:10px 14px;">
         v5.0 Enterprise
       </div>
@@ -1569,6 +1578,7 @@ async function loadDashboardData() {
     document.getElementById('statTransactions').textContent = (dash.totalTransactions || 0).toLocaleString('id-ID');
     BRANCHES = dash.branches;
     renderBranches(dash.branches);
+    populateQuickBranchPOSSelect(dash.branches);
     renderChart(history || []);
     if (ACTIVE_VIEW === 'analytics') renderAnalytics(dash.branches);
     if (ACTIVE_VIEW === 'branchDetail' && DETAIL_BRANCH_ID) showBranchDetail(DETAIL_BRANCH_ID);
@@ -1727,6 +1737,22 @@ function monitorBranchDirect(branchId) {
       loadMonitorIframe(branchId);
     }
   }, 50);
+}
+
+function populateQuickBranchPOSSelect(branches) {
+  const select = document.getElementById('quickBranchPOSSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">Pilih Cabang...</option>' + 
+    branches.map(b => `<option value="${b.id}">🛒 ${b.name}</option>`).join('');
+}
+
+function quickSwitchToPOS(branchId) {
+  if (!branchId) return;
+  const select = document.getElementById('quickBranchPOSSelect');
+  select.value = ''; // reset select
+  const posUrl = 'index.html?branch=' + branchId + '&token=' + TOKEN;
+  window.open(posUrl, '_blank');
+  toast('Membuka POS Kasir Cabang...', 'info');
 }
 
 function populateMonitorBranches() {
