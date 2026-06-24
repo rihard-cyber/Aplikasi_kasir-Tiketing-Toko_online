@@ -1,4 +1,4 @@
-const CACHE_NAME = 'casirpro-cache-v2';
+const CACHE_NAME = 'casirpro-cache-v3';
 const STATIC_ASSETS = [
   './',
   './pos.html',
