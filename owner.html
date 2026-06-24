@@ -1003,6 +1003,69 @@
   </div>
 </div>
 
+      <!-- ── VIEW: Laporan Keuangan ── -->
+      <div class="dash-view" id="viewReports">
+        <div class="welcome-section">
+          <h2>📊 Laporan Keuangan</h2>
+          <p>Neraca, Laba Rugi, Arus Kas, dan ekspor CSV/PDF</p>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm active" id="reportPeriodAll" onclick="renderOwnerReports('all')">Semua</button>
+          <button class="btn btn-ghost btn-sm" id="reportPeriodMonth" onclick="renderOwnerReports('month')">Bulan Ini</button>
+          <button class="btn btn-ghost btn-sm" id="reportPeriodWeek" onclick="renderOwnerReports('week')">7 Hari</button>
+          <button class="btn btn-ghost btn-sm" id="reportPeriodToday" onclick="renderOwnerReports('today')">Hari Ini</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto;" onclick="exportOwnerReports()">📥 Export CSV</button>
+          <button class="btn btn-gold btn-sm" onclick="printOwnerReports()">🖨️ Cetak PDF</button>
+        </div>
+        <div id="ownerReportsContent" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="analytics-card" style="grid-column:1/-1;">
+            <h3>📈 Laba Rugi (Profit & Loss)</h3>
+            <div id="reportPnL"><div class="loading-state"><div class="loading-spinner"></div></div></div>
+          </div>
+          <div class="analytics-card">
+            <h3>📋 Neraca (Balance Sheet)</h3>
+            <div id="reportNeraca"><div class="loading-state"><div class="loading-spinner"></div></div></div>
+          </div>
+          <div class="analytics-card">
+            <h3>💸 Arus Kas (Cash Flow)</h3>
+            <div id="reportCashFlow"><div class="loading-state"><div class="loading-spinner"></div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VIEW: Karyawan ── -->
+      <div class="dash-view" id="viewStaff">
+        <div class="welcome-section">
+          <h2>👥 Manajemen Karyawan</h2>
+          <p>Absensi, komisi penjualan, dan laporan kinerja</p>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;">
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--emerald);"></div>
+            <span class="stat-label">Hadir Hari Ini</span>
+            <div class="stat-value gold-text" id="ownerStaffPresent">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--blue);"></div>
+            <span class="stat-label">Total Karyawan</span>
+            <div class="stat-value gold-text" id="ownerStaffTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-glow" style="background:var(--gold);"></div>
+            <span class="stat-label">Total Komisi Bulan Ini</span>
+            <div class="stat-value gold-text" id="ownerStaffCommission">Rp 0</div>
+          </div>
+        </div>
+        <div id="ownerStaffAttendance" style="margin-bottom:16px;">
+          <div class="loading-state"><div class="loading-spinner"></div></div>
+        </div>
+        <div id="ownerStaffCommission">
+          <div class="loading-state"><div class="loading-spinner"></div></div>
+        </div>
+      </div>
+
+    </div> <!-- end dash-content -->
+
 <script>
 // Load saved server URL or use default
 if (!localStorage.getItem('owner_server_url')) {
@@ -1119,6 +1182,8 @@ function switchView(view) {
   if (view === 'analytics') renderAnalytics(BRANCHES);
   if (view === 'branches') renderBranches(BRANCHES);
   if (view === 'monitoring') populateMonitorBranches();
+  if (view === 'reports') renderOwnerReports('all');
+  if (view === 'staff') renderOwnerStaff();
 }
 
 async function showBranchDetail(branchId) {
@@ -1196,6 +1261,150 @@ async function showBranchDetail(branchId) {
 
 function editBranchFromDetail() {
   if (DETAIL_BRANCH_ID) editBranch(DETAIL_BRANCH_ID);
+}
+
+// ─── Reports View ──────────────────────────────────────────────────
+let _ownerReportPeriod = 'all';
+function renderOwnerReports(period) {
+  if (period) _ownerReportPeriod = period;
+  document.querySelectorAll('[id^="reportPeriod"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('reportPeriod' + period.charAt(0).toUpperCase() + period.slice(1));
+  if (btn) btn.classList.add('active');
+
+  const transactions = BRANCHES.reduce((acc, b) => {
+    const tx = (b.transactions || b.orders || []);
+    return acc.concat(tx);
+  }, []);
+  api('/api/transactions').then(data => {
+    const allTx = Array.isArray(data) ? data : (data.transactions || transactions);
+    if (typeof NexaReports !== 'undefined') {
+      const pnl = NexaReports.profitLoss(allTx, [], period || _ownerReportPeriod);
+      document.getElementById('reportPnL').innerHTML = `
+        <div style="padding:12px;">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:13px;">
+            <div>Periode: <strong>${pnl.period.label}</strong></div>
+            <div>Transaksi: <strong>${pnl.transactionCount}</strong></div>
+            <div>💰 Revenue: <strong style="color:var(--emerald);">Rp ${(pnl.revenue||0).toLocaleString('id-ID')}</strong></div>
+            <div>📦 HPP: <strong style="color:var(--rose);">Rp ${(pnl.costOfGoods||0).toLocaleString('id-ID')}</strong></div>
+            <div>📊 Laba Kotor: <strong>Rp ${(pnl.grossProfit||0).toLocaleString('id-ID')} (${pnl.grossMargin})</strong></div>
+            <div>💸 Biaya: <strong>Rp ${(pnl.expenses||0).toLocaleString('id-ID')}</strong></div>
+            <div style="grid-column:1/-1;font-size:16px;padding-top:8px;border-top:1px solid var(--border);">
+              🏆 Laba Bersih: <strong style="color:var(--gold);font-size:20px;">Rp ${(pnl.netProfit||0).toLocaleString('id-ID')} (${pnl.netMargin})</strong>
+            </div>
+          </div>
+        </div>`;
+
+      const neraca = NexaReports.balanceSheet(allTx);
+      document.getElementById('reportNeraca').innerHTML = `
+        <div style="padding:12px;">
+          <div style="font-size:12px;margin-bottom:8px;"><strong>AKTIVA</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;"><span>Kas</span><span>Rp ${(neraca.assets.cash||0).toLocaleString('id-ID')}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;"><span>Piutang</span><span>Rp ${(neraca.assets.receivable||0).toLocaleString('id-ID')}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;"><span>Persediaan</span><span>Rp ${(neraca.assets.inventory||0).toLocaleString('id-ID')}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-top:1px solid var(--border);font-weight:700;">
+            <span>Total Aktiva</span><span style="color:var(--emerald);">Rp ${(neraca.assets.total||0).toLocaleString('id-ID')}</span>
+          </div>
+          <div style="font-size:12px;margin-top:12px;margin-bottom:8px;"><strong>PASIVA</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;"><span>Kewajiban</span><span>Rp ${(neraca.liabilities.total||0).toLocaleString('id-ID')}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:4px 0;"><span>Ekuitas</span><span>Rp ${(neraca.equity.total||0).toLocaleString('id-ID')}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-top:1px solid var(--border);font-weight:700;">
+            <span>Total Pasiva</span><span style="color:var(--gold);">Rp ${(neraca.totalLiabilitiesEquity||0).toLocaleString('id-ID')}</span>
+          </div>
+        </div>`;
+
+      const cf = NexaReports.cashFlow(allTx);
+      document.getElementById('reportCashFlow').innerHTML = `
+        <div style="padding:12px;max-height:300px;overflow-y:auto;">
+          ${(cf||[]).slice(-12).map(r => `
+            <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+              <span>${r.period}</span>
+              <span style="color:var(--emerald);">+Rp ${(r.inflow||0).toLocaleString('id-ID')}</span>
+              <span style="color:${r.net >= 0 ? 'var(--emerald)' : 'var(--rose)'};">${r.net >= 0 ? '+' : ''}Rp ${(r.net||0).toLocaleString('id-ID')}</span>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+  }).catch(() => {
+    document.getElementById('reportPnL').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data. Pastikan server terhubung.</div>';
+  });
+}
+
+function exportOwnerReports() {
+  if (typeof NexaReports !== 'undefined') {
+    const data = BRANCHES.reduce((acc, b) => {
+      const tx = (b.transactions || b.orders || []);
+      return acc.concat(tx.map(t => ({ branch: b.name, ...t })));
+    }, []);
+    NexaReports.exportCSV(data, 'laporan-keuangan.csv');
+    toast('CSV diunduh', 'success');
+  } else {
+    toast('Modul laporan tidak tersedia', 'error');
+  }
+}
+
+function printOwnerReports() {
+  const content = document.getElementById('ownerReportsContent');
+  if (content && typeof NexaReports !== 'undefined') {
+    NexaReports.exportPDF('Laporan Keuangan NexaPOS', content.innerHTML, 'laporan-keuangan.pdf');
+  }
+}
+
+// ─── Staff View ────────────────────────────────────────────────────
+function renderOwnerStaff() {
+  const attendanceEl = document.getElementById('ownerStaffAttendance');
+  const commissionEl = document.getElementById('ownerStaffCommission');
+
+  api('/api/branch/staff?branch=all').then(staffData => {
+    const staffList = Array.isArray(staffData) ? staffData : (staffData.staff || []);
+    api('/api/transactions').then(txData => {
+      const transactions = Array.isArray(txData) ? txData : (txData.transactions || []);
+
+      if (typeof NexaStaff !== 'undefined') {
+        NexaStaff.init();
+        const tempContainerId = '_ownerStaffTempAttendance';
+        let tempEl = document.getElementById(tempContainerId);
+        if (!tempEl) {
+          tempEl = document.createElement('div');
+          tempEl.id = tempContainerId;
+          tempEl.style.display = 'none';
+          document.body.appendChild(tempEl);
+        }
+        NexaStaff.renderAttendance(tempContainerId, staffList);
+        attendanceEl.innerHTML = tempEl.innerHTML;
+
+        const tempCommId = '_ownerStaffTempComm';
+        let tempCommEl = document.getElementById(tempCommId);
+        if (!tempCommEl) {
+          tempCommEl = document.createElement('div');
+          tempCommEl.id = tempCommId;
+          tempCommEl.style.display = 'none';
+          document.body.appendChild(tempCommEl);
+        }
+        NexaStaff.renderCommission(tempCommId, transactions, staffList);
+        commissionEl.innerHTML = tempCommEl.innerHTML;
+
+        const today = new Date().toISOString().split('T')[0];
+        const presentCount = NexaStaff.attendance.filter(a => a.date === today).length;
+        document.getElementById('ownerStaffPresent').textContent = presentCount;
+        document.getElementById('ownerStaffTotal').textContent = staffList.length;
+
+        let totalComm = 0;
+        staffList.forEach(s => {
+          const calc = NexaStaff.calculateCommission(transactions, s.id);
+          totalComm += calc.commission;
+        });
+        document.getElementById('ownerStaffCommission').textContent = 'Rp ' + totalComm.toLocaleString('id-ID');
+      } else {
+        attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Muat ulang halaman untuk mengaktifkan modul Karyawan</div>';
+      }
+    }).catch(() => {
+      commissionEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data komisi</div>';
+    });
+  }).catch(() => {
+    attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data karyawan. Pastikan server terhubung.</div>';
+  });
+
+  document.getElementById('ownerStaffTotal').textContent = BRANCHES.reduce((sum, b) => sum + (b.staffCount || 0), 0) || '—';
 }
 
 function renderAnalytics(branches) {
@@ -1597,8 +1806,16 @@ function initParticles() {
 }
 initParticles();
 
-if (TOKEN) loadDashboard();
+  if (TOKEN) loadDashboard();
 </script>
+
+<script src="js/offline.js"></script>
+<script src="js/payment.js"></script>
+<script src="js/printer.js"></script>
+<script src="js/whatsapp.js"></script>
+<script src="js/promo.js"></script>
+<script src="js/staff.js"></script>
+<script src="js/reports.js"></script>
 
 <!-- PWA INSTALL PROMPT BANNER -->
 <div id="pwa-install-banner" class="glass-panel" style="display: none; position: fixed; bottom: 24px; left: 24px; z-index: 999999; max-width: 400px; padding: 20px; box-shadow: var(--shadow-xl); border: 1px solid rgba(245,158,11,0.22); align-items: center; gap: 16px; animation: slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;">

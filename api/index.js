@@ -391,5 +391,83 @@ module.exports = (req, res) => {
     })();
   }
 
+  // ─── New: Transactions API for Reports ───────────────────────────
+  if (method === 'GET' && pathname === '/api/transactions') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
+    const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+    const allTx = [];
+    branches.forEach(b => {
+      const txns = getBranchFile(b.id, 'transactions') || [];
+      txns.forEach(t => allTx.push({ branchId: b.id, branchName: b.name, ...t }));
+    });
+    return respond(200, allTx);
+  }
+
+  // ─── New: Payment QRIS endpoint ──────────────────────────────────
+  if (method === 'POST' && pathname === '/api/payment/qris') {
+    return (async () => {
+      try {
+        const { amount, orderId, customer } = JSON.parse(await readBody());
+        // Simulate QRIS payment creation
+        const payment = {
+          id: 'QRIS-' + Date.now().toString(36).toUpperCase(),
+          amount: amount || 0,
+          orderId: orderId || '',
+          customer: customer || '',
+          status: 'pending',
+          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=NEXAPOS-QRIS-' + Date.now(),
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 15 * 60000).toISOString()
+        };
+        respond(200, { success: true, payment });
+      } catch (e) { respond(400, { error: e.message }); }
+    })();
+  }
+
+  // ─── New: Promo API ──────────────────────────────────────────────
+  if (pathname === '/api/promo') {
+    if (method === 'GET') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const id = firstBranch();
+      const promos = id ? (getBranchFile(id, 'promos') || []) : [];
+      return respond(200, promos);
+    }
+    if (method === 'POST') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      return (async () => {
+        try {
+          const data = JSON.parse(await readBody());
+          const id = firstBranch();
+          if (id) saveBranchFile(id, 'promos', data);
+          respond(200, { success: true });
+        } catch (e) { respond(400, { error: e.message }); }
+      })();
+    }
+    return;
+  }
+
+  // ─── New: Staff Attendance API ───────────────────────────────────
+  if (pathname === '/api/staff/attendance') {
+    if (method === 'GET') {
+      const id = firstBranch();
+      const attendance = id ? (getBranchFile(id, 'attendance') || []) : [];
+      return respond(200, attendance);
+    }
+    if (method === 'POST') {
+      return (async () => {
+        try {
+          const data = JSON.parse(await readBody());
+          const id = firstBranch();
+          if (id) saveBranchFile(id, 'attendance', data);
+          respond(200, { success: true });
+        } catch (e) { respond(400, { error: e.message }); }
+      })();
+    }
+    return;
+  }
+
   respond(404, { error: 'Not found' });
 };

@@ -624,6 +624,8 @@ const server = http.createServer((req, res) => {
   // ─── Legacy API (backward compatible, single mode) ──────────────
   // These are served when no branch context is given (legacy POS)
 
+  function firstBranch() { const b = getBranches(); return b.length ? b[0].id : null; }
+
   // Legacy legacy data loaded from server_data.json backup
   const legacyDB = (function loadLegacy() {
     const lf = path.join(__dirname, 'server_data.json.backup');
@@ -717,6 +719,89 @@ const server = http.createServer((req, res) => {
         respond(200, { success: true });
       } catch (e) { respond(400, { error: 'Invalid JSON' }); }
     })();
+    return;
+  }
+
+  // ─── New: Transactions API for Reports ───────────────────────────
+  if (method === 'GET' && pathname === '/api/transactions') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
+    const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+    const allTx = [];
+    branches.forEach(b => {
+      const txns = getBranchFile(b.id, 'transactions') || [];
+      txns.forEach(t => allTx.push({ branchId: b.id, branchName: b.name, ...t }));
+    });
+    respond(200, allTx);
+    return;
+  }
+
+  // ─── New: Payment QRIS endpoint ──────────────────────────────────
+  if (method === 'POST' && pathname === '/api/payment/qris') {
+    (async () => {
+      try {
+        const { amount, orderId, customer } = JSON.parse(await readBody());
+        const payment = {
+          id: 'QRIS-' + Date.now().toString(36).toUpperCase(),
+          amount: amount || 0, orderId: orderId || '', customer: customer || '',
+          status: 'pending',
+          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=NEXAPOS-QRIS-' + Date.now(),
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 15 * 60000).toISOString()
+        };
+        respond(200, { success: true, payment });
+      } catch (e) { respond(400, { error: e.message }); }
+    })();
+    return;
+  }
+
+  // ─── New: Promo API ──────────────────────────────────────────────
+  if (pathname === '/api/promo') {
+    if (method === 'GET') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches();
+      const id = branches.length ? branches[0].id : null;
+      const promos = id ? (getBranchFile(id, 'promos') || []) : [];
+      respond(200, promos); return;
+    }
+    if (method === 'POST') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      (async () => {
+        try {
+          const data = JSON.parse(await readBody());
+          const branches = getBranches();
+          const id = branches.length ? branches[0].id : null;
+          if (id) saveBranchFile(id, 'promos', data);
+          respond(200, { success: true });
+        } catch (e) { respond(400, { error: e.message }); }
+      })();
+      return;
+    }
+    return;
+  }
+
+  // ─── New: Staff Attendance API ───────────────────────────────────
+  if (pathname === '/api/staff/attendance') {
+    if (method === 'GET') {
+      const branches = getBranches();
+      const id = branches.length ? branches[0].id : null;
+      const attendance = id ? (getBranchFile(id, 'attendance') || []) : [];
+      respond(200, attendance); return;
+    }
+    if (method === 'POST') {
+      (async () => {
+        try {
+          const data = JSON.parse(await readBody());
+          const branches = getBranches();
+          const id = branches.length ? branches[0].id : null;
+          if (id) saveBranchFile(id, 'attendance', data);
+          respond(200, { success: true });
+        } catch (e) { respond(400, { error: e.message }); }
+      })();
+      return;
+    }
     return;
   }
 
