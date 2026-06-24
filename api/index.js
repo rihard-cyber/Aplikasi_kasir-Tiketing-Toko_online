@@ -52,7 +52,7 @@ function simShipping(courier, weight) { const baseCost = courier === 'jne' ? 150
 module.exports = (req, res) => {
   seed();
 
-  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+  const { pathname } = new URL(req.url, 'http://localhost');
   const method = req.method;
 
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -63,7 +63,13 @@ module.exports = (req, res) => {
 
   const respond = (code, data) => { res.status(code).json(data); };
   const getAuth = () => { const auth = req.headers['authorization']; if (!auth || !auth.startsWith('Bearer ')) return null; return verifyToken(auth.slice(7)); };
-  const readBody = () => new Promise(resolve => { let b = ''; req.on('data', c => b += c); req.on('end', () => resolve(b)); });
+  const readBody = () => new Promise(resolve => {
+    if (req.body !== undefined) {
+      if (typeof req.body === 'string') return resolve(req.body);
+      return resolve(JSON.stringify(req.body));
+    }
+    let b = ''; req.on('data', c => b += c); req.on('end', () => resolve(b));
+  });
 
   // Auth
   if (method === 'POST' && pathname === '/api/auth/register') {
