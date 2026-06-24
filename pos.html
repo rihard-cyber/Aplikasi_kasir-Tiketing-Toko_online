@@ -5,14 +5,104 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CasirPRO - Premium Enterprise POS System</title>
   <meta name="description" content="CasirPRO - Premium Enterprise Point of Sale & Business Management Platform">
-  <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#07080D">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    :root {
+      --font-cyber: 'Orbitron', sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
+      --font-mono-cyber: 'Share Tech Mono', monospace;
+      --neon-cyan: #00f0ff;
+      --neon-magenta: #ff00aa;
+      --neon-gold: #ffd700;
+      --cyber-glow: 0 0 20px rgba(0,240,255,0.15);
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(0,240,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    .lock-screen-overlay {
+      background: radial-gradient(ellipse at center, rgba(10,12,22,0.4), rgba(7,8,13,0.96)) !important;
+    }
+    .lock-screen-overlay .lock-container {
+      border: 1px solid rgba(0,240,255,0.15) !important;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(0,240,255,0.06), inset 0 1px 0 rgba(0,240,255,0.05) !important;
+      background: linear-gradient(145deg, rgba(10,12,22,0.85), rgba(15,18,35,0.7)) !important;
+    }
+    .lock-screen-overlay h2 {
+      font-family: var(--font-cyber) !important;
+      background: linear-gradient(135deg, #fff 30%, var(--neon-cyan) 70%, var(--neon-magenta) 100%) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      letter-spacing: 1px !important;
+    }
+    .numpad-btn {
+      background: rgba(0,240,255,0.03) !important;
+      border: 1px solid rgba(0,240,255,0.1) !important;
+      color: var(--text-primary) !important;
+      font-family: var(--font-cyber) !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      transition: all 0.2s !important;
+      border-radius: 12px !important;
+    }
+    .numpad-btn:hover {
+      background: rgba(0,240,255,0.08) !important;
+      border-color: rgba(0,240,255,0.25) !important;
+      box-shadow: 0 0 15px rgba(0,240,255,0.08) !important;
+    }
+    .numpad-btn:active { transform: scale(0.95) !important; }
+    .pin-dot.filled { background: var(--neon-cyan) !important; border-color: var(--neon-cyan) !important; box-shadow: 0 0 10px rgba(0,240,255,0.3) !important; }
+    .sidebar-nav-link.active, .sidebar-nav-link:hover { border-color: rgba(0,240,255,0.2) !important; background: rgba(0,240,255,0.04) !important; }
+    .sidebar-nav-link.active .nav-icon { color: var(--neon-cyan) !important; }
+    .glass-panel { border-color: rgba(0,240,255,0.06) !important; }
+    .glass-panel:hover { border-color: rgba(0,240,255,0.12) !important; }
+    .btn-primary, .btn-success, .kiosk-btn-primary {
+      background: linear-gradient(135deg, var(--neon-cyan), #0099cc) !important;
+      color: #000 !important; font-weight: 700 !important;
+      box-shadow: 0 4px 20px rgba(0,240,255,0.15) !important;
+    }
+    .btn-primary:hover, .btn-success:hover, .kiosk-btn-primary:hover {
+      box-shadow: 0 8px 30px rgba(0,240,255,0.2) !important;
+      transform: translateY(-1px) !important;
+    }
+    .stat-value { font-family: var(--font-cyber) !important; }
+    .stat-value.gold-text { color: var(--neon-cyan) !important; }
+    .logo-title { font-family: var(--font-cyber) !important; letter-spacing: 1px !important; }
+    .pos-toolbar { border-bottom-color: rgba(0,240,255,0.06) !important; }
+    .pos-search:focus { border-color: var(--neon-cyan) !important; box-shadow: 0 0 15px rgba(0,240,255,0.06) !important; }
+    .data-table th { color: var(--neon-cyan) !important; font-family: var(--font-cyber) !important; font-size: 9px !important; letter-spacing: 1px !important; }
+    .panel-header h3 { font-family: var(--font-cyber) !important; letter-spacing: 0.5px !important; }
+    .kiosk-title { font-family: var(--font-cyber) !important; }
+    .new-order-badge { background: var(--neon-cyan) !important; color: #000 !important; }
+    .pos-cart-total { color: var(--neon-cyan) !important; }
+    .btn-ghost, .glass-btn { border-color: rgba(0,240,255,0.1) !important; }
+    .btn-ghost:hover, .glass-btn:hover { border-color: rgba(0,240,255,0.2) !important; background: rgba(0,240,255,0.04) !important; }
+    select.glass-input:focus { border-color: var(--neon-cyan) !important; }
+    .modal-content { border-color: rgba(0,240,255,0.1) !important; }
+    .modal-header { border-bottom-color: rgba(0,240,255,0.06) !important; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.1) !important; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,240,255,0.2) !important; }
+    .badge, .tag, .panel-badge { background: rgba(0,240,255,0.08) !important; color: var(--neon-cyan) !important; }
+    .data-table tbody tr:hover { background: rgba(0,240,255,0.02) !important; }
+    .pos-grid .product-card { border-color: rgba(0,240,255,0.04) !important; }
+    .pos-grid .product-card:hover { border-color: rgba(0,240,255,0.15) !important; box-shadow: 0 0 20px rgba(0,240,255,0.04) !important; }
+    .product-card .product-price { color: var(--neon-cyan) !important; }
+    .kiosk-grid .kiosk-product { border-color: rgba(0,240,255,0.04) !important; }
+    .kiosk-grid .kiosk-product:hover { border-color: rgba(0,240,255,0.15) !important; }
+    .pos-cart-item .item-total { color: var(--neon-cyan) !important; }
+    .pos-cart-item:hover { background: rgba(0,240,255,0.02) !important; }
+    .receipt-modal .receipt-header { border-bottom-color: rgba(0,240,255,0.06) !important; }
+    .toast { border: 1px solid rgba(0,240,255,0.1) !important; }
+  </style>
+  <link rel="stylesheet" href="style.css">
   <script>
   // Multi-tenant mode: read branch & token from URL
   const _urlParams = new URLSearchParams(location.search);
@@ -1361,15 +1451,19 @@
   </div>
   <!-- ===== TERMINAL LOCK SCREEN (CASHIER AUTHORIZATION) ===== -->
   <div class="lock-screen-overlay" id="lockScreen" style="position:fixed; inset:0; z-index:999999; background:rgba(7,8,13,0.92); backdrop-filter:blur(40px); display:none; align-items:center; justify-content:center; flex-direction:column; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);">
-    <div class="glass-panel lock-container" style="width:380px; padding:32px; text-align:center; border:1px solid rgba(245,158,11,0.2); box-shadow:0 25px 50px rgba(0,0,0,0.8), 0 0 30px rgba(245,158,11,0.05); border-radius:24px; position:relative;">
-      <div style="font-size:3rem; margin-bottom:16px; animation: pulse 2s infinite;">🔐</div>
-      <h2 data-i18n="locked_title" style="font-family:'Space Grotesk',sans-serif; font-weight:800; background:linear-gradient(135deg, #fff 40%, #F59E0B 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; font-size:1.6rem;">CasirPRO Locked</h2>
-      <p data-i18n="locked_subtitle" style="color:var(--text-secondary); font-size:12px; margin-bottom:24px;">Pilih Kasir & Masukkan 4-Digit PIN Prioritas</p>
+    <div style="position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;">
+      <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(0,240,255,0.06),transparent);top:-20%;left:-15%;animation:orbFloat 20s ease-in-out infinite;"></div>
+      <div style="position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(255,0,170,0.05),transparent);bottom:-15%;right:-10%;animation:orbFloat 20s ease-in-out infinite;animation-delay:-7s;"></div>
+    </div>
+    <div class="glass-panel lock-container" style="width:380px; padding:40px 32px 32px; text-align:center; border:1px solid rgba(0,240,255,0.12); box-shadow:0 25px 50px rgba(0,0,0,0.8), 0 0 40px rgba(0,240,255,0.05); border-radius:24px; position:relative; background:linear-gradient(145deg,rgba(10,12,22,0.85),rgba(15,18,35,0.7));">
+      <div style="font-size:2.8rem; margin-bottom:12px; filter:drop-shadow(0 0 15px rgba(0,240,255,0.15));">⟐</div>
+      <h2 data-i18n="locked_title" style="font-family:'Orbitron',sans-serif; font-weight:900; background:linear-gradient(135deg, #fff 30%, #00f0ff 70%, #ff00aa 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:4px; font-size:1.4rem; letter-spacing:1px;">TERMINAL LOCKED</h2>
+      <p data-i18n="locked_subtitle" style="color:var(--text-secondary); font-size:11px; margin-bottom:20px; font-family:'Rajdhani',sans-serif; font-weight:500; letter-spacing:0.5px;">Pilih Kasir & Masukkan 4-Digit PIN Prioritas</p>
       
       <!-- Cashier Select -->
       <div class="form-group" style="margin-bottom:16px; text-align:left;">
-        <label data-i18n="active_cashier" style="font-size:10px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; display:block; margin-bottom:6px;">Kasir Aktif</label>
-        <select id="lockCashierSelect" class="glass-input" style="width:100%; padding:12px; font-weight:600; background:#111; color:#fff; border:1px solid var(--border-default); border-radius:8px;">
+        <label data-i18n="active_cashier" style="font-size:9px; font-weight:700; text-transform:uppercase; color:var(--text-muted); letter-spacing:1px; display:block; margin-bottom:6px; font-family:'Share Tech Mono',monospace;">⟨ Kasir Aktif ⟩</label>
+        <select id="lockCashierSelect" class="glass-input" style="width:100%; padding:12px; font-weight:600; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(0,240,255,0.08); border-radius:10px; font-family:'Rajdhani',sans-serif;">
           <option value="Edward Stark">Edward Stark (Owner / Administrator)</option>
           <option value="John Doe">John Doe (Kasir Staff / Operator)</option>
         </select>
@@ -1377,26 +1471,26 @@
 
       <!-- PIN Code Indicator Dots -->
       <div style="display:flex; justify-content:center; gap:16px; margin:20px 0 24px 0;">
-        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
-        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
-        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
-        <div class="pin-dot" style="width:14px; height:14px; border-radius:50%; border:2px solid var(--border-default); transition:all 0.15s;"></div>
+        <div class="pin-dot" style="width:16px; height:16px; border-radius:50%; border:2px solid rgba(0,240,255,0.15); transition:all 0.2s; background:transparent;"></div>
+        <div class="pin-dot" style="width:16px; height:16px; border-radius:50%; border:2px solid rgba(0,240,255,0.15); transition:all 0.2s; background:transparent;"></div>
+        <div class="pin-dot" style="width:16px; height:16px; border-radius:50%; border:2px solid rgba(0,240,255,0.15); transition:all 0.2s; background:transparent;"></div>
+        <div class="pin-dot" style="width:16px; height:16px; border-radius:50%; border:2px solid rgba(0,240,255,0.15); transition:all 0.2s; background:transparent;"></div>
       </div>
 
       <!-- Numpad -->
-      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px; max-width:280px; margin:0 auto;">
-        <button class="numpad-btn" onclick="pressPin('1')">1</button>
-        <button class="numpad-btn" onclick="pressPin('2')">2</button>
-        <button class="numpad-btn" onclick="pressPin('3')">3</button>
-        <button class="numpad-btn" onclick="pressPin('4')">4</button>
-        <button class="numpad-btn" onclick="pressPin('5')">5</button>
-        <button class="numpad-btn" onclick="pressPin('6')">6</button>
-        <button class="numpad-btn" onclick="pressPin('7')">7</button>
-        <button class="numpad-btn" onclick="pressPin('8')">8</button>
-        <button class="numpad-btn" onclick="pressPin('9')">9</button>
-        <button class="numpad-btn" onclick="clearPin()" style="font-size:11px; font-weight:700; color:var(--danger);">CLR</button>
-        <button class="numpad-btn" onclick="pressPin('0')">0</button>
-        <button class="numpad-btn" onclick="submitPin()" style="font-size:11px; font-weight:700; color:var(--success);">OK</button>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; max-width:270px; margin:0 auto;">
+        <button class="numpad-btn" onclick="pressPin('1')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">1</button>
+        <button class="numpad-btn" onclick="pressPin('2')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">2</button>
+        <button class="numpad-btn" onclick="pressPin('3')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">3</button>
+        <button class="numpad-btn" onclick="pressPin('4')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">4</button>
+        <button class="numpad-btn" onclick="pressPin('5')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">5</button>
+        <button class="numpad-btn" onclick="pressPin('6')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">6</button>
+        <button class="numpad-btn" onclick="pressPin('7')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">7</button>
+        <button class="numpad-btn" onclick="pressPin('8')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">8</button>
+        <button class="numpad-btn" onclick="pressPin('9')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">9</button>
+        <button class="numpad-btn" onclick="clearPin()" style="background:rgba(255,0,170,0.04); border:1px solid rgba(255,0,170,0.1); color:#ff00aa; font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">⌫</button>
+        <button class="numpad-btn" onclick="pressPin('0')" style="background:rgba(0,240,255,0.02); border:1px solid rgba(0,240,255,0.08); color:#e8eaf0; font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">0</button>
+        <button class="numpad-btn" onclick="submitPin()" style="background:linear-gradient(135deg,rgba(0,240,255,0.1),rgba(0,153,204,0.08)); border:1px solid rgba(0,240,255,0.15); color:#00f0ff; font-family:'Orbitron',sans-serif; font-size:11px; font-weight:700; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s;">⟐</button>
       </div>
     </div>
   </div>
