@@ -280,7 +280,7 @@ function initSidebar() {
       if (token) {
         url += `?token=${encodeURIComponent(token)}`;
       }
-      window.open(url, '_blank');
+      window.location.href = url;
     });
   }
 }

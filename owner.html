@@ -1301,7 +1301,7 @@ async function showBranchDetail(branchId) {
 
   document.getElementById('detailOpenPOS').onclick = () => {
     const posUrl = 'pos.html?branch=' + branchId + '&token=' + TOKEN;
-    window.open(posUrl, '_blank');
+    window.location.href = posUrl;
   };
 
   document.getElementById('detailMonitorLive').onclick = () => {
@@ -1752,8 +1752,7 @@ function quickSwitchToPOS(branchId) {
   const select = document.getElementById('quickBranchPOSSelect');
   select.value = ''; // reset select
   const posUrl = 'pos.html?branch=' + branchId + '&token=' + TOKEN;
-  window.open(posUrl, '_blank');
-  toast('Membuka POS Kasir Cabang...', 'info');
+  window.location.href = posUrl;
 }
 
 function populateMonitorBranches() {
@@ -1802,7 +1801,7 @@ function openMonitorInNewTab() {
   const select = document.getElementById('monitorBranchSelect');
   if (select && select.value) {
     const posUrl = 'pos.html?branch=' + select.value + '&token=' + TOKEN;
-    window.open(posUrl, '_blank');
+    window.location.href = posUrl;
   }
 }
 
