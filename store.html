@@ -1766,7 +1766,7 @@
     let courierServices = {};
     let lastOrder = null;
     let activePaymentMode = 'transfer';
-    const SERVER = localStorage.getItem('storeServerUrl') || '';
+    let SERVER = localStorage.getItem('storeServerUrl') || 'http://localhost:3000';
 
     function api(path) {
       const base = SERVER || window.location.origin;
@@ -2558,8 +2558,19 @@
       el._t = setTimeout(() => el.classList.remove('show'), 2500);
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!localStorage.getItem('storeServerUrl')) {
+        localStorage.setItem('storeServerUrl', 'http://localhost:3000');
+      }
+      const input = document.getElementById('storeUrlInput');
+      if (input) input.value = localStorage.getItem('storeServerUrl') || 'http://localhost:3000';
+      init();
+    });
   </script>
-<div style="position:fixed;bottom:8px;right:8px;font-size:10px;color:var(--text3);background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;"><input id="storeUrlInput" style="width:180px;background:transparent;border:none;color:#fff;font-size:10px;outline:none" placeholder="Server URL" value=""><button onclick="localStorage.setItem('storeServerUrl',document.getElementById('storeUrlInput').value);showToast('URL disimpan')" style="background:none;border:none;color:#fff;cursor:pointer;font-size:10px">💾</button></div>
+<div style="position:fixed;bottom:8px;right:8px;font-size:10px;color:var(--text3);background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;z-index:9999;">
+  <span style="opacity:0.6;">Server:</span>
+  <input id="storeUrlInput" style="width:160px;background:rgba(255,255,255,0.1);border:1px solid rgba(245,158,11,0.2);color:#fff;font-size:10px;outline:none;padding:2px 6px;border-radius:3px;" placeholder="http://localhost:3000" value="http://localhost:3000">
+  <button onclick="localStorage.setItem('storeServerUrl',document.getElementById('storeUrlInput').value);showToast('URL disimpan');SERVER=localStorage.getItem('storeServerUrl')" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);color:#fff;cursor:pointer;font-size:9px;padding:2px 8px;border-radius:3px;">Simpan</button>
+</div>
 </body>
 </html>

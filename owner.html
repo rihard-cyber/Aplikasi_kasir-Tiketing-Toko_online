@@ -998,6 +998,15 @@
 </div>
 
 <script>
+// Load saved server URL or use default
+if (!localStorage.getItem('owner_server_url')) {
+  localStorage.setItem('owner_server_url', 'http://localhost:3000');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('ownerServerUrlInput');
+  if (input) input.value = localStorage.getItem('owner_server_url') || 'http://localhost:3000';
+});
+
 // Retrieve token from query params, sessionStorage, or localStorage
 const urlParams = new URLSearchParams(window.location.search);
 let TOKEN = urlParams.get('token') || sessionStorage.getItem('nexapos_token') || localStorage.getItem('nexapos_owner_token') || '';
@@ -1034,7 +1043,8 @@ function showLogin() {
 async function api(path, options = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (TOKEN) headers['Authorization'] = 'Bearer ' + TOKEN;
-  const res = await fetch(path, { ...options, headers });
+  const base = localStorage.getItem('owner_server_url') || '';
+  const res = await fetch(base + path, { ...options, headers });
   return res.json();
 }
 
@@ -1647,5 +1657,10 @@ if (TOKEN) loadDashboard();
     }
   });
 </script>
+<div style="position:fixed;bottom:8px;right:8px;font-size:10px;color:var(--text3);background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;z-index:9999;display:flex;align-items:center;gap:4px;">
+  <span style="opacity:0.6;">Server:</span>
+  <input id="ownerServerUrlInput" style="width:160px;background:rgba(255,255,255,0.1);border:1px solid rgba(245,158,11,0.2);color:#fff;font-size:10px;outline:none;padding:2px 6px;border-radius:3px;" placeholder="http://localhost:3000" value="http://localhost:3000">
+  <button onclick="localStorage.setItem('owner_server_url',document.getElementById('ownerServerUrlInput').value);toast('Server URL disimpan','success')" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);color:#fff;cursor:pointer;font-size:9px;padding:2px 8px;border-radius:3px;">Simpan</button>
+</div>
 </body>
 </html>
