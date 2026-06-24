@@ -188,6 +188,13 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initBarcodeScanner(); } catch(e) { console.warn('Barcode:', e); }
   try { lockTerminal(); } catch(e) { console.warn('Lock:', e); }
   try { initQueueSystem(); } catch(e) { console.warn('QueueSystem:', e); }
+  try { initOfflineSupport(); } catch(e) { console.warn('Offline:', e); }
+  try { initNexaPOSPromo(); } catch(e) { console.warn('Promo:', e); }
+  try { initNexaPOSStaff(); } catch(e) { console.warn('Staff:', e); }
+  try { initNexaPOSReports(); } catch(e) { console.warn('Reports:', e); }
+  try { initNexaPOSPayment(); } catch(e) { console.warn('Payment:', e); }
+  try { initNexaPOSPrinter(); } catch(e) { console.warn('Printer:', e); }
+  try { initNexaPOSWhatsApp(); } catch(e) { console.warn('WA:', e); }
   setTimeout(sfxClick, 600);
 });
 
@@ -289,7 +296,7 @@ function initRouter() {
       const target=link.getAttribute('data-tab');
       
       // RBAC Check for Admin Tabs
-      if (['pengaturan', 'keuangan', 'laporan'].includes(target) && db.state.activeCashier) {
+      if (['pengaturan', 'keuangan', 'laporan', 'promo', 'karyawan'].includes(target) && db.state.activeCashier) {
         const currentUser = db.state.staffList.find(s => s.name === db.state.activeCashier);
         if (!currentUser || currentUser.role !== 'Admin') {
           toast('Akses Ditolak', 'Hanya Administrator yang dapat mengakses menu ini.', 'danger');
@@ -311,6 +318,8 @@ function initRouter() {
       if(target==='laporan') renderReport();
       if(target==='profil') renderProfilePage();
       if(target==='antrean') renderQueueView();
+      if(target==='promo') renderPromoSection();
+      if(target==='karyawan') renderStaffSection();
     });
   });
 }
@@ -4013,6 +4022,188 @@ function renderStaffList() {
       </tr>
     `;
   }).join('');
+}
+
+// ─── Integration: NexaPOS Modules ────────────────────────────────────
+function initOfflineSupport() {
+  if (typeof NexaDB !== 'undefined') {
+    NexaDB.open().catch(e => console.warn('NexaDB open:', e));
+  }
+  if (typeof initOfflineDetection === 'function') {
+    initOfflineDetection();
+  }
+}
+
+function initNexaPOSPromo() {
+  if (typeof NexaPromo !== 'undefined') {
+    NexaPromo.init();
+    updatePromoBadge();
+  }
+}
+
+function initNexaPOSStaff() {
+  if (typeof NexaStaff !== 'undefined') {
+    NexaStaff.init();
+  }
+}
+
+function initNexaPOSReports() {
+  // Reports module is utilized in render calls
+}
+
+function initNexaPOSPayment() {
+  // Payment module is utilized in checkout flow
+}
+
+function initNexaPOSPrinter() {
+  // Printer module is utilized in receipt printing
+}
+
+function initNexaPOSWhatsApp() {
+  // WhatsApp module is utilized in order/receipt flow
+}
+
+function updatePromoBadge() {
+  if (typeof NexaPromo === 'undefined') return;
+  const badge = document.getElementById('promoCountBadge');
+  if (badge) {
+    const active = NexaPromo.promos.filter(p => p.active !== false).length;
+    badge.textContent = active;
+  }
+}
+
+function renderPromoSection() {
+  if (typeof NexaPromo === 'undefined') return;
+  NexaPromo.init();
+
+  const tbody = document.getElementById('promoTbody');
+  if (!tbody) return;
+
+  if (!NexaPromo.promos.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada promo. Klik "Buat Promo Baru" untuk memulai.</td></tr>';
+    updatePromoBadge();
+    document.getElementById('promoStats')?.querySelector('.stat-value') && (document.getElementById('promoActiveCount').textContent = '0');
+    return;
+  }
+
+  const now = Date.now();
+  const activePromos = NexaPromo.promos.filter(p => p.active !== false);
+  document.getElementById('promoActiveCount').textContent = activePromos.length;
+
+  tbody.innerHTML = NexaPromo.promos.map((p, i) => {
+    const isActive = p.active !== false && new Date(p.startDate || 0).getTime() <= now && new Date(p.endDate || '2099-12-31').getTime() >= now;
+    const typeLabels = { percentage: `Diskon ${p.value}%`, nominal: `Rp ${(p.value||0).toLocaleString('id-ID')}`, buy_x_get_y: 'Buy X Get Y', bundle: 'Bundle' };
+    return `<tr>
+      <td class="pl-4" style="font-weight:600;">${p.name}</td>
+      <td><span style="background:var(--accent);color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">${typeLabels[p.type] || p.type}</span></td>
+      <td>${p.type === 'percentage' ? p.value + '%' : p.type === 'nominal' ? 'Rp ' + (p.value||0).toLocaleString('id-ID') : '-'}</td>
+      <td style="font-size:12px;">${p.startDate ? new Date(p.startDate).toLocaleDateString('id-ID') : '-'} &ndash; ${p.endDate ? new Date(p.endDate).toLocaleDateString('id-ID') : '-'}</td>
+      <td>${p.minPurchase ? 'Rp ' + p.minPurchase.toLocaleString('id-ID') : '-'}</td>
+      <td>${isActive ? '<span style="color:var(--success);font-weight:600;">🟢 Aktif</span>' : '<span style="color:var(--text-muted);">🔴 Nonaktif</span>'}</td>
+      <td class="text-right pr-4">
+        <button class="glass-btn glass-btn-sm" onclick="NexaPromo.remove('${p.id}');renderPromoSection();" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--danger);font-size:10px;padding:4px 8px;">Hapus</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  updatePromoBadge();
+
+  // Populate broadcast dropdown
+  const select = document.getElementById('promoBroadcastSelect');
+  if (select) {
+    select.innerHTML = '<option value="">-- Pilih Promo --</option>' +
+      activePromos.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  }
+}
+
+function showPromoForm() {
+  if (typeof NexaPromo === 'undefined') return;
+  NexaPromo.showAddForm(() => { renderPromoSection(); toast('Promo berhasil ditambahkan', '', 'success'); });
+}
+
+function broadcastPromo() {
+  const select = document.getElementById('promoBroadcastSelect');
+  if (!select || !select.value) return toast('Pilih promo terlebih dahulu', '', 'warning');
+  const promo = NexaPromo.promos.find(p => p.id === select.value);
+  if (!promo) return;
+  if (typeof NexaWA !== 'undefined' && typeof NexaWA.broadcast === 'function') {
+    NexaWA.broadcast(promo);
+    toast('Broadcast promo dikirim via WhatsApp', '', 'success');
+  } else {
+    // Fallback: open wa.me with promo message
+    const msg = encodeURIComponent(`Halo! Ada promo menarik dari kami: ${promo.name}\n${promo.description || ''}\n\nDiskon: ${promo.type === 'percentage' ? promo.value + '%' : 'Rp ' + (promo.value||0).toLocaleString('id-ID')}\nBerlaku sampai: ${promo.endDate ? new Date(promo.endDate).toLocaleDateString('id-ID') : 'Sekarang'}\n\nKunjungi toko kami!`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+  }
+}
+
+function renderStaffSection() {
+  const tbody = document.getElementById('staffTbody');
+  if (!tbody || !db.state || !db.state.staffList) return;
+
+  const staffList = db.state.staffList || [];
+  if (typeof NexaStaff !== 'undefined') NexaStaff.init();
+
+  document.getElementById('staffTotalCount').textContent = staffList.length;
+
+  // Count present today
+  let presentCount = 0;
+  if (typeof NexaStaff !== 'undefined') {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecs = NexaStaff.attendance.filter(a => a.date === today);
+    presentCount = todayRecs.length;
+  }
+  document.getElementById('staffPresentCount').textContent = presentCount;
+
+  const badge = document.getElementById('staffCountBadge');
+  if (badge) badge.textContent = staffList.length;
+
+  // Commission total
+  const transactions = db.state.orderList || [];
+  let totalCommission = 0;
+  if (typeof NexaStaff !== 'undefined') {
+    staffList.forEach(s => {
+      const calc = NexaStaff.calculateCommission(transactions, s.id);
+      totalCommission += calc.commission;
+    });
+  }
+  document.getElementById('staffCommissionTotal').textContent = 'Rp ' + totalCommission.toLocaleString('id-ID');
+
+  if (!staffList.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada karyawan. Tambah melalui menu Pengaturan > Staff.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = staffList.map(s => {
+    const todayRec = typeof NexaStaff !== 'undefined' ? NexaStaff.getToday(s.id) : null;
+    const isClockedIn = todayRec && !todayRec.clockOut;
+    const status = isClockedIn ? '<span style="color:var(--success);font-weight:600;">🟢 Hadir</span>' :
+      todayRec ? '<span style="color:var(--text-muted);">✅ Selesai</span>' :
+      '<span style="color:var(--text-muted);">⚪ Tidak Hadir</span>';
+    const commission = typeof NexaStaff !== 'undefined' ? NexaStaff.calculateCommission(transactions, s.id).commission : 0;
+    return `<tr>
+      <td class="pl-4" style="font-weight:600;">${s.name}</td>
+      <td><span style="background:${s.role === 'Admin' ? 'var(--accent)' : 'var(--primary)'};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">${s.role || 'Staff'}</span></td>
+      <td>${s.phone || '-'}</td>
+      <td>${status}</td>
+      <td>${todayRec ? '✅' : '—'}</td>
+      <td>Rp ${commission.toLocaleString('id-ID')}</td>
+      <td class="text-right pr-4">
+        <button class="glass-btn glass-btn-sm" onclick="NexaStaff.clockIn('${s.id}','${s.name}');renderStaffSection();" style="font-size:10px;padding:4px 8px;${isClockedIn ? 'background:rgba(239,68,68,0.1);color:var(--danger);' : 'background:rgba(16,185,129,0.1);color:var(--success);'}">${isClockedIn ? 'Clock Out' : 'Clock In'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function showStaffForm() {
+  // Navigate to settings where staff management is
+  switchTab('pengaturan');
+  setTimeout(() => {
+    const panel = document.getElementById('staffManagementPanel');
+    if (panel) {
+      panel.style.display = 'block';
+      panel.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, 300);
 }
 
 function renderProfilePage() {

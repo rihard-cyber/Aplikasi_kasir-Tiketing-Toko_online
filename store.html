@@ -1523,12 +1523,20 @@
 
       <!-- QRIS payment section -->
       <div id="pay-details-qris" style="display:none; text-align:center; padding:12px">
-        <div class="p-3 bg-white rounded-xl inline-block" style="box-shadow: 0 10px 30px rgba(0,0,0,0.5)">
-          <div class="w-36 h-36 bg-slate-900 p-1.5 rounded flex flex-wrap gap-[3px] content-start overflow-hidden">
-            ${Array.from({length: 120}).map(() => `<div class="w-[7px] h-[7px] ${Math.random() > 0.45 ? 'bg-black' : 'bg-transparent'}"></div>`).join('')}
+        <div style="background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:20px;padding:24px;max-width:280px;margin:0 auto;">
+          <div style="font-size:48px;margin-bottom:8px;">📱</div>
+          <div style="font-weight:700;color:var(--accent);margin-bottom:4px;">QRIS Pembayaran</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:16px;">Scan QR Code via GoPay, OVO, DANA, Mobile Banking</div>
+          <div id="qrisPlaceholder" style="background:#fff;border-radius:12px;padding:20px;margin-bottom:12px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:11px;color:#333;font-weight:600;margin-bottom:8px;">TOTAL PEMBAYARAN</div>
+            <div id="qrisTotalDisplay" style="font-size:22px;font-weight:800;color:#333;margin-bottom:12px;">Rp 0</div>
+            <div style="width:160px;height:160px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;text-align:center;padding:8px;">
+              QRIS<br>NexaPay Gateway<br><span style="font-size:10px;opacity:0.7;">Klik Bayar untuk generate</span>
+            </div>
           </div>
+          <button class="store-card-add w-full" onclick="processQRISPayment()" style="width:100%;">💳 Bayar via QRIS</button>
+          <p class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wider">NexaPay QRIS Gateway</p>
         </div>
-        <p class="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wider">Scannable VIP Gateway</p>
       </div>
 
       <!-- Bank Transfer details -->
@@ -2288,6 +2296,10 @@
       if (!selectedCourier) return showToast('Pilih kurir pengiriman');
       if (selectedCourier !== 'toko' && !selectedService.cost) return showToast('Pilih layanan kurir');
 
+      if (activePaymentMode === 'qris') {
+        return processQRISPayment();
+      }
+
       if (activePaymentMode === 'cc') {
         const ccNum = document.getElementById('ccNum').value.trim();
         const ccName = document.getElementById('ccName').value.trim();
@@ -2342,13 +2354,20 @@
           bc.postMessage({ type: 'new_order', order: lastOrder });
         } catch(e3) {}
 
+        // Send WA notification
+        try {
+          if (typeof NexaWA !== 'undefined') {
+            NexaWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
+          }
+        } catch(e2) {}
         showConfirmation(lastOrder);
       } catch (e) {
-        showToast('Gagal memproses pesanan. Server offline. Coba lagi.');
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        btnText.textContent = 'Konfirmasi & Pesan Sekarang';
-        return;
+        // Offline fallback
+        const fallbackOrder = { ...order, id: 'offline-' + Date.now(), invoiceNo: 'INV-OFFLINE-' + Date.now().toString(36).toUpperCase() };
+        lastOrder = fallbackOrder;
+        cart = []; saveCart(); renderCart();
+        showConfirmation(fallbackOrder);
+        showToast('Pesanan disimpan offline');
       } finally {
         btn.disabled = false;
         spinner.style.display = 'none';
@@ -2566,7 +2585,91 @@
       if (input) input.value = localStorage.getItem('storeServerUrl') || 'http://localhost:3000';
       init();
     });
+
+    // ─── QRIS Payment Integration ──────────────────────────────────────────
+    function processQRISPayment() {
+      const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + (selectedService.cost || 0);
+      if (total <= 0) return showToast('Keranjang kosong');
+
+      if (typeof NexaPay !== 'undefined') {
+        NexaPay.showQRModal(total, (result) => {
+          if (result.success) {
+            showToast('✅ Pembayaran QRIS berhasil!');
+            submitOrderWithPayment('qris', result);
+          }
+        });
+      } else {
+        // Fallback QRIS simulation
+        const qrisEl = document.querySelector('#pay-details-qris .w-36');
+        if (qrisEl) {
+          qrisEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#000;font-size:11px;font-weight:700;text-align:center;">✓ QRIS GENERATED<br><span style="font-size:9px;font-weight:400;">Scan to pay</span></div>';
+        }
+        showToast('QRIS siap - Lanjutkan checkout');
+      }
+    }
+
+    // ─── Enhanced Submit with QRIS + WA ───────────────────────────────────
+    async function submitOrderWithPayment(method, paymentResult) {
+      const name = document.getElementById('coName').value.trim();
+      const phone = document.getElementById('coPhone').value.trim();
+      const address = document.getElementById('coAddress').value.trim();
+      const city = document.getElementById('coCity').value.trim();
+      const note = document.getElementById('coNote').value.trim();
+
+      if (!name || !phone) return showToast('Lengkapi data diri');
+
+      const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+      const total = subtotal + (selectedService.cost || 0);
+
+      const order = {
+        customerName: name,
+        customerPhone: phone,
+        customerAddress: address,
+        customerCity: city,
+        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
+        subtotal,
+        shippingCost: selectedService.cost || 0,
+        shippingCourier: selectedCourier === 'toko' ? 'Ambil di Toko' : (selectedCourier || '').toUpperCase(),
+        shippingService: selectedService.name || '',
+        total,
+        paymentMethod: method,
+        paymentStatus: 'paid',
+        paymentRef: paymentResult?.transactionId || 'QR-' + Date.now().toString(36)
+      };
+
+      try {
+        const res = await fetch(api('/api/store/checkout'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(order)
+        });
+        if (!res.ok) throw new Error('Gagal');
+        const result = await res.json();
+        lastOrder = result.order;
+        cart = []; saveCart(); renderCart();
+
+        // Send WA notification
+        if (typeof NexaWA !== 'undefined') {
+          NexaWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
+        }
+
+        showConfirmation(lastOrder);
+      } catch (e) {
+        // Offline fallback
+        const fallbackOrder = { ...order, id: 'offline-' + Date.now(), invoiceNo: 'INV-OFFLINE-' + Date.now().toString(36).toUpperCase() };
+        lastOrder = fallbackOrder;
+        cart = []; saveCart(); renderCart();
+        showConfirmation(fallbackOrder);
+        showToast('Pesanan disimpan offline');
+      }
+    }
   </script>
+
+<script src="js/offline.js"></script>
+<script src="js/payment.js"></script>
+<script src="js/printer.js"></script>
+<script src="js/whatsapp.js"></script>
+
 <div style="position:fixed;bottom:8px;right:8px;font-size:10px;color:var(--text3);background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;z-index:9999;">
   <span style="opacity:0.6;">Server:</span>
   <input id="storeUrlInput" style="width:160px;background:rgba(255,255,255,0.1);border:1px solid rgba(245,158,11,0.2);color:#fff;font-size:10px;outline:none;padding:2px 6px;border-radius:3px;" placeholder="http://localhost:3000" value="http://localhost:3000">

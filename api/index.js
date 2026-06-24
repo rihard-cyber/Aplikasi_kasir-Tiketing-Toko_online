@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'nexapos-saas-secret-2026';
 
@@ -59,9 +61,72 @@ module.exports = (req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  if (method === 'OPTIONS') { res.status(204).end(); return; }
+  // Serve static files if not an API route (monolithic compatibility fallback)
+  if (!pathname.startsWith('/api/')) {
+    let cleanPath = pathname.replace(/\/$/, '');
+    if (cleanPath === '') cleanPath = '/';
 
-  const respond = (code, data) => { res.status(code).json(data); };
+    let fp = cleanPath;
+    if (cleanPath === '/') { fp = '/index.html'; }
+    else if (cleanPath === '/store' || cleanPath === '/tokoonline') { fp = '/store.html'; }
+    else if (cleanPath === '/owner' || cleanPath === '/ownerportal') { fp = '/owner.html'; }
+    else if (cleanPath === '/pos') { fp = '/index.html'; }
+
+    const rootDir = path.resolve(__dirname, '..');
+    fp = path.join(rootDir, fp);
+
+    if (!path.resolve(fp).startsWith(rootDir)) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
+
+    const ext = path.extname(fp);
+    const MIME = {
+      '.html': 'text/html; charset=utf-8',
+      '.js': 'application/javascript; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.json': 'application/json',
+      '.png': 'image/png',
+      '.jpg': 'image/jpeg',
+      '.svg': 'image/svg+xml',
+      '.ico': 'image/x-icon'
+    };
+
+    fs.readFile(fp, (err, data) => {
+      if (err) {
+        if (!ext) {
+          fs.readFile(path.join(rootDir, 'index.html'), (e2, d2) => {
+            if (e2) {
+              res.writeHead(404, { 'Content-Type': 'text/plain' });
+              res.end('Not found');
+              return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(d2);
+          });
+          return;
+        }
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Not found');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      res.end(data);
+    });
+    return;
+  }
+
+  if (method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  const respond = (code, data) => {
+    res.writeHead(code, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(data));
+  };
   const getAuth = () => { const auth = req.headers['authorization']; if (!auth || !auth.startsWith('Bearer ')) return null; return verifyToken(auth.slice(7)); };
   const readBody = () => new Promise(resolve => {
     if (req.body !== undefined) {
@@ -203,7 +268,7 @@ module.exports = (req, res) => {
   const requireBranchAuth = () => {
     const auth = getAuth();
     if (!auth) return null;
-    const br = new URL(req.url, `http://${req.headers.host}`).searchParams.get('branch');
+    const br = new URL(req.url, 'http://localhost').searchParams.get('branch');
     if (!br) return null;
     const branches = getBranches();
     const branch = branches.find(b => b.id === br && b.ownerId === auth.ownerId);
@@ -224,7 +289,7 @@ module.exports = (req, res) => {
 
   // Store
   if (method === 'GET' && pathname === '/api/store/products') {
-    const branchId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('branch');
+    const branchId = new URL(req.url, 'http://localhost').searchParams.get('branch');
     let products = [];
     if (branchId) { products = getBranchFile(branchId, 'products') || []; }
     else { const branches = getBranches(); if (branches.length) products = getBranchFile(branches[0].id, 'products') || []; }
@@ -252,7 +317,7 @@ module.exports = (req, res) => {
 
   const storeOrderMatch = pathname.match(/^\/api\/store\/orders\/(\d+)$/);
   if (method === 'GET' && storeOrderMatch) {
-    const branchId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('branch');
+    const branchId = new URL(req.url, 'http://localhost').searchParams.get('branch');
     const orders = branchId ? (getBranchFile(branchId, 'orders') || []) : [];
     const order = orders.find(o => o.id === Number(storeOrderMatch[1]));
     if (!order) return respond(404, { error: 'Order not found' });

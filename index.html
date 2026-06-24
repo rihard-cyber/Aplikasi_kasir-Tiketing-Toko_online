@@ -96,6 +96,10 @@
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span>VIP CRM</span>
           </a>
+          <a href="#" class="sidebar-nav-link" data-tab="promo" data-i18n="promo" style="color:var(--accent);">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            <span>🏷️ Promo</span>
+          </a>
           <a href="#" class="sidebar-nav-link" data-tab="keuangan" data-i18n="finance">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             <span>Keuangan</span>
@@ -107,6 +111,10 @@
           <a href="#" class="sidebar-nav-link" data-tab="antrean" data-i18n="queue_tab">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
             <span>Antrean</span>
+          </a>
+          <a href="#" class="sidebar-nav-link" data-tab="karyawan" data-i18n="karyawan">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>👥 Karyawan</span>
           </a>
           <a href="store.html" target="_blank" class="sidebar-nav-link" data-tab="store" data-i18n="store" style="color:var(--success)">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -499,6 +507,55 @@
           </div>
         </section>
 
+        <!-- ===== PROMO ===== -->
+        <section class="app-section" id="section-promo">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title">🏷️ Promo & Diskon</h1>
+              <p class="section-subtitle">Kelola promo, diskon, BOGO, bundling, dan siarkan ke pelanggan via WhatsApp</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm glass-btn-primary" onclick="showPromoForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Buat Promo Baru
+              </button>
+            </div>
+          </div>
+          <div id="promoStats" class="stats-grid">
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--accent)"></div>
+              <span class="stat-label">Promo Aktif</span>
+              <p class="stat-value" id="promoActiveCount">0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--success)"></div>
+              <span class="stat-label">Total Diskon Diberikan</span>
+              <p class="stat-value" id="promoTotalDiscount">Rp 0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--primary)"></div>
+              <span class="stat-label">Transaksi Pakai Promo</span>
+              <p class="stat-value" id="promoTransactionCount">0</p>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-header"><h3>Daftar Promo</h3><span class="panel-badge" id="promoCountBadge">0</span></div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4">Nama Promo</th><th>Tipe</th><th>Nilai</th><th>Periode</th><th>Min. Belanja</th><th>Status</th><th class="text-right pr-4">Aksi</th></tr></thead>
+                <tbody id="promoTbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="glass-panel" style="margin-top:16px;">
+            <div class="panel-header"><h3>📢 Siarkan Promo via WhatsApp</h3></div>
+            <div style="display:flex; gap:12px; padding:16px; flex-wrap:wrap;">
+              <select id="promoBroadcastSelect" class="glass-input" style="flex:1; min-width:200px;"><option value="">-- Pilih Promo --</option></select>
+              <button class="glass-btn glass-btn-primary" onclick="broadcastPromo()">📤 Kirim Broadcast</button>
+            </div>
+          </div>
+        </section>
+
         <!-- ===== KEUANGAN ===== -->
         <section class="app-section" id="section-keuangan">
           <div class="section-header">
@@ -631,6 +688,63 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== KARYAWAN ===== -->
+        <section class="app-section" id="section-karyawan">
+          <div class="section-header">
+            <div>
+              <h1 class="section-title">👥 Manajemen Karyawan</h1>
+              <p class="section-subtitle">Absensi, komisi, jadwal, dan laporan kinerja karyawan</p>
+            </div>
+            <div class="section-actions">
+              <button class="glass-btn glass-btn-sm glass-btn-primary" onclick="showStaffForm()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Tambah Karyawan
+              </button>
+            </div>
+          </div>
+          <div id="staffStats" class="stats-grid">
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--success)"></div>
+              <span class="stat-label">Hadir Hari Ini</span>
+              <p class="stat-value" id="staffPresentCount">0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--warning)"></div>
+              <span class="stat-label">Total Karyawan</span>
+              <p class="stat-value" id="staffTotalCount">0</p>
+            </div>
+            <div class="stat-card glass-panel">
+              <div class="stat-glow" style="background:var(--accent)"></div>
+              <span class="stat-label">Komisi Bulan Ini</span>
+              <p class="stat-value" id="staffCommissionTotal">Rp 0</p>
+            </div>
+          </div>
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3>Daftar Karyawan</h3>
+              <div style="display:flex; gap:8px;">
+                <button class="glass-btn glass-btn-sm" onclick="renderStaffClockUI()">⏰ Absensi</button>
+                <span class="panel-badge" id="staffCountBadge">0</span>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4">Nama</th><th>Role</th><th>No. HP</th><th>Status</th><th>Hadir</th><th>Komisi</th><th class="text-right pr-4">Aksi</th></tr></thead>
+                <tbody id="staffTbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="staffClockPanel" class="glass-panel" style="margin-top:16px; display:none;">
+            <div class="panel-header"><h3>⏰ Absensi Hari Ini</h3><button class="glass-btn glass-btn-sm" onclick="document.getElementById('staffClockPanel').style.display='none'">✕ Tutup</button></div>
+            <div class="table-scroll">
+              <table class="data-table">
+                <thead><tr><th class="pl-4">Nama</th><th>Check In</th><th>Check Out</th><th>Status</th><th class="text-right pr-4">Aksi</th></tr></thead>
+                <tbody id="staffClockTbody"></tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -1348,6 +1462,13 @@
     });
   </script>
 
+  <script src="js/offline.js"></script>
+  <script src="js/payment.js"></script>
+  <script src="js/printer.js"></script>
+  <script src="js/whatsapp.js"></script>
+  <script src="js/promo.js"></script>
+  <script src="js/staff.js"></script>
+  <script src="js/reports.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
