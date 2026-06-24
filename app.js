@@ -726,13 +726,13 @@ function selectPayMethod(m) {
       const totalTxt=document.getElementById('checkoutTotal').textContent;
       const total=parseInt(totalTxt.replace(/[^0-9]/g,''))||0;
       document.getElementById('qrisPayWithNexaBtn')?.addEventListener('click', () => {
-        NexaPay.showQRModal(total, (result) => {
-          if (result.success) {
+        NexaPay.showQRModal(total, '', (result) => {
+          if (result && result.success) {
             toast('✅ Pembayaran QRIS berhasil!', '', 'success');
             submitPayment();
           }
         });
-      });
+      }, { once: true });
     }
     if(m==='Split') initSplit();
 }
@@ -849,6 +849,8 @@ function submitPayment() {
     if(received<total){ toast('Insufficient','Cash amount is less than total.','danger'); return; }
   } else if(activePayMethod==='Debit'){
     payMethod='Debit Card';
+  } else if (activePayMethod === 'QRIS') {
+    // QRIS validated via modal callback; skip amount check
   }
 
   if(selectedCustomer){
@@ -943,7 +945,7 @@ function sendReceiptWA() {
   if (typeof NexaWA !== 'undefined') {
     const phone = txn.customerPhone || (selectedCustomer && selectedCustomer.phone) || '';
     if (phone) {
-      NexaWA.sendReceipt(txn, phone);
+      NexaWA.sendReceipt(phone, txn);
       toast('Struk dikirim via WhatsApp', '', 'success');
     } else {
       toast('No. HP pelanggan tidak tersedia', '', 'warning');
@@ -1800,11 +1802,11 @@ function createMarketingSection() {
     </div>
     <div class="dashboard-grid thirds" style="grid-template-columns:1.5fr 1fr">
       <div class="glass-panel">
-        <div class="panel-header"><h3>Active Promotions</h3><span class="panel-badge" id="promoCount">0</span></div>
+        <div class="panel-header"><h3>Active Promotions</h3>        <span class="panel-badge" id="marketingCount">0</span></div>
         <div class="table-scroll">
           <table class="data-table">
             <thead><tr><th class="pl-4">Name</th><th>Type</th><th>Value</th><th>Category</th><th>Status</th><th class="text-right pr-4">Actions</th></tr></thead>
-            <tbody id="promoTbody"></tbody>
+            <tbody id="marketingTbody"></tbody>
           </table>
         </div>
       </div>
@@ -1824,9 +1826,9 @@ function createMarketingSection() {
 function renderMarketing() {
   const promos = db.state.promos || [];
   document.getElementById('mktActiveCount').textContent = promos.filter(p => p.active).length;
-  document.getElementById('promoCount').textContent = promos.length;
+  document.getElementById('marketingCount').textContent = promos.length;
 
-  const tbody = document.getElementById('promoTbody');
+  const tbody = document.getElementById('marketingTbody');
   if (tbody) {
     if (!promos.length) {
       tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No promotions yet</td></tr>';
@@ -4224,10 +4226,14 @@ function broadcastPromo() {
   if (!select || !select.value) return toast('Pilih promo terlebih dahulu', '', 'warning');
   const promo = NexaPromo.promos.find(p => p.id === select.value);
   if (!promo) return;
-  if (typeof NexaWA !== 'undefined' && typeof NexaWA.broadcast === 'function') {
-    NexaWA.broadcast(promo);
-    toast('Broadcast promo dikirim via WhatsApp', '', 'success');
-  } else {
+  try {
+    if (typeof NexaWA !== 'undefined' && typeof NexaWA.broadcast === 'function') {
+      NexaWA.broadcast(promo);
+      toast('Broadcast promo dikirim via WhatsApp', '', 'success');
+    } else {
+      throw new Error('NexaWA.broadcast not available');
+    }
+  } catch (e) {
     // Fallback: open wa.me with promo message
     const msg = encodeURIComponent(`Halo! Ada promo menarik dari kami: ${promo.name}\n${promo.description || ''}\n\nDiskon: ${promo.type === 'percentage' ? promo.value + '%' : 'Rp ' + (promo.value||0).toLocaleString('id-ID')}\nBerlaku sampai: ${promo.endDate ? new Date(promo.endDate).toLocaleDateString('id-ID') : 'Sekarang'}\n\nKunjungi toko kami!`);
     window.open(`https://wa.me/?text=${msg}`, '_blank');
@@ -4256,7 +4262,7 @@ function renderStaffSection() {
   if (badge) badge.textContent = staffList.length;
 
   // Commission total
-  const transactions = db.state.orderList || [];
+  const transactions = db.state.transactions || [];
   let totalCommission = 0;
   if (typeof NexaStaff !== 'undefined') {
     staffList.forEach(s => {
@@ -4287,6 +4293,45 @@ function renderStaffSection() {
       <td>Rp ${commission.toLocaleString('id-ID')}</td>
       <td class="text-right pr-4">
         <button class="glass-btn glass-btn-sm" onclick="NexaStaff.clockIn('${s.id}','${s.name}');renderStaffSection();" style="font-size:10px;padding:4px 8px;${isClockedIn ? 'background:rgba(239,68,68,0.1);color:var(--danger);' : 'background:rgba(16,185,129,0.1);color:var(--success);'}">${isClockedIn ? 'Clock Out' : 'Clock In'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStaffClockUI() {
+  const panel = document.getElementById('staffClockPanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') return;
+  
+  const tbody = document.getElementById('staffClockTbody');
+  if (!tbody || !db.state || !db.state.staffList) return;
+  
+  if (typeof NexaStaff === 'undefined') {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Modul Karyawan tidak tersedia</td></tr>';
+    return;
+  }
+  
+  NexaStaff.init();
+  const today = new Date().toISOString().split('T')[0];
+  const todayRecs = NexaStaff.attendance.filter(a => a.date === today);
+  
+  if (!todayRecs.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada absensi hari ini</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = todayRecs.map(r => {
+    const staff = db.state.staffList.find(s => s.id === r.staffId);
+    const name = staff ? staff.name : r.staffName || 'Unknown';
+    const isClockedIn = !r.clockOut;
+    return `<tr>
+      <td class="pl-4" style="font-weight:600;">${name}</td>
+      <td>${r.clockIn ? new Date(r.clockIn).toLocaleTimeString('id-ID') : '-'}</td>
+      <td>${r.clockOut ? new Date(r.clockOut).toLocaleTimeString('id-ID') : '-'}</td>
+      <td>${isClockedIn ? '<span style="color:var(--success);">🟢 Hadir</span>' : '<span style="color:var(--text-muted);">✅ Selesai</span>'}</td>
+      <td class="text-right pr-4">
+        ${isClockedIn ? `<button class="glass-btn glass-btn-sm" onclick="NexaStaff.clockOut('${r.staffId}');renderStaffClockUI();renderStaffSection();" style="background:rgba(239,68,68,0.1);color:var(--danger);font-size:10px;padding:4px 8px;">Clock Out</button>` : '<span style="font-size:10px;color:var(--text-muted);">Selesai</span>'}
       </td>
     </tr>`;
   }).join('');
@@ -4691,7 +4736,37 @@ const TRANSLATIONS = {
     success: "Sukses",
     failed: "Gagal",
     saved: "Tersimpan",
-    deleted: "Dihapus"
+    deleted: "Dihapus",
+    promo: {
+      id: '🏷️ Promo',
+      en: '🏷️ Promo',
+      zh: '🏷️ 促销'
+    },
+    karyawan: {
+      id: '👥 Karyawan',
+      en: '👥 Staff',
+      zh: '👥 员工'
+    },
+    loyalty_driven: {
+      id: 'Loyalty Driven',
+      en: 'Loyalty Driven',
+      zh: '忠诚度驱动'
+    },
+    restock_required: {
+      id: 'Restock Required',
+      en: 'Restock Required',
+      zh: '需要补货'
+    },
+    th_supplier: {
+      id: 'Supplier',
+      en: 'Supplier',
+      zh: '供应商'
+    },
+    th_tier: {
+      id: 'Tier',
+      en: 'Tier',
+      zh: '等级'
+    }
   },
   en: {
     // Sidebar
@@ -4965,7 +5040,37 @@ const TRANSLATIONS = {
     success: "Success",
     failed: "Failed",
     saved: "Saved",
-    deleted: "Deleted"
+    deleted: "Deleted",
+    promo: {
+      id: '🏷️ Promo',
+      en: '🏷️ Promo',
+      zh: '🏷️ 促销'
+    },
+    karyawan: {
+      id: '👥 Karyawan',
+      en: '👥 Staff',
+      zh: '👥 员工'
+    },
+    loyalty_driven: {
+      id: 'Loyalty Driven',
+      en: 'Loyalty Driven',
+      zh: '忠诚度驱动'
+    },
+    restock_required: {
+      id: 'Restock Required',
+      en: 'Restock Required',
+      zh: '需要补货'
+    },
+    th_supplier: {
+      id: 'Supplier',
+      en: 'Supplier',
+      zh: '供应商'
+    },
+    th_tier: {
+      id: 'Tier',
+      en: 'Tier',
+      zh: '等级'
+    }
   },
   zh: {
     // Sidebar
@@ -5239,7 +5344,37 @@ const TRANSLATIONS = {
     success: "成功",
     failed: "失败",
     saved: "配置已保存",
-    deleted: "数据已删除"
+    deleted: "数据已删除",
+    promo: {
+      id: '🏷️ Promo',
+      en: '🏷️ Promo',
+      zh: '🏷️ 促销'
+    },
+    karyawan: {
+      id: '👥 Karyawan',
+      en: '👥 Staff',
+      zh: '👥 员工'
+    },
+    loyalty_driven: {
+      id: 'Loyalty Driven',
+      en: 'Loyalty Driven',
+      zh: '忠诚度驱动'
+    },
+    restock_required: {
+      id: 'Restock Required',
+      en: 'Restock Required',
+      zh: '需要补货'
+    },
+    th_supplier: {
+      id: 'Supplier',
+      en: 'Supplier',
+      zh: '供应商'
+    },
+    th_tier: {
+      id: 'Tier',
+      en: 'Tier',
+      zh: '等级'
+    }
   }
 };
 

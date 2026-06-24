@@ -11,8 +11,8 @@ const NexaPay = {
       const res = await fetch(serverUrl + '/api/payment/qris', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          order_id: order.id || 'ORD-' + Date.now(),
-          gross_amount: order.total || 0,
+          amount: order.total || 0,
+          orderId: order.id || 'ORD-' + Date.now(),
           customer: order.customer || {}
         })
       });
@@ -27,7 +27,14 @@ const NexaPay = {
   },
 
   // Show QRIS payment modal
-  async showQRModal(total, orderId, onPaid) {
+  async showQRModal(total, onPaidOrOrderId, onPaidFallback) {
+    let orderId = '';
+    let onPaid = onPaidFallback;
+    if (typeof onPaidOrOrderId === 'function') {
+      onPaid = onPaidOrOrderId;
+    } else {
+      orderId = onPaidOrOrderId || '';
+    }
     const existing = document.getElementById('nexapayModal');
     if (existing) existing.remove();
 
@@ -93,7 +100,7 @@ const NexaPay = {
     let elapsed = 0;
     const timer = document.getElementById('nexapayTimer');
     const interval = setInterval(() => {
-      elapsed += 5;
+      elapsed += 1;
       if (elapsed >= 300) {
         clearInterval(interval);
         timer.innerHTML = '⌛ Waktu habis';
@@ -105,7 +112,7 @@ const NexaPay = {
     window.onNexaPayConfirm = () => {
       clearInterval(interval);
       modal.remove();
-      if (onPaid) onPaid();
+      if (onPaid) onPaid({ success: true, transactionId: 'QR-' + Date.now().toString(36).toUpperCase() });
     };
   },
 

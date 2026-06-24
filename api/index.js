@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'nexapos-saas-secret-2026';
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'); // Generated dynamically for security; set JWT_SECRET env var for persistence
 
 // ─── In-Memory Store ────────────────────────────────────────────────
 const store = { owners: [], branches: {}, seeded: false };
@@ -278,11 +278,59 @@ module.exports = (req, res) => {
 
   if (method === 'GET' && pathname === '/api/branch/products') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'products') || []); }
   if (method === 'POST' && pathname === '/api/branch/products') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'products', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
-  if (method === 'GET' && pathname === '/api/branch/orders') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'orders') || []); }
+  if (method === 'GET' && pathname === '/api/branch/orders') {
+    const branchParam = new URL(req.url, 'http://localhost').searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allOrders = [];
+      branches.forEach(b => {
+        const orders = getBranchFile(b.id, 'orders') || [];
+        orders.forEach(o => allOrders.push({ branchId: b.id, branchName: b.name, ...o }));
+      });
+      return respond(200, allOrders);
+    }
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    return respond(200, getBranchFile(ctx.branch.id, 'orders') || []);
+  }
   if (method === 'POST' && pathname === '/api/branch/orders') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'orders', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
-  if (method === 'GET' && pathname === '/api/branch/transactions') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'transactions') || []); }
+  if (method === 'GET' && pathname === '/api/branch/transactions') {
+    const branchParam = new URL(req.url, 'http://localhost').searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allTx = [];
+      branches.forEach(b => {
+        const txns = getBranchFile(b.id, 'transactions') || [];
+        txns.forEach(t => allTx.push({ branchId: b.id, branchName: b.name, ...t }));
+      });
+      return respond(200, allTx);
+    }
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    return respond(200, getBranchFile(ctx.branch.id, 'transactions') || []);
+  }
   if (method === 'POST' && pathname === '/api/branch/transactions') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'transactions', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
-  if (method === 'GET' && pathname === '/api/branch/staff') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'staff') || []); }
+  if (method === 'GET' && pathname === '/api/branch/staff') {
+    const branchParam = new URL(req.url, 'http://localhost').searchParams.get('branch');
+    if (branchParam === 'all') {
+      const auth = getAuth();
+      if (!auth) return respond(401, { error: 'Unauthorized' });
+      const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+      let allStaff = [];
+      branches.forEach(b => {
+        const staff = getBranchFile(b.id, 'staff') || [];
+        staff.forEach(s => allStaff.push({ ...s, branchId: b.id, branchName: b.name }));
+      });
+      return respond(200, allStaff);
+    }
+    const ctx = requireBranchAuth();
+    if (!ctx) return respond(401, { error: 'Unauthorized' });
+    return respond(200, getBranchFile(ctx.branch.id, 'staff') || []);
+  }
   if (method === 'POST' && pathname === '/api/branch/staff') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'staff', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
   if (method === 'GET' && pathname === '/api/branch/settings') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'settings') || {}); }
   if (method === 'POST' && pathname === '/api/branch/settings') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'settings', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
@@ -467,6 +515,18 @@ module.exports = (req, res) => {
       })();
     }
     return;
+  }
+
+  if (method === 'GET' && pathname === '/api/transactions') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
+    const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+    const allTx = [];
+    branches.forEach(b => {
+      const txns = getBranchFile(b.id, 'transactions') || [];
+      txns.forEach(t => allTx.push({ branchId: b.id, branchName: b.name, ...t }));
+    });
+    return respond(200, allTx);
   }
 
   respond(404, { error: 'Not found' });

@@ -979,6 +979,7 @@
 <div class="modal-overlay" id="branchModal">
   <div class="modal">
     <h2 id="branchModalTitle">Tambah Cabang Baru</h2>
+    <button class="modal-close" onclick="closeBranchModal()" style="position:absolute;top:12px;right:16px;background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;">✕</button>
     <div class="form-group">
       <label>Nama Cabang</label>
       <input class="input" id="branchName" placeholder="Contoh: Senayan Flagship Store">
@@ -1354,10 +1355,19 @@ function renderOwnerStaff() {
   const attendanceEl = document.getElementById('ownerStaffAttendance');
   const commissionEl = document.getElementById('ownerStaffCommission');
 
-  api('/api/branch/staff?branch=all').then(staffData => {
-    const staffList = Array.isArray(staffData) ? staffData : (staffData.staff || []);
-    api('/api/transactions').then(txData => {
-      const transactions = Array.isArray(txData) ? txData : (txData.transactions || []);
+  (async function loadStaff() {
+    const allStaff = [];
+    const allTransactions = [];
+    for (const b of BRANCHES) {
+      try {
+        const staff = await api('/api/branch/staff?branch=' + b.id);
+        if (Array.isArray(staff)) allStaff.push(...staff);
+        const tx = await api('/api/branch/transactions?branch=' + b.id);
+        if (Array.isArray(tx)) allTransactions.push(...tx);
+      } catch(e) {}
+    }
+    const staffList = allStaff;
+    const transactions = allTransactions;
 
       if (typeof NexaStaff !== 'undefined') {
         NexaStaff.init();
@@ -1397,14 +1407,11 @@ function renderOwnerStaff() {
       } else {
         attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Muat ulang halaman untuk mengaktifkan modul Karyawan</div>';
       }
-    }).catch(() => {
+    } catch(e) {
+      attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data karyawan. Pastikan server terhubung.</div>';
       commissionEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data komisi</div>';
-    });
-  }).catch(() => {
-    attendanceEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Gagal memuat data karyawan. Pastikan server terhubung.</div>';
-  });
-
-  document.getElementById('ownerStaffTotal').textContent = BRANCHES.reduce((sum, b) => sum + (b.staffCount || 0), 0) || '—';
+    }
+  })();
 }
 
 function renderAnalytics(branches) {
@@ -1494,8 +1501,8 @@ function renderBranches(branches) {
         </div>
       </div>
       <div class="branch-stats">
-        <div>📦 <span class="num">${b.orders}</span> Pesanan</div>
-        <div>💳 <span class="num">${b.transactions}</span> Transaksi</div>
+        <div>📦 <span class="num">${(b.orders || 0).toLocaleString('id-ID')}</span> Pesanan</div>
+        <div>💳 <span class="num">${(b.transactions || 0).toLocaleString('id-ID')}</span> Transaksi</div>
         <div>📋 <span class="num">${b.products}</span> Produk</div>
         <div>💰 <span class="num">Rp ${(b.revenue || 0).toLocaleString('id-ID')}</span></div>
       </div>
@@ -1813,7 +1820,7 @@ initParticles();
 <script src="js/payment.js"></script>
 <script src="js/printer.js"></script>
 <script src="js/whatsapp.js"></script>
-<script src="js/promo.js"></script>
+
 <script src="js/staff.js"></script>
 <script src="js/reports.js"></script>
 

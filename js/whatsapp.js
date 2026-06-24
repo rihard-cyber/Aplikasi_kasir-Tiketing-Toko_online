@@ -24,6 +24,30 @@ const NexaWA = {
     this.open(phone, message);
   },
 
+  // Alias for sendPromo
+  broadcast(promo) {
+    const msg = `🏷️ *PROMO SPESIAL*\n\n${promo.name}\n${promo.description || ''}\n\n${promo.type === 'percentage' ? `Diskon ${promo.value}%` : `Diskon Rp ${(promo.value || 0).toLocaleString('id-ID')}`}\n${promo.endDate ? `\nBerlaku sampai: ${new Date(promo.endDate).toLocaleDateString('id-ID')}` : ''}\n\nKunjungi toko kami!`;
+    const cleaned = prompt('Masukkan no. HP tujuan broadcast (pisahkan dengan koma):', '');
+    if (cleaned) {
+      cleaned.split(',').forEach(p => {
+        const phone = p.trim();
+        if (phone) this.open(phone, msg);
+      });
+    }
+  },
+
+  // Send order notification
+  sendOrderNotification(order, storePhone) {
+    const msg = `🔔 *PESANAN BARU*\n\n` +
+      `🆔 ${order.invoiceNo || order.id}\n` +
+      `👤 ${order.customerName || '-'}\n` +
+      `💰 Rp ${(order.total || 0).toLocaleString('id-ID')}\n` +
+      `💳 ${order.paymentMethod || '-'}\n` +
+      `📦 ${(order.items || []).length} item\n\n` +
+      `Terima kasih telah berbelanja!`;
+    this.open(storePhone || '6281234567890', msg);
+  },
+
   // Open WhatsApp
   open(phone, text) {
     const cleaned = phone.replace(/[^0-9]/g, '');

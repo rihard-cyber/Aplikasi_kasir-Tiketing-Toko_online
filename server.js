@@ -17,7 +17,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
-const JWT_SECRET = process.env.JWT_SECRET || 'nexapos-saas-secret-2026';
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'); // Generated dynamically for security; set JWT_SECRET env var for persistence
 
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
