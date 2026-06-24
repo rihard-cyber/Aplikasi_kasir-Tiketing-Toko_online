@@ -4821,36 +4821,12 @@ const TRANSLATIONS = {
     failed: "Gagal",
     saved: "Tersimpan",
     deleted: "Dihapus",
-    promo: {
-      id: '🏷️ Promo',
-      en: '🏷️ Promo',
-      zh: '🏷️ 促销'
-    },
-    karyawan: {
-      id: '👥 Karyawan',
-      en: '👥 Staff',
-      zh: '👥 员工'
-    },
-    loyalty_driven: {
-      id: 'Loyalty Driven',
-      en: 'Loyalty Driven',
-      zh: '忠诚度驱动'
-    },
-    restock_required: {
-      id: 'Restock Required',
-      en: 'Restock Required',
-      zh: '需要补货'
-    },
-    th_supplier: {
-      id: 'Supplier',
-      en: 'Supplier',
-      zh: '供应商'
-    },
-    th_tier: {
-      id: 'Tier',
-      en: 'Tier',
-      zh: '等级'
-    }
+    promo: '🏷️ Promo',
+    karyawan: '👥 Karyawan',
+    loyalty_driven: 'Loyalty Driven',
+    restock_required: 'Butuh Stok',
+    th_supplier: 'Supplier',
+    th_tier: 'Tier'
   },
   en: {
     // Sidebar
@@ -5125,36 +5101,12 @@ const TRANSLATIONS = {
     failed: "Failed",
     saved: "Saved",
     deleted: "Deleted",
-    promo: {
-      id: '🏷️ Promo',
-      en: '🏷️ Promo',
-      zh: '🏷️ 促销'
-    },
-    karyawan: {
-      id: '👥 Karyawan',
-      en: '👥 Staff',
-      zh: '👥 员工'
-    },
-    loyalty_driven: {
-      id: 'Loyalty Driven',
-      en: 'Loyalty Driven',
-      zh: '忠诚度驱动'
-    },
-    restock_required: {
-      id: 'Restock Required',
-      en: 'Restock Required',
-      zh: '需要补货'
-    },
-    th_supplier: {
-      id: 'Supplier',
-      en: 'Supplier',
-      zh: '供应商'
-    },
-    th_tier: {
-      id: 'Tier',
-      en: 'Tier',
-      zh: '等级'
-    }
+    promo: '🏷️ Promo',
+    karyawan: '👥 Staff',
+    loyalty_driven: 'Loyalty Driven',
+    restock_required: 'Restock Required',
+    th_supplier: 'Supplier',
+    th_tier: 'Tier'
   },
   zh: {
     // Sidebar
@@ -5429,36 +5381,12 @@ const TRANSLATIONS = {
     failed: "失败",
     saved: "配置已保存",
     deleted: "数据已删除",
-    promo: {
-      id: '🏷️ Promo',
-      en: '🏷️ Promo',
-      zh: '🏷️ 促销'
-    },
-    karyawan: {
-      id: '👥 Karyawan',
-      en: '👥 Staff',
-      zh: '👥 员工'
-    },
-    loyalty_driven: {
-      id: 'Loyalty Driven',
-      en: 'Loyalty Driven',
-      zh: '忠诚度驱动'
-    },
-    restock_required: {
-      id: 'Restock Required',
-      en: 'Restock Required',
-      zh: '需要补货'
-    },
-    th_supplier: {
-      id: 'Supplier',
-      en: 'Supplier',
-      zh: '供应商'
-    },
-    th_tier: {
-      id: 'Tier',
-      en: 'Tier',
-      zh: '等级'
-    }
+    promo: '🏷️ 促销',
+    karyawan: '👥 员工',
+    loyalty_driven: '忠诚度驱动',
+    restock_required: '需要补货',
+    th_supplier: '供应商',
+    th_tier: '等级'
   }
 };
 
