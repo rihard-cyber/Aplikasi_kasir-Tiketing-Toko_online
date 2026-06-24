@@ -254,8 +254,7 @@ function initSidebar() {
   const storeLink = document.querySelector('.sidebar-nav-link[data-tab="store"]');
   if (storeLink) {
     const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
-    const isFile = window.location.protocol === 'file:';
-    let base = isFile ? 'store.html' : '/store';
+    let base = 'store.html';
     if (branch) {
       storeLink.href = `${base}?branch=${branch}`;
     } else {
@@ -269,8 +268,7 @@ function initSidebar() {
     ownerLink.addEventListener('click', e => {
       e.preventDefault();
       const token = sessionStorage.getItem('nexapos_token') || localStorage.getItem('nexapos_owner_token') || '';
-      const isFile = window.location.protocol === 'file:';
-      let url = isFile ? 'owner.html' : '/owner';
+      let url = 'owner.html';
       if (token) {
         url += `?token=${encodeURIComponent(token)}`;
       }

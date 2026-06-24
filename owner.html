@@ -1117,8 +1117,7 @@ async function showBranchDetail(branchId) {
   document.getElementById('detailStaff').textContent = '—';
 
   document.getElementById('detailOpenPOS').onclick = () => {
-    const isFile = window.location.protocol === 'file:';
-    const posUrl = (isFile ? 'index.html' : '/pos') + '?branch=' + branchId + '&token=' + TOKEN;
+    const posUrl = 'index.html?branch=' + branchId + '&token=' + TOKEN;
     window.open(posUrl, '_blank');
   };
 
@@ -1431,8 +1430,7 @@ function loadMonitorIframe(branchId) {
   
   if (placeholder) placeholder.style.display = 'none';
   if (iframe) {
-    const isFile = window.location.protocol === 'file:';
-    iframe.src = (isFile ? 'index.html' : '/pos') + '?branch=' + branchId + '&token=' + TOKEN;
+    iframe.src = 'index.html?branch=' + branchId + '&token=' + TOKEN;
   }
 }
 
@@ -1447,8 +1445,7 @@ function refreshMonitorIframe() {
 function openMonitorInNewTab() {
   const select = document.getElementById('monitorBranchSelect');
   if (select && select.value) {
-    const isFile = window.location.protocol === 'file:';
-    const posUrl = (isFile ? 'index.html' : '/pos') + '?branch=' + select.value + '&token=' + TOKEN;
+    const posUrl = 'index.html?branch=' + select.value + '&token=' + TOKEN;
     window.open(posUrl, '_blank');
   }
 }
