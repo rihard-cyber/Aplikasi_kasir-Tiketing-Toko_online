@@ -1,5 +1,5 @@
 // ─── Thermal Printer (ESC/POS via Web Bluetooth) ─────────────────────
-const NexaPrint = {
+const CasirPrint = {
   device: null, service: null, char: null,
 
   // ESC/POS commands
@@ -46,7 +46,7 @@ const NexaPrint = {
     }
   },
 
-  async printReceipt(order, storeName = 'NexaPOS') {
+  async printReceipt(order, storeName = 'CasirPRO') {
     const enc = new TextEncoder();
     let buf = [];
 
@@ -106,7 +106,7 @@ const NexaPrint = {
     s('~ Barang yang sudah dibeli tidak dapat\n');
     s('   dikembalikan kecuali ada cacat ~\n');
     s('\n');
-    s('Powered by NexaPOS v5.0\n');
+    s('Powered by CasirPRO v5.0\n');
 
     // Cut
     w(this.CMD.LF);
@@ -158,7 +158,7 @@ const NexaPrint = {
   },
 
   // Generate receipt HTML for browser printing
-  generateReceiptHTML(order, storeName = 'NexaPOS') {
+  generateReceiptHTML(order, storeName = 'CasirPRO') {
     const itemsHtml = (order.items || []).map(item =>
       `<div>${(item.name || 'Item')} x${item.qty || 1}</div>
        <div style="text-align:right;">Rp ${(item.qty * item.price).toLocaleString('id-ID')}</div>`
@@ -181,10 +181,10 @@ const NexaPrint = {
       ${order.paid ? `<div>Dibayar: Rp ${order.paid.toLocaleString('id-ID')}</div>` : ''}
       ${order.change ? `<div>Kembali: Rp ${order.change.toLocaleString('id-ID')}</div>` : ''}
       <div class="center" style="margin-top:10px;font-size:10px;">
-        Terima kasih<br>Powered by NexaPOS v5.0
+        Terima kasih<br>Powered by CasirPRO v5.0
       </div>
     `;
   }
 };
 
-window.NexaPrint = NexaPrint;
+window.CasirPrint = CasirPrint;

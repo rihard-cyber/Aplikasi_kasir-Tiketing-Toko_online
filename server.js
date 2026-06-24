@@ -76,12 +76,12 @@ function seed() {
   const owners = getOwners();
   if (owners.length === 0) {
     owners.push({
-      id: 'owner-1', name: 'Edward Stark', email: 'admin@nexapos.com',
+      id: 'owner-1', name: 'Edward Stark', email: 'admin@casirpro.com',
       password: hashPassword('admin123'), phone: '08123456789',
       createdAt: new Date().toISOString()
     });
     saveOwners(owners);
-    console.log('  Default owner: admin@nexapos.com / admin123');
+    console.log('  Default owner: admin@casirpro.com / admin123');
   }
   const branches = getBranches();
   if (branches.length === 0) {
@@ -108,14 +108,14 @@ function seed() {
         { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }
       ]);
       saveBranchFile('branch-1', 'settings', {
-        companyName:'Nexa Luxury Group', branchName:'Senayan Flagship Store',
+        companyName:'CasirPRO Luxury Group', branchName:'Senayan Flagship Store',
         taxRate:0.11, currency:'IDR', whatsappNotif:true
       });
       saveBranchFile('branch-1', 'customers', [
-        { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
-        { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
-        { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
-        { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 }
+        { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'CPR-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'CPR-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'CPR-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
+        { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'CPR-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 }
       ]);
       saveBranchFile('branch-1', 'shifts', []);
     }
@@ -835,7 +835,7 @@ const server = http.createServer((req, res) => {
           id: 'QRIS-' + Date.now().toString(36).toUpperCase(),
           amount: amount || 0, orderId: orderId || '', customer: customer || '',
           status: 'pending',
-          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=NEXAPOS-QRIS-' + Date.now(),
+          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CASIRPRO-QRIS-' + Date.now(),
           createdAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 15 * 60000).toISOString()
         };
@@ -908,7 +908,7 @@ const server = http.createServer((req, res) => {
   if (cleanPath === '/') { fp = '/index.html'; }
   else if (cleanPath === '/store' || cleanPath === '/tokoonline') { fp = '/store.html'; }
   else if (cleanPath === '/owner' || cleanPath === '/ownerportal') { fp = '/owner.html'; }
-  else if (cleanPath === '/pos') { fp = '/index.html'; }
+  else if (cleanPath === '/pos') { fp = '/pos.html'; }
 
   fp = path.join(__dirname, fp);
   if (!path.resolve(fp).startsWith(__dirname)) { res.writeHead(403); res.end('Forbidden'); return; }
@@ -994,7 +994,7 @@ function broadcast(msg, exclude = null) {
 server.listen(PORT, () => {
   console.log('');
   console.log('  ╔══════════════════════════════════════════╗');
-  console.log('  ║        NexaPOS SaaS v5.0                 ║');
+  console.log('  ║        CasirPRO SaaS v5.0                ║');
   console.log('  ╠══════════════════════════════════════════╣');
   console.log(`  ║  http://localhost:${PORT}          — POS Legacy    ║`);
   console.log(`  ║  http://localhost:${PORT}/owner    — Owner Portal  ║`);

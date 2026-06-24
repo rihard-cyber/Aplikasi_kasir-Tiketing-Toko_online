@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexaPOS — Empire Dashboard</title>
+  <title>CasirPRO — Empire Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -668,14 +668,14 @@
 <div class="page active" id="authPage">
   <div class="auth-box">
     <span class="auth-emoji">🏛️</span>
-    <h1>NexaPOS Empire</h1>
+    <h1>CasirPRO Empire</h1>
     <p class="subtitle">Premium Multi-Cabang Management Platform</p>
     <div class="auth-divider"></div>
 
     <div id="authLogin">
       <div class="form-group">
         <label>Email Address</label>
-        <input class="input" id="loginEmail" type="email" placeholder="admin@nexapos.com" value="admin@nexapos.com">
+        <input class="input" id="loginEmail" type="email" placeholder="admin@casirpro.com" value="admin@casirpro.com">
       </div>
       <div class="form-group">
         <label>Password</label>
@@ -707,7 +707,7 @@
     </div>
   </div>
   <div style="margin-top:20px; font-size:11px; color:var(--text-muted); text-align:center;">
-    NexaPOS SaaS v5.0 &mdash; Enterprise Multi-Branch Platform
+    CasirPRO SaaS v5.0 &mdash; Enterprise Multi-Branch Platform
   </div>
 </div>
 
@@ -726,7 +726,7 @@
     </div>
     <div class="dash-user">
       <div style="display:flex; flex-direction:column; align-items:flex-end; gap:2px;">
-        <div class="name" id="dashUserEmail">admin@nexapos.com</div>
+        <div class="name" id="dashUserEmail">admin@casirpro.com</div>
         <div class="dash-logout" onclick="doLogout()">Logout</div>
       </div>
       <div class="avatar">👑</div>
@@ -1178,9 +1178,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Retrieve token from query params, sessionStorage, or localStorage
 const urlParams = new URLSearchParams(window.location.search);
-let TOKEN = urlParams.get('token') || sessionStorage.getItem('nexapos_token') || localStorage.getItem('nexapos_owner_token') || '';
+let TOKEN = urlParams.get('token') || sessionStorage.getItem('casirpro_token') || localStorage.getItem('casirpro_owner_token') || '';
 if (TOKEN) {
-  localStorage.setItem('nexapos_owner_token', TOKEN);
+  localStorage.setItem('casirpro_owner_token', TOKEN);
   // Clear token from URL to keep it clean and secure
   if (window.history && window.history.replaceState && urlParams.get('token')) {
     const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]token=[^&]+/, '').replace(/^&/, '?').replace(/\?$/, '');
@@ -1224,7 +1224,7 @@ async function doLogin() {
   const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
   if (!res.success) return toast(res.error || 'Login gagal', 'error');
   TOKEN = res.token;
-  localStorage.setItem('nexapos_owner_token', TOKEN);
+  localStorage.setItem('casirpro_owner_token', TOKEN);
   toast('Akses diberikan. Selamat datang!', 'success');
   loadDashboard();
 }
@@ -1239,14 +1239,14 @@ async function doRegister() {
   const res = await api('/api/auth/register', { method: 'POST', body: JSON.stringify({ name, email, phone, password }) });
   if (!res.success) return toast(res.error || 'Daftar gagal', 'error');
   TOKEN = res.token;
-  localStorage.setItem('nexapos_owner_token', TOKEN);
+  localStorage.setItem('casirpro_owner_token', TOKEN);
   toast('Akun premium berhasil dibuat!', 'success');
   loadDashboard();
 }
 
 function doLogout() {
   TOKEN = '';
-  localStorage.removeItem('nexapos_owner_token');
+  localStorage.removeItem('casirpro_owner_token');
   document.getElementById('authPage').classList.add('active');
   document.getElementById('dashPage').classList.remove('active');
   showLogin();
@@ -1299,7 +1299,7 @@ async function showBranchDetail(branchId) {
   document.getElementById('detailStaff').textContent = '—';
 
   document.getElementById('detailOpenPOS').onclick = () => {
-    const posUrl = 'index.html?branch=' + branchId + '&token=' + TOKEN;
+    const posUrl = 'pos.html?branch=' + branchId + '&token=' + TOKEN;
     window.open(posUrl, '_blank');
   };
 
@@ -1378,12 +1378,12 @@ function renderOwnerReports(period) {
   }, []);
   api('/api/transactions').then(data => {
     const allTx = Array.isArray(data) ? data : (data.transactions || transactions);
-    if (typeof NexaReports !== 'undefined') {
-      if (!NexaReports.profitLoss) {
+    if (typeof CasirReports !== 'undefined') {
+      if (!CasirReports.profitLoss) {
         document.getElementById('reportPnL').innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-muted);">Modul Laporan Keuangan belum siap. Muat ulang halaman.</div>';
         return;
       }
-      const pnl = NexaReports.profitLoss(allTx, [], period || _ownerReportPeriod);
+      const pnl = CasirReports.profitLoss(allTx, [], period || _ownerReportPeriod);
       document.getElementById('reportPnL').innerHTML = `
         <div style="padding:12px;">
           <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;font-size:13px;">
@@ -1399,7 +1399,7 @@ function renderOwnerReports(period) {
           </div>
         </div>`;
 
-      const neraca = NexaReports.balanceSheet(allTx);
+      const neraca = CasirReports.balanceSheet(allTx);
       document.getElementById('reportNeraca').innerHTML = `
         <div style="padding:12px;">
           <div style="font-size:12px;margin-bottom:8px;"><strong>AKTIVA</strong></div>
@@ -1417,7 +1417,7 @@ function renderOwnerReports(period) {
           </div>
         </div>`;
 
-      const cf = NexaReports.cashFlow(allTx);
+      const cf = CasirReports.cashFlow(allTx);
       document.getElementById('reportCashFlow').innerHTML = `
         <div style="padding:12px;max-height:300px;overflow-y:auto;">
           ${(cf||[]).slice(-12).map(r => `
@@ -1435,12 +1435,12 @@ function renderOwnerReports(period) {
 }
 
 function exportOwnerReports() {
-  if (typeof NexaReports !== 'undefined') {
+  if (typeof CasirReports !== 'undefined') {
     const data = BRANCHES.reduce((acc, b) => {
       const tx = (b.transactions || b.orders || []);
       return acc.concat(tx.map(t => ({ branch: b.name, ...t })));
     }, []);
-    NexaReports.exportCSV(data, 'laporan-keuangan.csv');
+    CasirReports.exportCSV(data, 'laporan-keuangan.csv');
     toast('CSV diunduh', 'success');
   } else {
     toast('Modul laporan tidak tersedia', 'error');
@@ -1449,8 +1449,8 @@ function exportOwnerReports() {
 
 function printOwnerReports() {
   const content = document.getElementById('ownerReportsContent');
-  if (content && typeof NexaReports !== 'undefined') {
-    NexaReports.exportPDF('Laporan Keuangan NexaPOS', content.innerHTML, 'laporan-keuangan.pdf');
+  if (content && typeof CasirReports !== 'undefined') {
+    CasirReports.exportPDF('Laporan Keuangan CasirPRO', content.innerHTML, 'laporan-keuangan.pdf');
   }
 }
 
@@ -1475,8 +1475,8 @@ function renderOwnerStaff() {
       const staffList = allStaff;
       const transactions = allTransactions;
 
-      if (typeof NexaStaff !== 'undefined') {
-        NexaStaff.init();
+      if (typeof CasirStaff !== 'undefined') {
+        CasirStaff.init();
         const tempContainerId = '_ownerStaffTempAttendance';
         let tempEl = document.getElementById(tempContainerId);
         if (!tempEl) {
@@ -1485,7 +1485,7 @@ function renderOwnerStaff() {
           tempEl.style.display = 'none';
           document.body.appendChild(tempEl);
         }
-        NexaStaff.renderAttendance(tempContainerId, staffList);
+        CasirStaff.renderAttendance(tempContainerId, staffList);
         attendanceEl.innerHTML = tempEl.innerHTML;
 
         const tempCommId = '_ownerStaffTempComm';
@@ -1496,17 +1496,17 @@ function renderOwnerStaff() {
           tempCommEl.style.display = 'none';
           document.body.appendChild(tempCommEl);
         }
-        NexaStaff.renderCommission(tempCommId, transactions, staffList);
+        CasirStaff.renderCommission(tempCommId, transactions, staffList);
         commissionEl.innerHTML = tempCommEl.innerHTML;
 
         const today = new Date().toISOString().split('T')[0];
-        const presentCount = NexaStaff.attendance.filter(a => a.date === today).length;
+        const presentCount = CasirStaff.attendance.filter(a => a.date === today).length;
         document.getElementById('ownerStaffPresent').textContent = presentCount;
         document.getElementById('ownerStaffTotal').textContent = staffList.length;
 
         let totalComm = 0;
         staffList.forEach(s => {
-          const calc = NexaStaff.calculateCommission(transactions, s.id);
+          const calc = CasirStaff.calculateCommission(transactions, s.id);
           totalComm += calc.commission;
         });
         document.getElementById('ownerStaffCommission').textContent = 'Rp ' + totalComm.toLocaleString('id-ID');
@@ -1750,7 +1750,7 @@ function quickSwitchToPOS(branchId) {
   if (!branchId) return;
   const select = document.getElementById('quickBranchPOSSelect');
   select.value = ''; // reset select
-  const posUrl = 'index.html?branch=' + branchId + '&token=' + TOKEN;
+  const posUrl = 'pos.html?branch=' + branchId + '&token=' + TOKEN;
   window.open(posUrl, '_blank');
   toast('Membuka POS Kasir Cabang...', 'info');
 }
@@ -1785,7 +1785,7 @@ function loadMonitorIframe(branchId) {
   
   if (placeholder) placeholder.style.display = 'none';
   if (iframe) {
-    iframe.src = 'index.html?branch=' + branchId + '&token=' + TOKEN;
+    iframe.src = 'pos.html?branch=' + branchId + '&token=' + TOKEN;
   }
 }
 
@@ -1800,7 +1800,7 @@ function refreshMonitorIframe() {
 function openMonitorInNewTab() {
   const select = document.getElementById('monitorBranchSelect');
   if (select && select.value) {
-    const posUrl = 'index.html?branch=' + select.value + '&token=' + TOKEN;
+    const posUrl = 'pos.html?branch=' + select.value + '&token=' + TOKEN;
     window.open(posUrl, '_blank');
   }
 }
@@ -2146,7 +2146,7 @@ function sendWAReminder(name, phone, debt, limit) {
   
   const rpLocal = val => 'Rp ' + (val || 0).toLocaleString('id-ID');
   
-  const message = `Halo Kak *${name}*,\n\nKami dari *NexaPOS* ingin menginformasikan rincian tagihan kasbon aktif Kakak:\n\n` +
+  const message = `Halo Kak *${name}*,\n\nKami dari *CasirPRO* ingin menginformasikan rincian tagihan kasbon aktif Kakak:\n\n` +
     `▪️ *Total Hutang:* ${rpLocal(debt)}\n` +
     `▪️ *Batas Limit:* ${rpLocal(limit)}\n\n` +
     `Mohon kesediaannya untuk melakukan pembayaran pelunasan kasbon. Pembayaran dapat dilakukan langsung di kasir toko kami. Terima kasih atas kerja samanya! 🙏😊`;
@@ -2171,7 +2171,7 @@ initParticles();
 <div id="pwa-install-banner" class="glass-panel" style="display: none; position: fixed; bottom: 24px; left: 24px; z-index: 999999; max-width: 400px; padding: 20px; box-shadow: var(--shadow-xl); border: 1px solid rgba(245,158,11,0.22); align-items: center; gap: 16px; animation: slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;">
   <div style="font-size: 32px; filter: drop-shadow(0 0 10px rgba(245,158,11,0.3));">👑</div>
   <div style="flex: 1; display:flex; flex-direction:column; gap:4px;">
-    <h4 style="margin:0; font-family:var(--font-display); font-size:14px; font-weight:700; color:#fff;">Pasang Aplikasi NexaPOS</h4>
+    <h4 style="margin:0; font-family:var(--font-display); font-size:14px; font-weight:700; color:#fff;">Pasang Aplikasi CasirPRO</h4>
     <p style="margin:0; font-size:11px; color:var(--text-secondary, #9CA3AF); line-height:1.4;">Unduh aplikasi untuk performa super cepat dan akses offline.</p>
   </div>
   <div style="display:flex; flex-direction:column; gap:6px;">
@@ -2185,7 +2185,7 @@ initParticles();
   if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then(reg => {
-        console.log('NexaPOS SW registered:', reg.scope);
+        console.log('CasirPRO SW registered:', reg.scope);
       }).catch(err => {
         console.warn('SW registration failed:', err);
       });

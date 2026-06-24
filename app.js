@@ -1,9 +1,9 @@
 /**
- * NexaPOS - Enterprise Premium POS System
+ * CasirPRO - Enterprise Premium POS System
  * Complete Business Management Platform
  */
 
-const DB_KEY = 'nexapos_db';
+const DB_KEY = 'casirpro_db';
 const TAX_RATE = 0.11;
 
 // =============================================
@@ -25,10 +25,10 @@ const SEED_PRODUCTS = [
 ];
 
 const SEED_CUSTOMERS = [
-  { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'NXP-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
-  { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'NXP-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
-  { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'NXP-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
-  { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'NXP-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c1', name:'Alice Wijaya', phone:'08129876543', email:'alice@elite.com', tier:'Diamond', points:3400, ltv:84000000, joinDate:'2025-01-12', cardNo:'CPR-DMND-1001', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c2', name:'Budi Santoso', phone:'08119876542', email:'budi@business.com', tier:'Platinum', points:1250, ltv:25500000, joinDate:'2025-02-18', cardNo:'CPR-PLAT-2034', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c3', name:'Clara Croft', phone:'08219876541', email:'clara@croft.org', tier:'Gold', points:850, ltv:12800000, joinDate:'2025-04-03', cardNo:'CPR-GOLD-3051', maxDebtLimit: 2000000, currentDebt: 0 },
+  { id:'c4', name:'David Beckham', phone:'08789876540', email:'david@legend.com', tier:'Silver', points:300, ltv:5200000, joinDate:'2025-05-19', cardNo:'CPR-SLVR-4092', maxDebtLimit: 2000000, currentDebt: 0 },
 ];
 
 const SEED_EXPENSES = [
@@ -93,10 +93,10 @@ class Database {
       ],
       shifts:[{ id:'sh1', cashier:'Edward Stark', startTime:'2026-06-23T08:00:00', endTime:null, totalSales:0, status:'Active' }],
       notifications:[
-        { id:'n1', type:'info', title:'System Ready', message:'NexaPOS Premium initialized.', time:'13:00' },
+        { id:'n1', type:'info', title:'System Ready', message:'CasirPRO Premium initialized.', time:'13:00' },
         { id:'n2', type:'warning', title:'Low Stock', message:'Carbon Knight Keyboard: 4 units left.', time:'13:15' }
       ],
-      settings:{ companyName:'Nexa Luxury Group', branchName:'Senayan Flagship Store', taxRate:0.11, currency:'IDR', whatsappNotif:true }
+      settings:{ companyName:'CasirPRO Luxury Group', branchName:'Senayan Flagship Store', taxRate:0.11, currency:'IDR', whatsappNotif:true }
     };
     this.genHistory();
     this.save();
@@ -123,7 +123,7 @@ class Database {
         }
         const tax=Math.round(subtotal*TAX_RATE); const total=subtotal+tax;
         const methods=['QRIS','Debit Card','Bank Transfer','Cash'];
-        txns.push({ id:`txn-${c}`, invoiceNo:`NXP-INV-${c}`, date:txnDate.toISOString(), items, subtotal, tax, total, paymentMethod:methods[Math.floor(Math.random()*methods.length)], status:'Paid', cashier:'Edward Stark', customerId:cust?cust.id:null, customerName:cust?cust.name:'Walk-in Guest' });
+        txns.push({ id:`txn-${c}`, invoiceNo:`CPR-INV-${c}`, date:txnDate.toISOString(), items, subtotal, tax, total, paymentMethod:methods[Math.floor(Math.random()*methods.length)], status:'Paid', cashier:'Edward Stark', customerId:cust?cust.id:null, customerName:cust?cust.name:'Walk-in Guest' });
       }
     }
     this.state.transactions=txns;
@@ -190,12 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
   try { lockTerminal(); } catch(e) { console.warn('Lock:', e); }
   try { initQueueSystem(); } catch(e) { console.warn('QueueSystem:', e); }
   try { initOfflineSupport(); } catch(e) { console.warn('Offline:', e); }
-  try { initNexaPOSPromo(); } catch(e) { console.warn('Promo:', e); }
-  try { initNexaPOSStaff(); } catch(e) { console.warn('Staff:', e); }
-  try { initNexaPOSReports(); } catch(e) { console.warn('Reports:', e); }
-  try { initNexaPOSPayment(); } catch(e) { console.warn('Payment:', e); }
-  try { initNexaPOSPrinter(); } catch(e) { console.warn('Printer:', e); }
-  try { initNexaPOSWhatsApp(); } catch(e) { console.warn('WA:', e); }
+  try { initCasirPROPromo(); } catch(e) { console.warn('Promo:', e); }
+  try { initCasirPROStaff(); } catch(e) { console.warn('Staff:', e); }
+  try { initCasirPROReports(); } catch(e) { console.warn('Reports:', e); }
+  try { initCasirPROPayment(); } catch(e) { console.warn('Payment:', e); }
+  try { initCasirPROPrinter(); } catch(e) { console.warn('Printer:', e); }
+  try { initCasirPROWhatsApp(); } catch(e) { console.warn('WA:', e); }
   setTimeout(sfxClick, 600);
 });
 
@@ -240,13 +240,13 @@ function initParticles() {
 // =============================================
 function initTheme() {
   const toggle=document.getElementById('themeToggle');
-  const saved=localStorage.getItem('nexapos_theme')||'dark';
+  const saved=localStorage.getItem('casirpro_theme')||'dark';
   document.documentElement.setAttribute('data-theme',saved);
   if(toggle) toggle.addEventListener('click',()=>{
     const cur=document.documentElement.getAttribute('data-theme');
     const next=cur==='dark'?'light':'dark';
     document.documentElement.setAttribute('data-theme',next);
-    localStorage.setItem('nexapos_theme',next);
+    localStorage.setItem('casirpro_theme',next);
   });
 }
 
@@ -261,7 +261,7 @@ function initSidebar() {
   // Dynamically set Online Store link based on protocol and branch ID
   const storeLink = document.querySelector('.sidebar-nav-link[data-tab="store"]');
   if (storeLink) {
-    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
     let base = 'store.html';
     if (branch) {
       storeLink.href = `${base}?branch=${branch}`;
@@ -275,7 +275,7 @@ function initSidebar() {
   if (ownerLink) {
     ownerLink.addEventListener('click', e => {
       e.preventDefault();
-      const token = sessionStorage.getItem('nexapos_token') || localStorage.getItem('nexapos_owner_token') || '';
+      const token = sessionStorage.getItem('casirpro_token') || localStorage.getItem('casirpro_owner_token') || '';
       let url = 'owner.html';
       if (token) {
         url += `?token=${encodeURIComponent(token)}`;
@@ -635,13 +635,13 @@ function renderCart() {
   }
   // Show active promos bar
   let promoBar = '';
-  if (typeof NexaPromo !== 'undefined') {
-    NexaPromo.init();
+  if (typeof CasirPromo !== 'undefined') {
+    CasirPromo.init();
     const cartData = { subtotal: cart.reduce((s, i) => {
       const p = db.state.products.find(x => x.id === i.productId);
       return s + ((p ? (selectedCustomer && p.memberPrice ? p.memberPrice : p.price) : 0) * i.qty);
     }, 0), items: cart.map(i => ({ id: i.productId, name: i.name, qty: i.qty })) };
-    const promoResult = NexaPromo.apply(cartData, selectedCustomer);
+    const promoResult = CasirPromo.apply(cartData, selectedCustomer);
     if (promoResult.discounts.length) {
       promoBar = `<div style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(245,158,11,0.02));border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:11px;">
         <div style="font-weight:600;color:var(--accent);margin-bottom:4px;">🏷️ Promo Aktif</div>
@@ -787,7 +787,7 @@ function renderQRIS() {
   
   const container = document.getElementById('qrisImgContainer');
   if (container) {
-    const branch = sessionStorage.getItem('nexapos_branch') || 'main';
+    const branch = sessionStorage.getItem('casirpro_branch') || 'main';
     const qrData = `NEXAPOS-BRANCH-${branch}-TOTAL-${total}-${Date.now()}`;
     container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}" style="width:160px; height:160px; border-radius:8px;" alt="QRIS Dinamis">`;
   }
@@ -858,9 +858,9 @@ function submitPayment() {
 
   // Apply promo engine
   let appliedPromos = [];
-  if (typeof NexaPromo !== 'undefined') {
-    NexaPromo.init();
-    const promoResult = NexaPromo.apply(cartForPromo, selectedCustomer);
+  if (typeof CasirPromo !== 'undefined') {
+    CasirPromo.init();
+    const promoResult = CasirPromo.apply(cartForPromo, selectedCustomer);
     if (promoResult.totalDiscount > 0) {
       promoDiscount = promoResult.totalDiscount;
       appliedPromos = promoResult.discounts;
@@ -915,7 +915,7 @@ function submitPayment() {
     if(p){ p.stock-=item.qty; if(p.stock<=p.minStock) notif('warning','Low Stock',`${p.name}: ${p.stock} left.`); }
   });
 
-  const invNo=`NXP-INV-${1000+db.state.transactions.length+1}`;
+  const invNo=`CPR-INV-${1000+db.state.transactions.length+1}`;
   const txn={ id:uid('txn'), invoiceNo:invNo, date:new Date().toISOString(), items, subtotal:sub, tax, total, promoDiscount, appliedPromos: appliedPromos.map(a => a.name), paymentMethod:payMethod, status:'Paid', cashier:db.state.activeCashier||'Edward Stark', customerId:selectedCustomer?selectedCustomer.id:null, customerName:selectedCustomer?selectedCustomer.name:'Walk-in Guest' };
   db.state.transactions.push(txn);
 
@@ -933,26 +933,26 @@ function submitPayment() {
 
   db.save();
 
-  // Offline save via NexaDB
-  if (typeof NexaDB !== 'undefined') {
-    NexaDB.open().then(() => {
-      NexaDB.save('transactions', txn).catch(() => {});
+  // Offline save via CasirDB
+  if (typeof CasirDB !== 'undefined') {
+    CasirDB.open().then(() => {
+      CasirDB.save('transactions', txn).catch(() => {});
     }).catch(() => {});
   }
 
   closeCheckoutModal();
   showReceipt(txn);
 
-  // Thermal print via NexaPrint
-  if (typeof NexaPrint !== 'undefined') {
+  // Thermal print via CasirPrint
+  if (typeof CasirPrint !== 'undefined') {
     setTimeout(() => {
-      NexaPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
+      CasirPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
     }, 500);
   }
 
   // WhatsApp notification (if customer has WA number)
-  if (typeof NexaWA !== 'undefined' && selectedCustomer && selectedCustomer.phone) {
-    NexaWA.sendReceipt(txn, selectedCustomer.phone);
+  if (typeof CasirWA !== 'undefined' && selectedCustomer && selectedCustomer.phone) {
+    CasirWA.sendReceipt(txn, selectedCustomer.phone);
   }
 
   cart=[]; selectedCustomer=null;
@@ -977,7 +977,7 @@ function showReceipt(txn) {
   const noteHtml = txn.note ? `<div class="receipt-divider"></div><div class="receipt-row"><span>Note:</span><span>${txn.note}</span></div>` : '';
   const customerNameTranslated = txn.customerName === 'Walk-in Guest' ? t('walk_in_guest') : txn.customerName;
   const promoHtml = txn.promoDiscount > 0 ? `<div class="receipt-row" style="color:var(--accent);"><span>🏷️ Promo</span><span>-${rp(txn.promoDiscount)}</span></div>` : '';
-  content.innerHTML=`<div class="receipt-header"><h3>${db.state.settings.companyName}</h3><p>${db.state.settings.branchName}</p><p>${txn.invoiceNo} | ${date}</p></div><div class="receipt-divider"></div><div class="receipt-row"><span>${t('receipt_cashier')}</span><span>${txn.cashier}</span></div><div class="receipt-row"><span>${t('receipt_customer')}</span><span>${customerNameTranslated}</span></div><div class="receipt-divider"></div>${items}${noteHtml}<div class="receipt-divider"></div><div class="receipt-row"><span>${t('subtotal')}</span><span>${rp(txn.subtotal)}</span></div>${promoHtml}<div class="receipt-row"><span>${t('tax')} (${Math.round(db.state.settings.taxRate*100)}%)</span><span>${rp(txn.tax)}</span></div><div class="receipt-total"><span>${t('total')}</span><span>${rp(txn.total)}</span></div><div class="receipt-divider"></div><div class="receipt-footer"><p>${t('th_payment')}: ${txn.paymentMethod}</p><p class="thanks">${t('receipt_thanks')}</p><p>NexaPOS • Enterprise Suite</p></div>`;
+  content.innerHTML=`<div class="receipt-header"><h3>${db.state.settings.companyName}</h3><p>${db.state.settings.branchName}</p><p>${txn.invoiceNo} | ${date}</p></div><div class="receipt-divider"></div><div class="receipt-row"><span>${t('receipt_cashier')}</span><span>${txn.cashier}</span></div><div class="receipt-row"><span>${t('receipt_customer')}</span><span>${customerNameTranslated}</span></div><div class="receipt-divider"></div>${items}${noteHtml}<div class="receipt-divider"></div><div class="receipt-row"><span>${t('subtotal')}</span><span>${rp(txn.subtotal)}</span></div>${promoHtml}<div class="receipt-row"><span>${t('tax')} (${Math.round(db.state.settings.taxRate*100)}%)</span><span>${rp(txn.tax)}</span></div><div class="receipt-total"><span>${t('total')}</span><span>${rp(txn.total)}</span></div><div class="receipt-divider"></div><div class="receipt-footer"><p>${t('th_payment')}: ${txn.paymentMethod}</p><p class="thanks">${t('receipt_thanks')}</p><p>CasirPRO • Enterprise Suite</p></div>`;
 
   // Add WA send button in receipt actions
   const receiptActions = document.querySelector('.receipt-actions');
@@ -996,10 +996,10 @@ function showReceipt(txn) {
 function sendReceiptWA() {
   const txn = window.receiptTxn;
   if (!txn) return;
-  if (typeof NexaWA !== 'undefined') {
+  if (typeof CasirWA !== 'undefined') {
     const phone = txn.customerPhone || (selectedCustomer && selectedCustomer.phone) || '';
     if (phone) {
-      NexaWA.sendReceipt(phone, txn);
+      CasirWA.sendReceipt(phone, txn);
       toast('Struk dikirim via WhatsApp', '', 'success');
     } else {
       toast('No. HP pelanggan tidak tersedia', '', 'warning');
@@ -1015,8 +1015,8 @@ function closeReceipt() {
 
 function printReceipt() {
   const txn = window.receiptTxn;
-  if (typeof NexaPrint !== 'undefined' && txn) {
-    NexaPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
+  if (typeof CasirPrint !== 'undefined' && txn) {
+    CasirPrint.printReceipt(txn, { companyName: db.state.settings.companyName, branchName: db.state.settings.branchName });
     return;
   }
   window.print();
@@ -1215,7 +1215,7 @@ function saveCustomer(){
     const idx=db.state.customers.findIndex(c=>c.id===id);
     if(idx!==-1) Object.assign(db.state.customers[idx],{name,phone,email,tier,maxDebtLimit,currentDebt});
   } else {
-    db.state.customers.push({id:uid('c'),name,phone,email,tier,points:0,ltv:0,joinDate:new Date().toISOString().split('T')[0],cardNo:`NXP-${tier.substring(0,4).toUpperCase()}-${Math.floor(1000+Math.random()*9000)}`,maxDebtLimit,currentDebt});
+    db.state.customers.push({id:uid('c'),name,phone,email,tier,points:0,ltv:0,joinDate:new Date().toISOString().split('T')[0],cardNo:`CPR-${tier.substring(0,4).toUpperCase()}-${Math.floor(1000+Math.random()*9000)}`,maxDebtLimit,currentDebt});
   }
   db.save();
   closeModal('customerModal');
@@ -1393,7 +1393,7 @@ function exportCSV() {
   });
   const blob=new Blob([csv],{type:'text/csv'});
   const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='nexapos_transactions.csv'; a.click();
+  const a=document.createElement('a'); a.href=url; a.download='casirpro_transactions.csv'; a.click();
   URL.revokeObjectURL(url);
   toast('Exported','CSV file downloaded.','success');
 }
@@ -1430,7 +1430,7 @@ function sendAI() {
   container.appendChild(userDiv);
 
   const botDiv=document.createElement('div'); botDiv.className='ai-msg ai-bot';
-  botDiv.innerHTML=`<div class="ai-bubble"><span class="ai-typing">Analyzing...</span></div><span class="ai-label">Nexa AI</span>`;
+  botDiv.innerHTML=`<div class="ai-bubble"><span class="ai-typing">Analyzing...</span></div><span class="ai-label">CasirPRO AI</span>`;
   container.appendChild(botDiv);
   container.scrollTop=container.scrollHeight;
 
@@ -1467,7 +1467,7 @@ function generateAI(q) {
   }
   if(l.includes('forecast')||l.includes('prediksi')) return `<b>Sales Forecast</b><br>Projected growth: +15%<br>Estimated next month: ${rp(Math.round(totalSales*1.15))}<br>Key drivers: Gadgets & Luxury`;
   if(l.includes('customer')||l.includes('member')) return `<b>CRM Analytics</b><br>Total Members: ${db.state.customers.length}<br>Diamond: ${db.state.customers.filter(c=>c.tier==='Diamond').length}<br>Average LTV: ${rp(db.state.customers.length?Math.round(db.state.customers.reduce((s,c)=>s+c.ltv,0)/db.state.customers.length):0)}`;
-  return `Hello! I'm Nexa AI. Ask me about:<br>• <i>Profit analysis</i><br>• <i>Stock alerts</i><br>• <i>Best sellers</i><br>• <i>Sales forecast</i>`;
+  return `Hello! I'm CasirPRO AI. Ask me about:<br>• <i>Profit analysis</i><br>• <i>Stock alerts</i><br>• <i>Best sellers</i><br>• <i>Sales forecast</i>`;
 }
 
 // =============================================
@@ -1484,7 +1484,7 @@ function initSettings() {
     document.getElementById('setCurrency').value=db.state.settings.currency;
     document.getElementById('setWhatsapp').checked=db.state.settings.whatsappNotif;
     const setStoreName = document.getElementById('setStoreName');
-    if (setStoreName) setStoreName.value = db.state.settings.storeName || 'NexaStore';
+    if (setStoreName) setStoreName.value = db.state.settings.storeName || 'CasirStore';
     const setStoreWa = document.getElementById('setStoreWa');
     if (setStoreWa) setStoreWa.value = db.state.settings.storeWa || '6281234567890';
     const setRajaOngkirKey = document.getElementById('setRajaOngkirKey');
@@ -1582,7 +1582,7 @@ function saveSettings() {
     taxRate:parseFloat(document.getElementById('setTax').value)/100,
     currency:document.getElementById('setCurrency').value,
     whatsappNotif:document.getElementById('setWhatsapp').checked,
-    storeName: (document.getElementById('setStoreName') || {}).value || db.state.settings.storeName || 'NexaStore',
+    storeName: (document.getElementById('setStoreName') || {}).value || db.state.settings.storeName || 'CasirStore',
     storeWa: (document.getElementById('setStoreWa') || {}).value || db.state.settings.storeWa || '6281234567890',
     rajaongkirKey: (document.getElementById('setRajaOngkirKey') || {}).value || '',
     originCity: (document.getElementById('setOriginCity') || {}).value || '151',
@@ -2111,7 +2111,7 @@ function backupData() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `nexapos_backup_${todayStr()}.json`;
+  a.download = `casirpro_backup_${todayStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast('Backup', 'Database exported successfully.', 'success');
@@ -3027,7 +3027,7 @@ enhanceSettings = function() {
   _origEnhanceSettings2();
   setTimeout(addActivityLogToSettings, 100);
   // Also log page visit
-  setTimeout(() => logActivity('Session Started', 'NexaPOS v4.0 loaded'), 1000);
+  setTimeout(() => logActivity('Session Started', 'CasirPRO v4.0 loaded'), 1000);
 };
 
 // =============================================
@@ -3045,7 +3045,7 @@ function exportToExcel(type = 'transactions') {
     });
     html += '</tbody></table>';
 
-    downloadExcel('nexapos_transactions.xls', html);
+    downloadExcel('casirpro_transactions.xls', html);
     logActivity('Export', `Exported ${txns.length} transactions to Excel`);
     toast('Exported', `${txns.length} transactions exported.`, 'success');
   } else if (type === 'products') {
@@ -3055,7 +3055,7 @@ function exportToExcel(type = 'transactions') {
       html += `<tr><td>${p.name}</td><td>${p.sku}</td><td>${p.barcode}</td><td>${p.category}</td><td>${p.cost}</td><td>${p.price}</td><td>${p.memberPrice}</td><td>${p.stock}</td></tr>`;
     });
     html += '</tbody></table>';
-    downloadExcel('nexapos_products.xls', html);
+    downloadExcel('casirpro_products.xls', html);
     toast('Exported', `${prods.length} products exported.`, 'success');
   } else if (type === 'customers') {
     const custs = db.state.customers;
@@ -3064,7 +3064,7 @@ function exportToExcel(type = 'transactions') {
       html += `<tr><td>${c.name}</td><td>${c.cardNo}</td><td>${c.tier}</td><td>${c.phone}</td><td>${c.points}</td><td>${c.ltv}</td></tr>`;
     });
     html += '</tbody></table>';
-    downloadExcel('nexapos_customers.xls', html);
+    downloadExcel('casirpro_customers.xls', html);
     toast('Exported', `${custs.length} customers exported.`, 'success');
   }
 }
@@ -3427,7 +3427,7 @@ function syncProductsToServer() {
   const products = db?.state?.products || [];
   const settings = db?.state?.settings || {};
   const staffList = db?.state?.staffList || [];
-  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
   const endpoint = branch ? '/api/branch/products' : '/api/sync';
   const syncData = branch ? products : { products, settings, staffList };
   fetch(url + endpoint, {
@@ -3443,13 +3443,13 @@ function syncProductsToServer() {
 function syncServerSettings() {
   const url = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
   const settings = db?.state?.settings || {};
-  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
   const endpoint = branch ? '/api/branch/settings' : '/api/settings';
   fetch(url + endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      storeName: settings.storeName || 'NexaStore',
+      storeName: settings.storeName || 'CasirStore',
       storeWa: settings.storeWa || '6281234567890',
       rajaongkirKey: settings.rajaongkirKey || '',
       originCity: settings.originCity || '151',
@@ -3466,7 +3466,7 @@ function startOrderPolling() {
     const url = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
     const enabled = localStorage.getItem('pos_server_enabled') !== 'false';
     if (!enabled) return;
-    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
     const ordersEndpoint = branch ? `/api/branch/orders?branch=${branch}` : '/api/orders';
     fetch(url + ordersEndpoint)
       .then(r => r.json())
@@ -3729,12 +3729,12 @@ function connectWebSocket() {
       wsClient = null;
     }
 
-    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+    const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
     const wsUrl = branch ? savedUrl + '?branch=' + branch : savedUrl;
     wsClient = new WebSocket(wsUrl);
 
     wsClient.onopen = () => {
-      console.log('🔗 Connected to NexaPOS server');
+      console.log('🔗 Connected to CasirPRO server');
       const statusEl = document.getElementById('serverStatus');
       if (statusEl) {
         statusEl.textContent = '🟢 Server Terhubung';
@@ -3860,7 +3860,7 @@ function handleIncomingOrderNotification() {
 }
 
 function sendOrderViaServer(order) {
-  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
   if (wsClient && wsClient.readyState === WebSocket.OPEN) {
     wsClient.send(JSON.stringify({ type: 'new_order', order, branchId: branch }));
   }
@@ -4208,62 +4208,62 @@ function renderStaffList() {
   }).join('');
 }
 
-// ─── Integration: NexaPOS Modules ────────────────────────────────────
+// ─── Integration: CasirPRO Modules ────────────────────────────────────
 function initOfflineSupport() {
-  if (typeof NexaDB !== 'undefined') {
-    NexaDB.open().catch(e => console.warn('NexaDB open:', e));
+  if (typeof CasirDB !== 'undefined') {
+    CasirDB.open().catch(e => console.warn('CasirDB open:', e));
   }
   if (typeof initOfflineDetection === 'function') {
     initOfflineDetection();
   }
 }
 
-function initNexaPOSPromo() {
-  if (typeof NexaPromo !== 'undefined') {
-    NexaPromo.init();
+function initCasirPROPromo() {
+  if (typeof CasirPromo !== 'undefined') {
+    CasirPromo.init();
     updatePromoBadge();
   }
 }
 
-function initNexaPOSStaff() {
-  if (typeof NexaStaff !== 'undefined') {
-    NexaStaff.init();
+function initCasirPROStaff() {
+  if (typeof CasirStaff !== 'undefined') {
+    CasirStaff.init();
   }
 }
 
-function initNexaPOSReports() {
+function initCasirPROReports() {
   // Reports module is utilized in render calls
 }
 
-function initNexaPOSPayment() {
+function initCasirPROPayment() {
   // Payment module is utilized in checkout flow
 }
 
-function initNexaPOSPrinter() {
+function initCasirPROPrinter() {
   // Printer module is utilized in receipt printing
 }
 
-function initNexaPOSWhatsApp() {
+function initCasirPROWhatsApp() {
   // WhatsApp module is utilized in order/receipt flow
 }
 
 function updatePromoBadge() {
-  if (typeof NexaPromo === 'undefined') return;
+  if (typeof CasirPromo === 'undefined') return;
   const badge = document.getElementById('promoCountBadge');
   if (badge) {
-    const active = NexaPromo.promos.filter(p => p.active !== false).length;
+    const active = CasirPromo.promos.filter(p => p.active !== false).length;
     badge.textContent = active;
   }
 }
 
 function renderPromoSection() {
-  if (typeof NexaPromo === 'undefined') return;
-  NexaPromo.init();
+  if (typeof CasirPromo === 'undefined') return;
+  CasirPromo.init();
 
   const tbody = document.getElementById('promoTbody');
   if (!tbody) return;
 
-  if (!NexaPromo.promos.length) {
+  if (!CasirPromo.promos.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada promo. Klik "Buat Promo Baru" untuk memulai.</td></tr>';
     updatePromoBadge();
     document.getElementById('promoStats')?.querySelector('.stat-value') && (document.getElementById('promoActiveCount').textContent = '0');
@@ -4271,10 +4271,10 @@ function renderPromoSection() {
   }
 
   const now = Date.now();
-  const activePromos = NexaPromo.promos.filter(p => p.active !== false);
+  const activePromos = CasirPromo.promos.filter(p => p.active !== false);
   document.getElementById('promoActiveCount').textContent = activePromos.length;
 
-  tbody.innerHTML = NexaPromo.promos.map((p, i) => {
+  tbody.innerHTML = CasirPromo.promos.map((p, i) => {
     const isActive = p.active !== false && new Date(p.startDate || 0).getTime() <= now && new Date(p.endDate || '2099-12-31').getTime() >= now;
     const typeLabels = { percentage: `Diskon ${p.value}%`, nominal: `Rp ${(p.value||0).toLocaleString('id-ID')}`, buy_x_get_y: 'Buy X Get Y', bundle: 'Bundle' };
     return `<tr>
@@ -4285,7 +4285,7 @@ function renderPromoSection() {
       <td>${p.minPurchase ? 'Rp ' + p.minPurchase.toLocaleString('id-ID') : '-'}</td>
       <td>${isActive ? '<span style="color:var(--success);font-weight:600;">🟢 Aktif</span>' : '<span style="color:var(--text-muted);">🔴 Nonaktif</span>'}</td>
       <td class="text-right pr-4">
-        <button class="glass-btn glass-btn-sm" onclick="NexaPromo.remove('${p.id}');renderPromoSection();" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--danger);font-size:10px;padding:4px 8px;">Hapus</button>
+        <button class="glass-btn glass-btn-sm" onclick="CasirPromo.remove('${p.id}');renderPromoSection();" style="background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--danger);font-size:10px;padding:4px 8px;">Hapus</button>
       </td>
     </tr>`;
   }).join('');
@@ -4301,21 +4301,21 @@ function renderPromoSection() {
 }
 
 function showPromoForm() {
-  if (typeof NexaPromo === 'undefined') return;
-  NexaPromo.showAddForm(() => { renderPromoSection(); toast('Promo berhasil ditambahkan', '', 'success'); });
+  if (typeof CasirPromo === 'undefined') return;
+  CasirPromo.showAddForm(() => { renderPromoSection(); toast('Promo berhasil ditambahkan', '', 'success'); });
 }
 
 function broadcastPromo() {
   const select = document.getElementById('promoBroadcastSelect');
   if (!select || !select.value) return toast('Pilih promo terlebih dahulu', '', 'warning');
-  const promo = NexaPromo.promos.find(p => p.id === select.value);
+  const promo = CasirPromo.promos.find(p => p.id === select.value);
   if (!promo) return;
   try {
-    if (typeof NexaWA !== 'undefined' && typeof NexaWA.broadcast === 'function') {
-      NexaWA.broadcast(promo);
+    if (typeof CasirWA !== 'undefined' && typeof CasirWA.broadcast === 'function') {
+      CasirWA.broadcast(promo);
       toast('Broadcast promo dikirim via WhatsApp', '', 'success');
     } else {
-      throw new Error('NexaWA.broadcast not available');
+      throw new Error('CasirWA.broadcast not available');
     }
   } catch (e) {
     // Fallback: open wa.me with promo message
@@ -4329,15 +4329,15 @@ function renderStaffSection() {
   if (!tbody || !db.state || !db.state.staffList) return;
 
   const staffList = db.state.staffList || [];
-  if (typeof NexaStaff !== 'undefined') NexaStaff.init();
+  if (typeof CasirStaff !== 'undefined') CasirStaff.init();
 
   document.getElementById('staffTotalCount').textContent = staffList.length;
 
   // Count present today
   let presentCount = 0;
-  if (typeof NexaStaff !== 'undefined') {
+  if (typeof CasirStaff !== 'undefined') {
     const today = new Date().toISOString().split('T')[0];
-    const todayRecs = NexaStaff.attendance.filter(a => a.date === today);
+    const todayRecs = CasirStaff.attendance.filter(a => a.date === today);
     presentCount = todayRecs.length;
   }
   document.getElementById('staffPresentCount').textContent = presentCount;
@@ -4348,9 +4348,9 @@ function renderStaffSection() {
   // Commission total
   const transactions = db.state.transactions || [];
   let totalCommission = 0;
-  if (typeof NexaStaff !== 'undefined') {
+  if (typeof CasirStaff !== 'undefined') {
     staffList.forEach(s => {
-      const calc = NexaStaff.calculateCommission(transactions, s.id);
+      const calc = CasirStaff.calculateCommission(transactions, s.id);
       totalCommission += calc.commission;
     });
   }
@@ -4362,12 +4362,12 @@ function renderStaffSection() {
   }
 
   tbody.innerHTML = staffList.map(s => {
-    const todayRec = typeof NexaStaff !== 'undefined' ? NexaStaff.getToday(s.id) : null;
+    const todayRec = typeof CasirStaff !== 'undefined' ? CasirStaff.getToday(s.id) : null;
     const isClockedIn = todayRec && !todayRec.clockOut;
     const status = isClockedIn ? '<span style="color:var(--success);font-weight:600;">🟢 Hadir</span>' :
       todayRec ? '<span style="color:var(--text-muted);">✅ Selesai</span>' :
       '<span style="color:var(--text-muted);">⚪ Tidak Hadir</span>';
-    const commission = typeof NexaStaff !== 'undefined' ? NexaStaff.calculateCommission(transactions, s.id).commission : 0;
+    const commission = typeof CasirStaff !== 'undefined' ? CasirStaff.calculateCommission(transactions, s.id).commission : 0;
     return `<tr>
       <td class="pl-4" style="font-weight:600;">${s.name}</td>
       <td><span style="background:${s.role === 'Admin' ? 'var(--accent)' : 'var(--primary)'};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;">${s.role || 'Staff'}</span></td>
@@ -4376,7 +4376,7 @@ function renderStaffSection() {
       <td>${todayRec ? '✅' : '—'}</td>
       <td>Rp ${commission.toLocaleString('id-ID')}</td>
       <td class="text-right pr-4">
-        <button class="glass-btn glass-btn-sm" onclick="NexaStaff.clockIn('${s.id}','${s.name}');renderStaffSection();" style="font-size:10px;padding:4px 8px;${isClockedIn ? 'background:rgba(239,68,68,0.1);color:var(--danger);' : 'background:rgba(16,185,129,0.1);color:var(--success);'}">${isClockedIn ? 'Clock Out' : 'Clock In'}</button>
+        <button class="glass-btn glass-btn-sm" onclick="CasirStaff.clockIn('${s.id}','${s.name}');renderStaffSection();" style="font-size:10px;padding:4px 8px;${isClockedIn ? 'background:rgba(239,68,68,0.1);color:var(--danger);' : 'background:rgba(16,185,129,0.1);color:var(--success);'}">${isClockedIn ? 'Clock Out' : 'Clock In'}</button>
       </td>
     </tr>`;
   }).join('');
@@ -4391,14 +4391,14 @@ function renderStaffClockUI() {
   const tbody = document.getElementById('staffClockTbody');
   if (!tbody || !db.state || !db.state.staffList) return;
   
-  if (typeof NexaStaff === 'undefined') {
+  if (typeof CasirStaff === 'undefined') {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Modul Karyawan tidak tersedia</td></tr>';
     return;
   }
   
-  NexaStaff.init();
+  CasirStaff.init();
   const today = new Date().toISOString().split('T')[0];
-  const todayRecs = NexaStaff.attendance.filter(a => a.date === today);
+  const todayRecs = CasirStaff.attendance.filter(a => a.date === today);
   
   if (!todayRecs.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted);">Belum ada absensi hari ini</td></tr>';
@@ -4415,7 +4415,7 @@ function renderStaffClockUI() {
       <td>${r.clockOut ? new Date(r.clockOut).toLocaleTimeString('id-ID') : '-'}</td>
       <td>${isClockedIn ? '<span style="color:var(--success);">🟢 Hadir</span>' : '<span style="color:var(--text-muted);">✅ Selesai</span>'}</td>
       <td class="text-right pr-4">
-        ${isClockedIn ? `<button class="glass-btn glass-btn-sm" onclick="NexaStaff.clockOut('${r.staffId}');renderStaffClockUI();renderStaffSection();" style="background:rgba(239,68,68,0.1);color:var(--danger);font-size:10px;padding:4px 8px;">Clock Out</button>` : '<span style="font-size:10px;color:var(--text-muted);">Selesai</span>'}
+        ${isClockedIn ? `<button class="glass-btn glass-btn-sm" onclick="CasirStaff.clockOut('${r.staffId}');renderStaffClockUI();renderStaffSection();" style="background:rgba(239,68,68,0.1);color:var(--danger);font-size:10px;padding:4px 8px;">Clock Out</button>` : '<span style="font-size:10px;color:var(--text-muted);">Selesai</span>'}
       </td>
     </tr>`;
   }).join('');
@@ -4565,7 +4565,7 @@ const TRANSLATIONS = {
     owner_portal: "👑 Dashboard Owner",
     
     // Header
-    locked_title: "NexaPOS Terkunci",
+    locked_title: "CasirPRO Terkunci",
     locked_subtitle: "Pilih Kasir & Masukkan 4-Digit PIN Prioritas",
     active_cashier: "Kasir Aktif",
     
@@ -4691,7 +4691,7 @@ const TRANSLATIONS = {
     amount_received: "Jumlah Uang Diterima",
     exact: "Pas",
     change_label: "Kembalian:",
-    qris_gateway: "Gerbang Pembayaran Premium NexaPay",
+    qris_gateway: "Gerbang Pembayaran Premium CasirPay",
     qris_expires: "Kedaluwarsa dalam {time}",
     cash_portion: "Porsi Tunai",
     qris_portion: "Porsi QRIS",
@@ -4794,7 +4794,7 @@ const TRANSLATIONS = {
     shortcut_qty: "Sesuaikan Qty",
 
     // Placeholders
-    store_name_placeholder: "NexaStore",
+    store_name_placeholder: "CasirStore",
     store_wa_placeholder: "6281234567890",
     rajaongkir_key_placeholder: "Masukkan API key RajaOngkir",
     origin_city_placeholder: "151 (Jakarta)",
@@ -4869,7 +4869,7 @@ const TRANSLATIONS = {
     owner_portal: "👑 Owner Dashboard",
     
     // Header
-    locked_title: "NexaPOS Locked",
+    locked_title: "CasirPRO Locked",
     locked_subtitle: "Select Cashier & Enter 4-Digit PIN",
     active_cashier: "Active Cashier",
     
@@ -4995,7 +4995,7 @@ const TRANSLATIONS = {
     amount_received: "Amount Received",
     exact: "Exact",
     change_label: "Change:",
-    qris_gateway: "NexaPay Premium Gateway",
+    qris_gateway: "CasirPay Premium Gateway",
     qris_expires: "Expires in {time}",
     cash_portion: "Cash Portion",
     qris_portion: "QRIS Portion",
@@ -5098,7 +5098,7 @@ const TRANSLATIONS = {
     shortcut_qty: "Qty Adjust",
 
     // Placeholders
-    store_name_placeholder: "NexaStore",
+    store_name_placeholder: "CasirStore",
     store_wa_placeholder: "6281234567890",
     rajaongkir_key_placeholder: "Enter RajaOngkir API key",
     origin_city_placeholder: "151 (Jakarta)",
@@ -5173,7 +5173,7 @@ const TRANSLATIONS = {
     owner_portal: "👑 老板仪表盘",
     
     // Header
-    locked_title: "NexaPOS 已锁定",
+    locked_title: "CasirPRO 已锁定",
     locked_subtitle: "请选择收银员并输入4位安全密码",
     active_cashier: "当前收银员",
     
@@ -5299,7 +5299,7 @@ const TRANSLATIONS = {
     amount_received: "实收金额 (Tunai)",
     exact: "刚好 (实付)",
     change_label: "找零:",
-    qris_gateway: "NexaPay 高级扫码支付网关",
+    qris_gateway: "CasirPay 高级扫码支付网关",
     qris_expires: "二维码在 {time} 后过期",
     cash_portion: "现金支付部分",
     qris_portion: "扫码支付部分",
@@ -5402,7 +5402,7 @@ const TRANSLATIONS = {
     shortcut_qty: "快捷加减数量",
 
     // Placeholders
-    store_name_placeholder: "NexaStore",
+    store_name_placeholder: "CasirStore",
     store_wa_placeholder: "6281234567890",
     rajaongkir_key_placeholder: "输入 RajaOngkir API 密钥",
     origin_city_placeholder: "151 (雅加达)",
@@ -5525,7 +5525,7 @@ function applyLanguage(lang, syncToServer = true) {
   if (syncToServer) {
     syncServerSettings();
     if (wsClient && wsClient.readyState === WebSocket.OPEN) {
-      const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || '';
+      const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || '';
       wsClient.send(JSON.stringify({ type: 'sync', data: { settings: db.state.settings }, branchId: branch }));
     }
   }
@@ -5616,7 +5616,7 @@ function printBarcodeSheet() {
       <body>
         <div class="print-only-header">
           <h2 style="margin:0;">Lembar Barcode Pintasan POS</h2>
-          <p style="margin:5px 0 0 0; font-size:12px; color:#555;">NexaPOS System Barcodes Sheet</p>
+          <p style="margin:5px 0 0 0; font-size:12px; color:#555;">CasirPRO System Barcodes Sheet</p>
         </div>
         ${printContent}
         <script>
@@ -6031,7 +6031,7 @@ function submitTutupShift() {
     `⚠️ *Selisih Kas:* ${discrepancy === 0 ? 'Rp 0 (SEIMBANG)' : (discrepancy > 0 ? '+' : '-') + rp(Math.abs(discrepancy))}\n` +
     `📝 *Catatan:* ${notes || '-'}\n` +
     `---------------------------------------\n` +
-    `*NexaPOS Enterprise* - Terverifikasi`;
+    `*CasirPRO Enterprise* - Terverifikasi`;
 
   // Pre-load inside a confirmation toast or copy to clipboard
   navigator.clipboard.writeText(closingReportText).then(() => {
@@ -6050,7 +6050,7 @@ function submitTutupShift() {
 }
 
 function syncStateToServer() {
-  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('nexapos_branch') || 'branch-1';
+  const branch = (typeof BRANCH_ID !== 'undefined' && BRANCH_ID) || sessionStorage.getItem('casirpro_branch') || 'branch-1';
   const syncData = {
     type: 'sync',
     branchId: branch,
@@ -6068,7 +6068,7 @@ function syncStateToServer() {
 
   // Also sync via REST API to ensure Vercel / serverless is updated!
   const httpUrl = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
-  const branchAuthToken = sessionStorage.getItem('nexapos_token') || 'demo-token';
+  const branchAuthToken = sessionStorage.getItem('casirpro_token') || 'demo-token';
   const headers = {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer ' + branchAuthToken

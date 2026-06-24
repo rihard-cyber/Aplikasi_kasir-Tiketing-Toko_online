@@ -1,8 +1,8 @@
 {
-  "name": "NexaPOS Enterprise",
-  "short_name": "NexaPOS",
-  "description": "NexaPOS Premium Enterprise POS System",
-  "start_url": "./index.html",
+  "name": "CasirPRO Enterprise",
+  "short_name": "CasirPRO",
+  "description": "CasirPRO - Ultra Premium Enterprise POS & Business Management Platform",
+  "start_url": "./pos.html",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#07080D",

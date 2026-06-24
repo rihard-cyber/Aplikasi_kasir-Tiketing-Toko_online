@@ -1,7 +1,7 @@
-const CACHE_NAME = 'nexapos-cache-v3';
+const CACHE_NAME = 'casirpro-cache-v1';
 const STATIC_ASSETS = [
   './',
-  './index.html',
+  './pos.html',
   './owner.html',
   './store.html',
   './style.css',
@@ -66,7 +66,7 @@ self.addEventListener('fetch', e => {
       }).catch(() => {
         // Return cached index as fallback for navigation
         if (request.mode === 'navigate') {
-          return caches.match('./index.html');
+          return caches.match('./pos.html');
         }
       });
     })

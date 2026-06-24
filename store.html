@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NexaStore — Luxury Online Storefront</title>
+  <title>CasirStore — Luxury Online Storefront</title>
   <!-- Google Fonts: Plus Jakarta Sans for UI, Playfair Display for Luxury serif branding -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
@@ -1307,11 +1307,11 @@
     <div class="store-header-inner">
       <a href="#" class="store-logo" onclick="showPage('catalog')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        <span id="storeName">NexaStore VIP</span>
+        <span id="storeName">CasirStore VIP</span>
       </a>
       
       <div class="store-header-right">
-        <a href="index.html" class="store-wa-link" style="color:var(--accent); border-color:rgba(245,158,11,0.3);" title="Kembali ke Dashboard Kasir POS">
+        <a href="pos.html" class="store-wa-link" style="color:var(--accent); border-color:rgba(245,158,11,0.3);" title="Kembali ke Dashboard Kasir POS">
           <span>🖥️ Panel Kasir POS</span>
         </a>
         <a href="#" class="store-wa-link" onclick="showPage('tracking');return false" style="color:var(--primary)">
@@ -1531,18 +1531,18 @@
             <div style="font-size:11px;color:#333;font-weight:600;margin-bottom:8px;">TOTAL PEMBAYARAN</div>
             <div id="qrisTotalDisplay" style="font-size:22px;font-weight:800;color:#333;margin-bottom:12px;">Rp 0</div>
             <div style="width:160px;height:160px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;text-align:center;padding:8px;">
-              QRIS<br>NexaPay Gateway<br><span style="font-size:10px;opacity:0.7;">Klik Bayar untuk generate</span>
+              QRIS<br>CasirPay Gateway<br><span style="font-size:10px;opacity:0.7;">Klik Bayar untuk generate</span>
             </div>
           </div>
           <button class="store-card-add" onclick="processQRISPayment()" style="width:100%;">💳 Bayar via QRIS</button>
-          <p style="font-size:10px;color:#9CA3AF;margin-top:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">NexaPay QRIS Gateway</p>
+          <p style="font-size:10px;color:#9CA3AF;margin-top:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">CasirPay QRIS Gateway</p>
         </div>
       </div>
 
       <!-- Bank Transfer details -->
       <div id="pay-details-transfer" style="text-align:center; padding:12px">
         <p style="font-size:12px;color:#D1D5DB;">Silakan transfer pembayaran Anda ke rekening resmi kami:</p>
-        <p style="font-size:12px;font-weight:700;color:#fff;margin-top:4px;">Bank BCA VIP - 88293-1002 (A/N Nexa Store Group)</p>
+        <p style="font-size:12px;font-weight:700;color:#fff;margin-top:4px;">Bank BCA VIP - 88293-1002 (A/N CasirStore Group)</p>
         <div id="bankTransferInfo"></div>
       </div>
     </div>
@@ -1634,7 +1634,7 @@
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px;">
       <div class="glass-panel">
         <div style="color:var(--accent); font-size:14px; margin-bottom:12px;">★★★★★</div>
-        <p style="font-style:italic; font-size:12px; color:var(--text2); line-height:1.6; margin-bottom:16px;">"Pengalaman berbelanja di NexaStore benar-benar berkelas. Arloji Aether Chronograph saya sampai dalam waktu kurang dari 2 jam dengan kurir VIP berasuransi. Layanan AI Concierge juga sangat membantu memberikan rekomendasi."</p>
+        <p style="font-style:italic; font-size:12px; color:var(--text2); line-height:1.6; margin-bottom:16px;">"Pengalaman berbelanja di CasirStore benar-benar berkelas. Arloji Aether Chronograph saya sampai dalam waktu kurang dari 2 jam dengan kurir VIP berasuransi. Layanan AI Concierge juga sangat membantu memberikan rekomendasi."</p>
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:1.5rem;">👑</span>
           <div>
@@ -1669,17 +1669,17 @@
   </div>
 
   <!-- ===== FLOATING CUSTOMER AI CHATBOT ===== -->
-  <div class="ai-chat-pill" onclick="toggleAIChat()" title="Hubungi Nexa AI Concierge">🔮</div>
+  <div class="ai-chat-pill" onclick="toggleAIChat()" title="Hubungi CasirPRO AI Concierge">🔮</div>
   
   <div class="ai-chat-drawer" id="aiChatDrawer">
     <div class="ai-chat-header">
-      <span style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px">Nexa VIP Concierge</span>
+      <span style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px">CasirPRO VIP Concierge</span>
       <button onclick="toggleAIChat()" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:12px">✕</button>
     </div>
     
     <div class="ai-chat-body" id="aiChatBody">
       <div class="ai-chat-msg ai-chat-bot">
-        Selamat datang di <b>NexaStore Luxury Lounge</b>. Saya concierge AI Anda. Butuh saran memadukan aksesoris premium, detail spesifikasi, atau ingin tahu produk terlaris kami?
+        Selamat datang di <b>CasirStore Luxury Lounge</b>. Saya concierge AI Anda. Butuh saran memadukan aksesoris premium, detail spesifikasi, atau ingin tahu produk terlaris kami?
       </div>
     </div>
     
@@ -1695,9 +1695,9 @@
       <div>
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:18px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:22px; height:22px; color:var(--accent);"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          <span style="font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:#fff;">NexaStore</span>
+          <span style="font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:#fff;">CasirStore</span>
         </div>
-        <p style="font-size:12px; line-height:1.6; margin-bottom:16px;">Platform belanja online premium terintegrasi dengan ekosistem NexaPOS Enterprise. Akses prioritas bagi pelanggan VIP korporat.</p>
+        <p style="font-size:12px; line-height:1.6; margin-bottom:16px;">Platform belanja online premium terintegrasi dengan ekosistem CasirPRO Enterprise. Akses prioritas bagi pelanggan VIP korporat.</p>
         <div style="display:flex; gap:12px;">
           <a href="#" style="color:var(--text3); font-size:14px; text-decoration:none;" onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='var(--text3)'">📸 Instagram</a>
           <a href="#" style="color:var(--text3); font-size:14px; text-decoration:none;" onmouseenter="this.style.color='#fff'" onmouseleave="this.style.color='var(--text3)'">👔 LinkedIn</a>
@@ -1734,7 +1734,7 @@
     </div>
     
     <div style="max-width:1200px; margin:0 auto; padding-top:24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--text3);">
-      <p>© 2026 Nexa Luxury Group. Hak Cipta Dilindungi.</p>
+      <p>© 2026 CasirPRO Luxury Group. Hak Cipta Dilindungi.</p>
       <div style="display:flex; gap:16px; font-size:16px;">
         <span title="Visa">💳</span>
         <span title="Mastercard">🎴</span>
@@ -1829,7 +1829,7 @@
       }
     }
 
-    let storeSettings = { storeName: 'NexaStore', storeWa: '6281234567890', originCity: '151', bankName: 'BCA', bankAccount: '', bankHolder: '' };
+    let storeSettings = { storeName: 'CasirStore', storeWa: '6281234567890', originCity: '151', bankName: 'BCA', bankAccount: '', bankHolder: '' };
 
     async function updateStoreName() {
       try {
@@ -2371,8 +2371,8 @@
 
         // Send WA notification
         try {
-          if (typeof NexaWA !== 'undefined') {
-            NexaWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
+          if (typeof CasirWA !== 'undefined') {
+            CasirWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
           }
         } catch(e2) {}
         showConfirmation(lastOrder);
@@ -2576,7 +2576,7 @@
         return "Koleksi best-seller kami bulan ini:<br>1. Aether Chronograph Onyx<br>2. Zenith H1 ANC Headphones<br>3. Nova Ring V1 Titanium";
       }
 
-      return "Terima kasih telah berkonsultasi dengan Nexa VIP Concierge. Hubungi kami untuk detail personalisasi produk premium lainnya.";
+      return "Terima kasih telah berkonsultasi dengan CasirPRO VIP Concierge. Hubungi kami untuk detail personalisasi produk premium lainnya.";
     }
 
     // ─── HELPERS ────────────────────────────────────────────────────────────
@@ -2606,8 +2606,8 @@
       const total = cart.reduce((s, i) => s + i.price * i.qty, 0) + (selectedService.cost || 0);
       if (total <= 0) return showToast('Keranjang kosong');
 
-      if (typeof NexaPay !== 'undefined') {
-        NexaPay.showQRModal(total, '', function(result) {
+      if (typeof CasirPay !== 'undefined') {
+        CasirPay.showQRModal(total, '', function(result) {
           if (result && result.success) {
             showToast('✅ Pembayaran QRIS berhasil!');
             submitOrderWithPayment('qris', result);
@@ -2616,7 +2616,7 @@
       } else {
         // Simulate QRIS payment success directly
         showToast('✅ Pembayaran QRIS disimulasikan berhasil!');
-        submitOrderWithPayment('qris', { success: true, txnId: 'NXP-QRIS-' + Date.now() });
+        submitOrderWithPayment('qris', { success: true, txnId: 'CPR-QRIS-' + Date.now() });
       }
     }
 
@@ -2662,8 +2662,8 @@
         cart = []; saveCart(); renderCart();
 
         // Send WA notification
-        if (typeof NexaWA !== 'undefined') {
-          NexaWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
+        if (typeof CasirWA !== 'undefined') {
+          CasirWA.sendOrderNotification(lastOrder, storeSettings.storeWa);
         }
 
         showConfirmation(lastOrder);

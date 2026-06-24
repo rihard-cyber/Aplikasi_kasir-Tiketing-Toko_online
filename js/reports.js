@@ -1,5 +1,5 @@
 // ─── Laporan Keuangan (Neraca, Laba Rugi, Arus Kas) ──────────────────
-const NexaReports = {
+const CasirReports = {
 
   // ─── Laba Rugi (Profit & Loss) ──────────────────────────────────
   profitLoss(transactions, products, period = 'all') {
@@ -113,7 +113,7 @@ const NexaReports = {
       </style></head><body>
       <h1>${title}</h1>
       ${content}
-      <div class="footer">Dicetak dari NexaPOS v5.0 • ${new Date().toLocaleString('id-ID')}</div>
+      <div class="footer">Dicetak dari CasirPRO v5.0 • ${new Date().toLocaleString('id-ID')}</div>
       <script>window.onload=function(){window.print();}<\/script>
       </body></html>
     `);
@@ -137,4 +137,4 @@ const NexaReports = {
   }
 };
 
-window.NexaReports = NexaReports;
+window.CasirReports = CasirReports;

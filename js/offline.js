@@ -1,6 +1,6 @@
 // ─── Offline Mode (IndexedDB + Auto-Sync) ────────────────────────────
-const NexaDB = {
-  DB_NAME: 'NexaPOS',
+const CasirDB = {
+  DB_NAME: 'CasirPRO',
   DB_VERSION: 2,
   db: null,
 
@@ -99,7 +99,7 @@ const NexaDB = {
 };
 
 // ─── Sync Engine ─────────────────────────────────────────────────────
-const NexaSync = {
+const CasirSync = {
   isSyncing: false,
   listeners: [],
 
@@ -117,7 +117,7 @@ const NexaSync = {
   },
 
   async syncTransactions() {
-    const unsynced = await NexaDB.getByIndex('transactions', 'synced', false);
+    const unsynced = await CasirDB.getByIndex('transactions', 'synced', false);
     if (!unsynced.length) return;
     const serverUrl = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
     try {
@@ -128,14 +128,14 @@ const NexaSync = {
       if (res.ok) {
         for (const t of unsynced) {
           t.synced = true;
-          await NexaDB.save('transactions', t);
+          await CasirDB.save('transactions', t);
         }
       }
     } catch (e) { console.log('Sync deferred (offline)'); }
   },
 
   async syncOrders() {
-    const unsynced = await NexaDB.getByIndex('orders', 'synced', false);
+    const unsynced = await CasirDB.getByIndex('orders', 'synced', false);
     if (!unsynced.length) return;
     const serverUrl = localStorage.getItem('pos_server_http_url') || 'http://localhost:3000';
     for (const order of unsynced) {
@@ -146,7 +146,7 @@ const NexaSync = {
         });
         if (res.ok) {
           order.synced = true;
-          await NexaDB.save('orders', order);
+          await CasirDB.save('orders', order);
         }
       } catch (e) { /* stay queued */ }
     }
@@ -162,7 +162,7 @@ function initOfflineDetection() {
         el.textContent = '🟢 Online';
         el.style.color = '#10b981';
         // Try sync when coming back online
-        NexaSync.syncAll();
+        CasirSync.syncAll();
       } else {
         el.textContent = '🔴 Offline (mode lokal)';
         el.style.color = '#ef4444';
@@ -174,9 +174,9 @@ function initOfflineDetection() {
   updateStatus();
 
   // Periodic sync
-  setInterval(() => { if (navigator.onLine) NexaSync.syncAll(); }, 60000);
+  setInterval(() => { if (navigator.onLine) CasirSync.syncAll(); }, 60000);
 }
 
-window.NexaDB = NexaDB;
-window.NexaSync = NexaSync;
+window.CasirDB = CasirDB;
+window.CasirSync = CasirSync;
 window.initOfflineDetection = initOfflineDetection;

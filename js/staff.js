@@ -1,13 +1,13 @@
 // ─── Manajemen Karyawan (Absensi, Komisi, Shift) ─────────────────────
-const NexaStaff = {
+const CasirStaff = {
   attendance: [],
 
   init() {
-    const saved = localStorage.getItem('nexapos_attendance');
+    const saved = localStorage.getItem('casirpro_attendance');
     if (saved) { try { this.attendance = JSON.parse(saved); } catch (e) { this.attendance = []; } }
   },
 
-  save() { localStorage.setItem('nexapos_attendance', JSON.stringify(this.attendance)); },
+  save() { localStorage.setItem('casirpro_attendance', JSON.stringify(this.attendance)); },
 
   // Clock In
   clockIn(staffId, staffName) {
@@ -97,8 +97,8 @@ const NexaStaff = {
           ` : '<div style="font-size:11px;color:var(--text3);">Belum absen hari ini</div>'}
           <div style="margin-top:10px;">
             ${isClockedIn
-              ? `<button onclick="NexaStaff.clockOut('${staff.id}');NexaStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:12px;">Clock Out</button>`
-              : `<button onclick="NexaStaff.clockIn('${staff.id}','${staff.name}');NexaStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#10b981;color:#fff;cursor:pointer;font-size:12px;">Clock In</button>`
+              ? `<button onclick="CasirStaff.clockOut('${staff.id}');CasirStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:12px;">Clock Out</button>`
+              : `<button onclick="CasirStaff.clockIn('${staff.id}','${staff.name}');CasirStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#10b981;color:#fff;cursor:pointer;font-size:12px;">Clock In</button>`
             }
           </div>
         </div>
@@ -127,7 +127,7 @@ const NexaStaff = {
     `;
 
     (staffList || []).forEach(staff => {
-      const calc = NexaStaff.calculateCommission(transactions, staff.id, rate);
+      const calc = CasirStaff.calculateCommission(transactions, staff.id, rate);
       html += `
         <tr style="border-top:1px solid var(--border);">
           <td style="padding:8px;font-weight:500;">${staff.name}</td>
@@ -142,4 +142,4 @@ const NexaStaff = {
   }
 };
 
-window.NexaStaff = NexaStaff;
+window.CasirStaff = CasirStaff;

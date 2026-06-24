@@ -1,14 +1,14 @@
 // ─── WhatsApp Integration ────────────────────────────────────────────
-const NexaWA = {
+const CasirWA = {
 
   // Send receipt via WhatsApp
-  sendReceipt(phone, order, storeName = 'NexaPOS') {
+  sendReceipt(phone, order, storeName = 'CasirPRO') {
     const msg = this._receiptMessage(order, storeName);
     this.open(phone, msg);
   },
 
   // Send order notification to owner
-  notifyOwner(phone, order, storeName = 'NexaPOS') {
+  notifyOwner(phone, order, storeName = 'CasirPRO') {
     const msg = `🔔 *PESANAN BARU* - ${storeName}\n\n` +
       `📋 *${order.invoiceNo || order.id}*\n` +
       `👤 ${order.customerName || 'Walk-in'}\n` +
@@ -82,4 +82,4 @@ const NexaWA = {
   }
 };
 
-window.NexaWA = NexaWA;
+window.CasirWA = CasirWA;

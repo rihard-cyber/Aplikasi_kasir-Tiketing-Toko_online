@@ -1,13 +1,13 @@
 // ─── Promo & Diskon Engine ──────────────────────────────────────────
-const NexaPromo = {
+const CasirPromo = {
   promos: [],
 
   init() {
-    const saved = localStorage.getItem('nexapos_promos');
+    const saved = localStorage.getItem('casirpro_promos');
     if (saved) { try { this.promos = JSON.parse(saved); } catch (e) { this.promos = []; } }
   },
 
-  save() { localStorage.setItem('nexapos_promos', JSON.stringify(this.promos)); },
+  save() { localStorage.setItem('casirpro_promos', JSON.stringify(this.promos)); },
 
   add(promo) {
     promo.id = promo.id || 'promo-' + Date.now().toString(36);
@@ -116,7 +116,7 @@ const NexaPromo = {
             ${p.active !== false ? '🟢 Aktif' : '🔴 Nonaktif'}
           </div>
         </div>
-        <button onclick="NexaPromo.remove('${p.id}');NexaPromo.renderPromoList('${containerId}')"
+        <button onclick="CasirPromo.remove('${p.id}');CasirPromo.renderPromoList('${containerId}')"
           style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#ef4444;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;">Hapus</button>
       </div>
     `).join('');
@@ -172,4 +172,4 @@ const NexaPromo = {
   }
 };
 
-window.NexaPromo = NexaPromo;
+window.CasirPromo = CasirPromo;
