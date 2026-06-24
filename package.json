@@ -2,7 +2,7 @@
   "name": "nexapos-saas",
   "version": "5.0.0",
   "description": "NexaPOS SaaS — Multi-tenant POS for UMKM Indonesia",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"

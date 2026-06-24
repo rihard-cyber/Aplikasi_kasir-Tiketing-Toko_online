@@ -3,3 +3,5 @@ node_modules/
 server.log
 server.err
 server_data.json.backup
+
+.vercel
