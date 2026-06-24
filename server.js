@@ -1,5 +1,5 @@
 /**
- * NexaPOS SaaS v5.0
+ * CasirPRO SaaS v5.0
  * Multi-tenant POS Server — Auth, Branches, Owner Dashboard
  *
  * Mode SINGLE (backward-compatible):  /  serves legacy POS

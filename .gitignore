@@ -5,3 +5,14 @@ server.err
 server_data.json.backup
 
 .vercel
+
+# Temp scripts/files
+capture.mjs
+capture2.mjs
+pos-page-dump.html
+screenshot-hero.png
+
+# Local transactional data
+data/*_customers.json
+data/*_shifts.json
+data/*_transactions.json

@@ -50,7 +50,7 @@ const CasirPay = {
       <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border:1px solid rgba(99,102,241,0.3);
             border-radius:24px;padding:40px;max-width:380px;width:90%;text-align:center;
             box-shadow:0 25px 60px rgba(0,0,0,0.6);">
-        <div style="font-size:12px;color:#6366F1;font-weight:700;letter-spacing:2px;margin-bottom:8px;">NEXAPAY PREMIUM</div>
+        <div style="font-size:12px;color:#6366F1;font-weight:700;letter-spacing:2px;margin-bottom:8px;">CASIRPAY PREMIUM</div>
         <div style="font-size:28px;font-weight:700;color:#fff;margin-bottom:4px;">Rp ${total.toLocaleString('id-ID')}</div>
         <div style="font-size:12px;color:#94a3b8;margin-bottom:20px;">Scan QRIS untuk membayar</div>
         <div id="casirpayQRContainer" style="background:#fff;border-radius:16px;padding:16px;margin:0 auto 20px;width:200px;height:200px;display:flex;align-items:center;justify-content:center;">

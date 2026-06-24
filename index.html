@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CasirPRO — Sistem Kasir Ultra-Premium & Multi-Cabang untuk Pengusaha Modern</title>
-  <meta name="description" content="CasirPRO - Solusi Point of Sale (POS) dan Business Management Platform premium. Dirancang khusus untuk menargetkan UMKM, F&B, Retail, dan pengusaha ambisius.">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <title>CasirPRO — Sistem Kasir (POS), ERP & Manajemen Bisnis Multi Cabang Generasi Baru</title>
+  <meta name="description" content="CasirPRO - Sistem Kasir Digital & Business Management Platform dengan tampilan cyberpunk mewah. Multi-cabang, QRIS, WhatsApp, Laporan Keuangan Realtime. POS dan ERP untuk UMKM Indonesia.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,66 +15,59 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --bg: #06070c;
+      --bg: #07080D;
+      --bg-card: rgba(10,12,22,0.7);
       --surface: rgba(13,16,28,0.45);
       --surface-hover: rgba(20,24,42,0.6);
-      --border: rgba(245,158,11,0.08);
-      --border-light: rgba(245,158,11,0.18);
-      --border-active: rgba(245,158,11,0.35);
-      --text: #f1f5f9;
-      --text-secondary: rgba(241,245,249,0.65);
-      --text-muted: rgba(241,245,249,0.35);
-      --gold: #F59E0B;
-      --gold-light: #FBBF24;
-      --gold-glow: rgba(245,158,11,0.06);
-      --gold-glow-strong: rgba(245,158,11,0.15);
-      --emerald: #10b981;
-      --rose: #f43f5e;
-      --blue: #3b82f6;
+      --border: rgba(0,240,255,0.08);
+      --border-light: rgba(0,240,255,0.18);
+      --border-active: rgba(0,240,255,0.35);
+      --text: #e8eaf0;
+      --text-secondary: rgba(232,234,240,0.65);
+      --text-muted: rgba(232,234,240,0.35);
+      --neon-cyan: #00f0ff;
+      --neon-magenta: #ff00aa;
+      --neon-gold: #ffd700;
+      --neon-purple: #8b5cf6;
+      --cyan-dim: rgba(0,240,255,0.06);
+      --cyan-glow: rgba(0,240,255,0.12);
+      --cyan-glow-strong: rgba(0,240,255,0.25);
+      --magenta-glow: rgba(255,0,170,0.12);
       --radius-sm: 8px;
       --radius: 12px;
       --radius-lg: 18px;
       --radius-xl: 24px;
       --shadow-card: 0 16px 40px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.03);
-      --shadow-glow: 0 0 35px rgba(245,158,11,0.08);
-      --font: 'Inter', -apple-system, sans-serif;
-      --font-display: 'Space Grotesk', sans-serif;
+      --shadow-glow: 0 0 35px rgba(0,240,255,0.08);
+      --font-body: 'Rajdhani', sans-serif;
+      --font-display: 'Orbitron', sans-serif;
+      --font-mono: 'Share Tech Mono', monospace;
     }
     html { scroll-behavior: smooth; }
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--font);
+      font-family: var(--font-body);
       min-height: 100vh;
       overflow-x: hidden;
       -webkit-font-smoothing: antialiased;
     }
-
-    /* ── Animated Background ── */
-    .bg-orbs {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    body::before {
+      content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,240,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
     }
+
+    .bg-orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
     .bg-orbs .orb {
-      position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0.14;
+      position: absolute; border-radius: 50%; filter: blur(140px); opacity: 0.12;
       animation: orbFloat 25s ease-in-out infinite;
     }
-    .bg-orbs .orb:nth-child(1) {
-      width: 650px; height: 650px; background: radial-gradient(circle, var(--gold), transparent);
-      top: -10%; left: -10%; animation-delay: 0s;
-    }
-    .bg-orbs .orb:nth-child(2) {
-      width: 550px; height: 550px; background: radial-gradient(circle, #6366f1, transparent);
-      bottom: -10%; right: -5%; animation-delay: -7s;
-    }
-    .bg-orbs .orb:nth-child(3) {
-      width: 450px; height: 450px; background: radial-gradient(circle, #06b6d4, transparent);
-      top: 35%; right: 15%; animation-delay: -14s;
-    }
-    .bg-grain {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      opacity: 0.015; background-repeat: repeat; background-size: 256px 256px;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-    }
+    .bg-orbs .orb:nth-child(1) { width: 650px; height: 650px; background: radial-gradient(circle, var(--neon-cyan), transparent); top: -10%; left: -10%; animation-delay: 0s; }
+    .bg-orbs .orb:nth-child(2) { width: 550px; height: 550px; background: radial-gradient(circle, var(--neon-magenta), transparent); bottom: -10%; right: -5%; animation-delay: -7s; }
+    .bg-orbs .orb:nth-child(3) { width: 450px; height: 450px; background: radial-gradient(circle, var(--neon-purple), transparent); top: 35%; right: 15%; animation-delay: -14s; }
 
     @keyframes orbFloat {
       0%, 100% { transform: translate(0, 0) scale(1); }
@@ -82,440 +76,761 @@
       75% { transform: translate(30px, 40px) scale(1.02); }
     }
 
-    /* ── Header ── */
+    .neon-line {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 1001;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-magenta), transparent);
+      animation: neonScan 4s ease-in-out infinite;
+      opacity: 0.6;
+    }
+    @keyframes neonScan { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
+
     header {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       width: 90%; max-width: 1200px; z-index: 1000;
       padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
-      background: rgba(13,16,28,0.55);
+      background: rgba(10,12,22,0.65);
       backdrop-filter: blur(24px) saturate(160%);
       -webkit-backdrop-filter: blur(24px) saturate(160%);
-      border: 1px solid rgba(245,158,11,0.12);
+      border: 1px solid rgba(0,240,255,0.12);
       border-radius: 100px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      transition: all 0.3s;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 20px rgba(0,240,255,0.03);
     }
     .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
     .brand-icon {
-      width: 32px; height: 32px; border-radius: 8px;
-      background: linear-gradient(135deg, var(--gold), #d97706);
+      width: 34px; height: 34px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px; box-shadow: 0 4px 12px var(--gold-glow);
+      font-size: 14px; font-weight: 900; color: #000;
+      box-shadow: 0 0 20px rgba(0,240,255,0.2);
     }
-    .brand-title {
-      font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: -0.5px;
-    }
-    .brand-title span { color: var(--gold-light); }
-    
+    .brand-title { font-family: var(--font-display); font-size: 18px; font-weight: 800; letter-spacing: 1px; color: #fff; }
+    .brand-title span { color: var(--neon-cyan); }
+
     .nav-links { display: flex; gap: 28px; list-style: none; align-items: center; }
+    .nav-links .nav-mobile-hide { display: inline; }
+    @media (max-width: 768px) { .nav-links .nav-mobile-hide { display: none; } }
     .nav-links a {
-      color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500;
-      transition: color 0.2s;
+      color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 600;
+      transition: color 0.2s; letter-spacing: 0.5px;
     }
-    .nav-links a:hover { color: #fff; }
+    .nav-links a:hover { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,240,255,0.3); }
 
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       padding: 10px 22px; border-radius: 100px; font-weight: 600; font-size: 13px;
       cursor: pointer; border: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-decoration: none; position: relative; overflow: hidden;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px; font-family: var(--font-body);
     }
-    .btn-gold {
-      background: linear-gradient(135deg, var(--gold), #d97706);
+    .btn-cyan {
+      background: linear-gradient(135deg, var(--neon-cyan), #0099cc);
       color: #000; font-weight: 700;
-      box-shadow: 0 4px 20px rgba(245,158,11,0.2);
+      box-shadow: 0 4px 20px rgba(0,240,255,0.2);
     }
-    .btn-gold:hover {
+    .btn-cyan:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 30px var(--gold-glow-strong);
+      box-shadow: 0 8px 30px rgba(0,240,255,0.3);
     }
     .btn-ghost {
       background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
+      border: 1px solid rgba(0,240,255,0.12);
       color: var(--text);
     }
     .btn-ghost:hover {
-      border-color: var(--border-light);
-      background: rgba(255,255,255,0.06);
+      border-color: rgba(0,240,255,0.3);
+      background: rgba(0,240,255,0.06);
+      box-shadow: 0 0 20px rgba(0,240,255,0.06);
     }
 
-    /* ── Main Container ── */
     main { position: relative; z-index: 2; width: 100%; }
 
-    /* ── Hero Section ── */
     .hero-section {
-      min-height: 100vh; padding-top: 150px; padding-bottom: 80px;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      text-align: center; max-width: 1100px; margin: 0 auto; padding-left: 20px; padding-right: 20px;
+      min-height: 100vh; padding-top: 130px; padding-bottom: 60px;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; max-width: 1200px; margin: 0 auto; padding-left: 20px; padding-right: 20px;
     }
     .badge {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      padding: 4px 14px; border-radius: 100px;
-      background: rgba(245,158,11,0.1); color: var(--gold-light);
-      letter-spacing: 1.5px; border: 1px solid rgba(245,158,11,0.18);
+      font-family: var(--font-mono); font-size: 10px; font-weight: 400;
+      padding: 6px 18px; border-radius: 100px;
+      background: rgba(0,240,255,0.06); color: var(--neon-cyan);
+      letter-spacing: 2px; border: 1px solid rgba(0,240,255,0.12);
       margin-bottom: 24px; display: inline-block;
       animation: pulse 2.5s infinite;
+      text-transform: uppercase;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.8; transform: scale(0.97); }
-    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
     .hero-section h1 {
-      font-family: var(--font-display); font-size: 56px; font-weight: 800; line-height: 1.1;
-      letter-spacing: -1.5px; margin-bottom: 20px;
-      background: linear-gradient(135deg, #fff 30%, var(--gold-light) 65%, var(--gold) 100%);
+      font-family: var(--font-display); font-size: 52px; font-weight: 900; line-height: 1.1;
+      letter-spacing: -0.5px; margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 20%, var(--neon-cyan) 50%, var(--neon-magenta) 80%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+    .hero-section h1 .glow {
+      -webkit-text-fill-color: initial;
+      filter: drop-shadow(0 0 20px rgba(0,240,255,0.3));
+    }
     .hero-section p.lead {
-      font-size: 18px; color: var(--text-secondary); max-width: 780px; line-height: 1.6;
-      margin-bottom: 36px; font-weight: 400;
+      font-size: 17px; color: var(--text-secondary); max-width: 750px; line-height: 1.6;
+      margin-bottom: 36px; font-weight: 500;
     }
-    .hero-actions { display: flex; gap: 16px; margin-bottom: 60px; flex-wrap: wrap; justify-content: center; }
 
-    /* ── Live Interactive Mockups ── */
-    .showcase-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; width: 100%;
-      margin-top: 20px; text-align: left;
-    }
-    @media (max-width: 960px) {
-      .showcase-grid { grid-template-columns: 1fr; }
-    }
-    .glass-card {
-      background: var(--surface);
-      backdrop-filter: blur(30px) saturate(150%);
-      -webkit-backdrop-filter: blur(30px) saturate(150%);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-card);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 24px; overflow: hidden; position: relative;
-    }
-    .glass-card:hover {
-      border-color: var(--border-light);
-      box-shadow: var(--shadow-glow), var(--shadow-card);
-      transform: translateY(-4px);
-    }
-    .glass-card::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(circle at top right, rgba(245,158,11,0.06), transparent 50%);
-      z-index: 0;
-    }
-    .card-header-show { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; position: relative; z-index: 1; }
-    .card-title-show { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff; }
-    .card-badge-show { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.05); color: var(--text-secondary); text-transform: uppercase; }
+    .hero-actions { display: flex; gap: 16px; margin-bottom: 50px; flex-wrap: wrap; justify-content: center; }
 
-    /* Mockup UI Widgets */
-    .mock-pos-terminal { display: flex; flex-direction: column; gap: 8px; font-size: 11px; color: var(--text-secondary); position: relative; z-index: 1; }
-    .mock-item { display: flex; justify-content: space-between; padding: 6px 10px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.02); }
-    .mock-chart { height: 70px; display: flex; align-items: flex-end; gap: 8px; padding-top: 10px; margin-top: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); position: relative; z-index: 1;}
-    .mock-chart-bar { flex: 1; background: linear-gradient(to top, var(--gold), var(--gold-light)); border-radius: 3px 3px 0 0; min-height: 5px; animation: loadBar 1.5s forwards; }
-    @keyframes loadBar { from { height: 0%; } }
+    .pain-points {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      max-width: 900px; margin: 0 auto 40px; text-align: left;
+    }
+    @media (max-width: 768px) { .pain-points { grid-template-columns: 1fr; } }
+    .pain-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: var(--radius);
+      background: rgba(0,240,255,0.02); border: 1px solid rgba(0,240,255,0.04);
+      font-size: 12px; color: var(--text-secondary); line-height: 1.4;
+    }
+    .pain-item .x { color: var(--neon-magenta); font-weight: 700; flex-shrink: 0; }
 
-    /* ── Features Section ── */
+    /* ── Device Mockups ── */
+    .devices-showcase {
+      display: flex; align-items: center; justify-content: center; gap: 40px;
+      width: 100%; margin-top: 10px; flex-wrap: wrap;
+    }
+
+    /* Laptop mockup */
+    .laptop-mockup {
+      width: 700px; max-width: 90vw; position: relative;
+    }
+    .laptop-screen {
+      width: 100%; aspect-ratio: 16/10;
+      border: 2px solid rgba(0,240,255,0.15);
+      border-radius: 14px 14px 0 0;
+      overflow: hidden; position: relative;
+      background: #08080e;
+      box-shadow: 0 0 40px rgba(0,240,255,0.06), 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .laptop-screen img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .laptop-screen .glow-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,240,255,0.03), transparent 50%);
+      pointer-events: none;
+    }
+    .laptop-screen::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(0,240,255,0.3);
+      z-index: 2;
+    }
+    .laptop-base {
+      width: 100%; height: 18px;
+      background: linear-gradient(180deg, rgba(20,24,42,0.4), rgba(10,12,22,0.6));
+      border: 2px solid rgba(0,240,255,0.10);
+      border-top: none;
+      border-radius: 0 0 30px 30px;
+      position: relative;
+    }
+    .laptop-base::after {
+      content: ''; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 3px;
+      background: rgba(0,240,255,0.08);
+      border-radius: 3px;
+    }
+
+    /* Phone mockup */
+    .phone-mockup {
+      width: 220px; flex-shrink: 0;
+    }
+    .phone-body {
+      width: 100%; aspect-ratio: 390/844;
+      background: #08080e;
+      border: 2px solid rgba(0,240,255,0.15);
+      border-radius: 36px;
+      overflow: hidden; position: relative;
+      box-shadow: 0 0 30px rgba(0,240,255,0.06), 0 20px 50px rgba(0,0,0,0.5);
+      padding: 0;
+    }
+    .phone-body .notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 100px; height: 22px;
+      background: #08080e;
+      border-radius: 0 0 14px 14px;
+      z-index: 3;
+    }
+    .phone-body .notch::after {
+      content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(0,240,255,0.15);
+    }
+    .phone-body img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .phone-body .glow-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,240,255,0.03), transparent 50%);
+      pointer-events: none; z-index: 2;
+    }
+    .phone-label {
+      text-align: center; margin-top: 12px;
+      font-family: var(--font-mono); font-size: 10px;
+      color: var(--text-muted); letter-spacing: 1px;
+    }
+
+    /* Screenshot navigation dots */
+    .screen-nav {
+      display: flex; gap: 8px; justify-content: center; margin-top: 20px;
+    }
+    .screen-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(0,240,255,0.1);
+      cursor: pointer; transition: all 0.3s;
+      border: 1px solid rgba(0,240,255,0.05);
+    }
+    .screen-dot.active { background: var(--neon-cyan); box-shadow: 0 0 10px rgba(0,240,255,0.3); }
+
+    /* ── Sections ── */
     .section-padding { padding: 100px 20px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
-    .section-title {
-      text-align: center; margin-bottom: 60px;
+    .section-title { text-align: center; margin-bottom: 60px; }
+    .section-title .sub {
+      font-family: var(--font-mono); font-size: 10px; color: var(--neon-cyan);
+      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; display: block;
     }
     .section-title h2 {
-      font-family: var(--font-display); font-size: 38px; font-weight: 800; color: #fff; letter-spacing: -0.5px;
+      font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; letter-spacing: 0.5px;
     }
-    .section-title h2 span { color: var(--gold-light); }
+    .section-title h2 span { color: var(--neon-cyan); text-shadow: 0 0 20px rgba(0,240,255,0.2); }
     .section-title p {
-      color: var(--text-secondary); margin-top: 10px; font-size: 15px; max-width: 600px; margin-left: auto; margin-right: auto;
+      color: var(--text-secondary); margin-top: 10px; font-size: 15px; max-width: 600px;
+      margin-left: auto; margin-right: auto;
     }
 
     .features-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
     }
-    @media (max-width: 860px) {
-      .features-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 860px) { .features-grid { grid-template-columns: 1fr; } }
     .feature-card {
-      padding: 32px 24px; background: rgba(13,16,28,0.3); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      background: linear-gradient(135deg, rgba(10,12,22,0.4), rgba(15,18,35,0.2));
+      border: 1px solid rgba(0,240,255,0.06);
+      border-radius: var(--radius-lg);
       transition: all 0.3s;
+      position: relative; overflow: hidden;
     }
+    .feature-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(0,240,255,0.03), transparent 50%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
     .feature-card:hover {
-      border-color: var(--border-light); background: rgba(20,24,42,0.5); transform: translateY(-2px);
+      border-color: rgba(0,240,255,0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(0,240,255,0.04);
     }
-    .feature-icon {
-      font-size: 32px; margin-bottom: 20px; display: inline-block; filter: drop-shadow(0 0 10px rgba(245,158,11,0.2));
+    .feature-card .icon {
+      font-size: 28px; margin-bottom: 18px; display: inline-block;
+      filter: drop-shadow(0 0 8px rgba(0,240,255,0.15));
     }
     .feature-card h3 {
-      font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 12px;
+      font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff;
+      margin-bottom: 12px; letter-spacing: 0.5px;
     }
-    .feature-card p {
-      color: var(--text-secondary); font-size: 13px; line-height: 1.5;
+    .feature-card p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; font-weight: 500; }
+    .feature-card .feature-tag {
+      display: inline-block; font-family: var(--font-mono); font-size: 9px;
+      padding: 2px 8px; border-radius: 4px;
+      background: rgba(0,240,255,0.06); color: var(--neon-cyan);
+      margin-top: 12px; letter-spacing: 1px;
     }
 
-    /* ── Target Market Section ── */
+    /* Screenshot showcase sections */
+    .showcase-full {
+      padding: 80px 20px; max-width: 1200px; margin: 0 auto; position: relative; z-index: 2;
+    }
+    .showcase-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px;
+      align-items: start;
+    }
+    @media (max-width: 860px) { .showcase-grid { grid-template-columns: 1fr; } }
+    .showcase-card {
+      background: linear-gradient(135deg, rgba(10,12,22,0.4), rgba(15,18,35,0.2));
+      border: 1px solid rgba(0,240,255,0.06);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .showcase-card:hover {
+      border-color: rgba(0,240,255,0.12);
+      box-shadow: 0 0 30px rgba(0,240,255,0.04);
+      transform: translateY(-2px);
+    }
+    .showcase-card .preview {
+      width: 100%; aspect-ratio: 16/10;
+      background: #08080e;
+      position: relative; overflow: hidden;
+    }
+    .showcase-card .preview img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .showcase-card .preview::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,240,255,0.02), transparent 50%);
+      pointer-events: none;
+    }
+    .showcase-card .info {
+      padding: 20px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .showcase-card .info h4 {
+      font-family: var(--font-display); font-size: 13px; font-weight: 700; color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .showcase-card .info span {
+      font-family: var(--font-mono); font-size: 9px; color: var(--neon-cyan);
+      letter-spacing: 1px;
+    }
+
     .market-grid {
       display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 40px;
     }
-    @media (max-width: 900px) {
-      .market-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 480px) {
-      .market-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .market-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 480px) { .market-grid { grid-template-columns: 1fr; } }
     .market-card {
-      text-align: center; padding: 24px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: var(--radius);
+      text-align: center; padding: 24px;
+      background: linear-gradient(135deg, rgba(10,12,22,0.3), rgba(15,18,35,0.15));
+      border: 1px solid rgba(0,240,255,0.04);
+      border-radius: var(--radius);
       transition: all 0.3s;
     }
-    .market-card:hover {
-      background: rgba(255,255,255,0.03); border-color: var(--border-light);
-    }
-    .market-card .icon { font-size: 36px; margin-bottom: 12px; display: block; }
-    .market-card h4 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-    .market-card p { color: var(--text-muted); font-size: 12px; }
+    .market-card:hover { background: rgba(0,240,255,0.02); border-color: rgba(0,240,255,0.1); }
+    .market-card .icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .market-card h4 { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 6px; letter-spacing: 0.5px; }
+    .market-card p { color: var(--text-muted); font-size: 12px; font-weight: 500; }
 
-    /* ── CTA Section ── */
     .cta-banner {
-      background: radial-gradient(circle at top right, rgba(245,158,11,0.12), transparent), rgba(13,16,28,0.7);
-      border: 1px solid var(--border-light); border-radius: var(--radius-xl);
+      background: radial-gradient(circle at top right, rgba(0,240,255,0.08), transparent), rgba(10,12,22,0.7);
+      border: 1px solid rgba(0,240,255,0.1);
+      border-radius: var(--radius-xl);
       padding: 60px 40px; text-align: center; max-width: 950px; margin: 0 auto;
       box-shadow: var(--shadow-card);
     }
     .cta-banner h2 {
-      font-family: var(--font-display); font-size: 32px; font-weight: 800; color: #fff; margin-bottom: 16px;
+      font-family: var(--font-display); font-size: 28px; font-weight: 800; color: #fff;
+      margin-bottom: 16px; letter-spacing: 0.5px;
     }
+    .cta-banner h2 span { color: var(--neon-cyan); }
     .cta-banner p {
-      color: var(--text-secondary); max-width: 600px; margin: 0 auto 32px; line-height: 1.6; font-size: 14px;
+      color: var(--text-secondary); max-width: 600px; margin: 0 auto 32px;
+      line-height: 1.6; font-size: 14px; font-weight: 500;
     }
 
-    /* ── Footer ── */
     footer {
-      border-top: 1px solid rgba(255,255,255,0.02); padding: 40px 20px; text-align: center;
+      border-top: 1px solid rgba(0,240,255,0.03);
+      padding: 40px 20px; text-align: center;
       font-size: 12px; color: var(--text-muted); position: relative; z-index: 2;
+      font-weight: 500; letter-spacing: 0.5px;
     }
+    footer .mono { font-family: var(--font-mono); color: var(--neon-cyan); }
 
-    /* ── PWA Banner ── */
     #pwa-install-banner {
       display: none; position: fixed; bottom: 24px; left: 24px; z-index: 999999;
-      max-width: 400px; padding: 20px; box-shadow: var(--shadow-card);
-      border: 1px solid rgba(245,158,11,0.22); align-items: center; gap: 16px;
+      max-width: 400px; padding: 20px;
+      background: rgba(10,12,22,0.85);
+      backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(0,240,255,0.15);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 0 30px rgba(0,240,255,0.04), var(--shadow-card);
+      align-items: center; gap: 16px;
       animation: slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
     }
     @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Smooth scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.1); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0,240,255,0.2); }
+
+    @media (max-width: 768px) {
+      .hero-section h1 { font-size: 28px; }
+      .hero-section p.lead { font-size: 14px; }
+      .laptop-mockup { width: 100%; }
+      .phone-mockup { width: 160px; }
+      .devices-showcase { gap: 24px; }
+      .section-title h2 { font-size: 24px; }
+      header { padding: 10px 16px; }
+      .nav-links a:not(.btn) { display: none; }
+      .cta-banner { padding: 40px 20px; }
+      .cta-banner h2 { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
 
-<canvas id="particle-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
+<div class="neon-line"></div>
 <div class="bg-orbs">
   <div class="orb"></div>
   <div class="orb"></div>
   <div class="orb"></div>
 </div>
-<div class="bg-grain"></div>
 
 <header>
   <a href="#" class="brand">
-    <div class="brand-icon">🏛️</div>
-    <span class="brand-title">Casir<span>PRO</span></span>
+    <div class="brand-icon">CP</div>
+    <span class="brand-title">CASIR<span>PRO</span></span>
   </a>
   <nav class="nav-links">
-    <a href="#features">Fitur Utama</a>
-    <a href="#markets">Kesesuaian Usaha</a>
-    <a href="/owner" class="btn btn-ghost btn-sm" style="padding:6px 14px;border-radius:30px;">🏛️ Owner Portal</a>
-    <a href="/pos?branch=branch-1" class="btn btn-gold btn-sm" style="padding:6px 16px;border-radius:30px;">🚀 Buka Demo Kasir</a>
+    <a href="#features" class="nav-mobile-hide">FITUR</a>
+    <a href="#screenshots" class="nav-mobile-hide">GALERI</a>
+    <a href="#markets" class="nav-mobile-hide">SEKTOR</a>
+    <a href="/owner" class="btn btn-ghost" style="padding:6px 14px;">PORTAL OWNER</a>
+    <a href="/pos?branch=branch-1" class="btn btn-cyan" style="padding:6px 16px;">⟐ DEMO KASIR</a>
   </nav>
 </header>
 
 <main>
-  <!-- ===== HERO SECTION ===== -->
   <section class="hero-section">
-    <div class="badge">🔥 CasirPRO SaaS v5.0 Enterprise</div>
-    <h1>Sistem POS Multi-Cabang & Manajemen Bisnis Paling Mewah</h1>
-    <p class="lead">Solusi kasir digital premium yang didesain khusus untuk F&B, Retail, Butik, Jasa, dan UMKM berkembang. Monitor laba-rugi realtime, lacak absensi & komisi karyawan secara otomatis, dan kelola piutang pelanggan VIP (Buku Kasbon) dalam satu genggaman terintegrasi.</p>
-    
-    <div class="hero-actions">
-      <a href="/pos?branch=branch-1" class="btn btn-gold">🚀 Masuk Demo Kasir (POS)</a>
-      <a href="/owner" class="btn btn-ghost">🏛️ Buka Owner Portal</a>
-      <button class="btn btn-ghost" id="hero-install-btn" style="display:none; border-color:var(--emerald);">📥 Pasang Aplikasi</button>
+    <div class="badge">⟡ CasirPRO SaaS v5.0 — Enterprise Cyberpunk Edition</div>
+    <h1>Sistem POS Digital<br><span class="glow">Multi-Cabang Mewah</span></h1>
+    <p class="lead">Platform kasir premium dengan antarmuka cyberpunk futuristik. Kelola puluhan cabang, pantau laba-rugi realtime, otomatisasi QRIS &amp; WhatsApp — dalam satu ekosistem eksklusif.</p>
+
+    <div class="pain-points">
+      <div class="pain-item"><span class="x">✕</span> Uang kas sering tidak sesuai — selisih tidak ketahuan</div>
+      <div class="pain-item"><span class="x">✕</span> Sulit memantau omzet setiap cabang secara real-time</div>
+      <div class="pain-item"><span class="x">✕</span> Stok sering selisih atau hilang tanpa penyebab</div>
+      <div class="pain-item"><span class="x">✕</span> Penjualan ramai, laba tidak jelas kemana</div>
+      <div class="pain-item"><span class="x">✕</span> Laporan keuangan masih manual di Excel</div>
+      <div class="pain-item"><span class="x">✕</span> Owner harus datang ke toko hanya cek penjualan</div>
     </div>
 
-    <!-- Live Interactive Screens Mockup -->
-    <div class="showcase-grid">
-      <!-- POS Dashboard Mockup -->
-      <div class="glass-card">
-        <div class="card-header-show">
-          <span class="card-title-show">📱 Terminal Kasir POS</span>
-          <span class="card-badge-show" style="color:var(--gold);">Live View</span>
+    <div class="hero-actions">
+      <a href="/pos?branch=branch-1" class="btn btn-cyan">⟐ MASUK DEMO KASIR</a>
+      <a href="/owner" class="btn btn-ghost">⌨ PORTAL OWNER</a>
+      <button class="btn btn-ghost" id="hero-install-btn" style="display:none; border-color: var(--neon-cyan, rgba(0,240,255,0.3));">⬇ PASANG APLIKASI</button>
+    </div>
+
+    <div class="devices-showcase">
+      <div class="laptop-mockup">
+        <div class="laptop-screen">
+          <div class="glow-overlay"></div>
+          <img src="assets/screen-owner.png" alt="CasirPRO Dashboard" id="heroLaptopImg">
         </div>
-        <div class="mock-pos-terminal">
-          <div style="font-weight:700; color:#fff; margin-bottom:4px;">Invoice: CPR-INV-2026A</div>
-          <div class="mock-item"><span>Aether Chronograph Onyx</span><span>1 pcs</span></div>
-          <div class="mock-item"><span>Zenith H1 ANC Headphones</span><span>2 pcs</span></div>
-          <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; display:flex; justify-content:space-between; font-weight:700; color:var(--gold-light);">
-            <span>Total Transaksi:</span><span>Rp 17.300.000</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:4px; font-size:10px;">
-            <span>Metode: <strong style="color:var(--emerald);">QRIS Dinamis</strong></span>
-            <span>Kasir: <strong>Edward Stark</strong></span>
-          </div>
+        <div class="laptop-base"></div>
+        <div class="screen-nav" id="laptopNav">
+          <div class="screen-dot active" data-img="assets/screen-owner.png"></div>
+          <div class="screen-dot" data-img="assets/screen-owner-reports.png"></div>
+          <div class="screen-dot" data-img="assets/screen-owner-staff.png"></div>
+          <div class="screen-dot" data-img="assets/screen-store.png"></div>
         </div>
       </div>
 
-      <!-- Owner Dashboard Mockup -->
-      <div class="glass-card">
-        <div class="card-header-show">
-          <span class="card-title-show">📈 Analisis Multi-Cabang</span>
-          <span class="card-badge-show" style="color:var(--blue);">Live Stats</span>
+      <div class="phone-mockup">
+        <div class="phone-body">
+          <div class="notch"></div>
+          <div class="glow-overlay"></div>
+          <img src="assets/screen-store-mobile.png" alt="CasirPRO Mobile" id="heroPhoneImg">
         </div>
-        <div style="display:flex; flex-direction:column; gap:4px;">
-          <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted);">Total Pendapatan (Semua Cabang)</div>
-          <div style="font-size:20px; font-weight:800; color:#fff; font-family:var(--font-display);" class="gold-text">Rp 142.845.000</div>
-          <div class="mock-chart">
-            <div class="mock-chart-bar" style="height:40%;"></div>
-            <div class="mock-chart-bar" style="height:65%;"></div>
-            <div class="mock-chart-bar" style="height:55%;"></div>
-            <div class="mock-chart-bar" style="height:85%;"></div>
-            <div class="mock-chart-bar" style="height:95%; background:var(--emerald);"></div>
-          </div>
-          <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--text-muted); margin-top:4px;">
-            <span>Senayan</span><span>Kemang</span><span>PIM 3</span><span>Gading</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- E-commerce Store Mockup -->
-      <div class="glass-card">
-        <div class="card-header-show">
-          <span class="card-title-show">🌐 Catalog Toko Online</span>
-          <span class="card-badge-show" style="color:var(--emerald);">Customer View</span>
-        </div>
-        <div style="display:flex; flex-direction:column; gap:8px; font-size:11px;">
-          <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
-            <div style="font-weight:700; color:#fff;">Toko: CasirPRO Luxury Store</div>
-            <div style="color:var(--text-secondary); font-size:10px; margin-top:2px;">Terintegrasi WhatsApp order & Ongkir RajaOngkir otomatis</div>
-          </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(16,185,129,0.08); padding:8px 12px; border-radius:6px; border:1px solid rgba(16,185,129,0.15);">
-            <span style="color:var(--emerald); font-weight:700;">🟢 Checkout via QRIS</span>
-            <span style="font-family:monospace; font-weight:bold;">MDR 0.7%</span>
-          </div>
+        <div class="phone-label">━ ━ ━ MOBILE VIEW ━ ━ ━</div>
+        <div class="screen-nav" id="phoneNav">
+          <div class="screen-dot active" data-img="assets/screen-store-mobile.png"></div>
+          <div class="screen-dot" data-img="assets/screen-landing-mobile.png"></div>
+          <div class="screen-dot" data-img="assets/screen-pos-mobile.png"></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ===== FEATURES SECTION ===== -->
   <section id="features" class="section-padding">
     <div class="section-title">
-      <h2>Fitur Paling Lengkap <span>Mencegah Kebocoran Uang</span></h2>
-      <p>Kami merancang modul terbaik menggunakan metode digital marketing & kontrol operasional tangguh untuk mempermudah bisnis Anda melejit tanpa celah fraud.</p>
+      <span class="sub">✦ Premium Feature Set</span>
+      <h2>Fitur <span>Kelas Enterprise</span></h2>
+      <p>Dirancang untuk pengusaha ambisius yang menuntut kontrol penuh, kecepatan, dan estetika premium.</p>
     </div>
-
     <div class="features-grid">
       <div class="feature-card">
-        <div class="feature-icon">📱</div>
-        <h3>QRIS Dinamis Otomatis</h3>
-        <p>Proses pembayaran instan. Jumlah nominal pesanan langsung terprogram di dalam kode QR untuk menghindari salah ketik nilai uang oleh kasir maupun pembeli. Kecepatan transaksi naik 3x lipat.</p>
+        <div class="icon">⟐</div>
+        <h3>QRIS Dynamic Payment</h3>
+        <p>Kode QR otomatis sesuai total transaksi — tidak perlu mengetik nominal manual. Pembayaran lebih cepat, mengurangi human error. Mendukung transaksi cashless modern dengan MDR 0.7%.</p>
+        <span class="feature-tag">MIDTRANS GATEWAY</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">💳</div>
-        <h3>Buku Kasbon & Piutang VIP</h3>
-        <p>Pantau batas kredit limit piutang member VIP langsung dari dashboard owner. Catat cicilan pelunasan hutang dan tagih otomatis via template pengingat pesan WhatsApp dengan sekali klik.</p>
+        <div class="icon">◈</div>
+        <h3>VIP Member & Piutang Kasbon</h3>
+        <p>Credit limit, riwayat transaksi lengkap, cicilan pembayaran, reminder tagihan otomatis WhatsApp — monitoring piutang real-time untuk pelanggan VIP dan grosir.</p>
+        <span class="feature-tag">DEBITUR TRACKER</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🔐</div>
-        <h3>Shift Laci Kas & Selisih</h3>
-        <p>Kasir wajib memasukkan Modal Awal shift saat login PIN. Di akhir shift, sistem menghitung selisih kas fisik vs pencatatan penjualan secara akurat dan melaporkan rekap via WhatsApp ke Owner.</p>
+        <div class="icon">⌨</div>
+        <h3>Anti Fraud Cash Drawer</h3>
+        <p>Opening & closing cash, selisih kas otomatis terdeteksi, audit trail lengkap. Laporan shift langsung ke WhatsApp Owner. Minimalisir kebocoran uang.</p>
+        <span class="feature-tag">FRAUD PROTECTION</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">👥</div>
-        <h3>Absensi & Komisi Karyawan</h3>
-        <p>Pantau presensi check-in/out harian kasir. Sistem secara otomatis menghitung akumulasi komisi berdasarkan persentase nominal penjualan yang diselesaikan oleh masing-masing staf.</p>
+        <div class="icon">◉</div>
+        <h3>Manajemen Karyawan</h3>
+        <p>PIN login 4-digit, multi-role, presensi check-in/out, jam kerja, komisi otomatis dari penjualan. Monitoring performa setiap kasir secara real-time.</p>
+        <span class="feature-tag">HR ANALYTICS</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📈</div>
-        <h3>Konsolidasi Finansial Laba Rugi</h3>
-        <p>Dapatkan laporan keuangan real-time dari seluruh cabang dalam satu dashboard: Neraca Keuangan, Arus Kas (Cash Flow), dan Laporan Laba Rugi lengkap dengan ekspor format CSV/PDF.</p>
+        <div class="icon">⎔</div>
+        <h3>Laporan Keuangan Profesional</h3>
+        <p>Laba-rugi, neraca, cash flow, penjualan harian/bulanan, produk terlaris, customer terbaik. Export PDF & Excel 1 klik. Filter periode apa saja.</p>
+        <span class="feature-tag">MULTI-BRANCH</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🌐</div>
-        <h3>Online Store & Kurir Integrasi</h3>
-        <p>Buat etalase e-commerce premium hanya dalam 5 detik. Pembeli bisa berbelanja langsung, cek ongkos kirim real-time (JNE, TIKI, J&T), dan mengirim pesanan otomatis ke nomor WhatsApp admin Anda.</p>
+        <div class="icon">◎</div>
+        <h3>Toko Online & WhatsApp</h3>
+        <p>Website toko online instan dengan QRIS, cek ongkir realtime (JNE/TIKI/J&T), tracking pesanan, checkout langsung ke WA. Invoice & notifikasi otomatis.</p>
+        <span class="feature-tag">RAJAONGKIR + WA</span>
+      </div>
+      <div class="feature-card">
+        <div class="icon">◈</div>
+        <h3>Smart Inventory</h3>
+        <p>Multi-cabang, stok opname, mutasi barang antar cabang, barcode scanner, minimum stock alert, batch & expired date. Kontrol stok jadi lebih mudah.</p>
+        <span class="feature-tag">INVENTORY ENGINE</span>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⌨</div>
+        <h3>Executive Dashboard</h3>
+        <p>Pantau penjualan hari ini, profit, stok, customer, seluruh cabang — real-time dari mana saja via laptop, HP, atau tablet. Dashboard owner yang informatif.</p>
+        <span class="feature-tag">REALTIME SYNC</span>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⟐</div>
+        <h3>Multi Cabang Unlimited</h3>
+        <p>Kelola seluruh outlet dari satu dashboard. Transfer stok antar cabang, harga berbeda tiap cabang, gudang terpisah, laporan per outlet & konsolidasi.</p>
+        <span class="feature-tag">SCALABLE</span>
       </div>
     </div>
   </section>
 
-  <!-- ===== MARKETS SECTION ===== -->
-  <section id="markets" class="section-padding" style="border-top: 1px solid rgba(255,255,255,0.02);">
+  <section id="screenshots" class="showcase-full">
     <div class="section-title">
-      <h2>Satu Platform untuk <span>Berbagai Sektor Usaha</span></h2>
-      <p>CasirPRO dirancang fleksibel namun spesifik demi memenuhi kebutuhan alur operasional berbagai jenis bisnis.</p>
+      <span class="sub">✧ Live Preview</span>
+      <h2>Tampilan <span>Aplikasi</span></h2>
+      <p>Cuplikan langsung dari aplikasi CasirPRO yang sedang berjalan — bukan mockup statis.</p>
     </div>
+    <div class="showcase-grid">
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-owner.png" alt="Owner Dashboard" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>⌨ PORTAL OWNER — OVERVIEW MULTI-CABANG</h4>
+          <span>LIVE</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-owner-reports.png" alt="Laporan Keuangan" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>⎔ LAPORAN KEUANGAN — PROFIT & LOSS</h4>
+          <span>REALTIME</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-owner-staff.png" alt="Manajemen Karyawan" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>◉ ABSENSI & KOMISI KARYAWAN</h4>
+          <span>OTOMATIS</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-store.png" alt="Online Store" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>◎ ONLINE STORE — KATALOG PRODUK</h4>
+          <span>INTEGRATED</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-pos.png" alt="POS Terminal" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>⟐ POS TERMINAL — KASIR DIGITAL</h4>
+          <span>PIN MODE</span>
+        </div>
+      </div>
+      <div class="showcase-card">
+        <div class="preview">
+          <img src="assets/screen-landing.png" alt="Landing Page" loading="lazy">
+        </div>
+        <div class="info">
+          <h4>● LANDING PAGE — CASIRPRO v5</h4>
+          <span>CYBERPUNK</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
+  <section class="section-padding" style="border-top: 1px solid rgba(0,240,255,0.03);">
+    <div class="section-title">
+      <span class="sub">✦ Why Choose</span>
+      <h2>Kenapa Memilih <span>CASIRPRO</span></h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Tampilan Modern</h3>
+        <p style="font-size:11px;">UI/UX cyberpunk premium — nyaman dipakai sehari-hari</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Sangat Cepat</h3>
+        <p style="font-size:11px;">Loading instan — tanpa buffering lambat</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Aman & Anti Fraud</h3>
+        <p style="font-size:11px;">Audit trail, shift kas, anti kebocoran uang</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Mudah Digunakan</h3>
+        <p style="font-size:11px;">Staff bisa pakai dalam 5 menit — tanpa training</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">UMKM hingga Enterprise</h3>
+        <p style="font-size:11px;">Skalabel — dari 1 toko hingga 100+ cabang</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Update Berkala</h3>
+        <p style="font-size:11px;">Fitur baru terus ditambahkan setiap bulan</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Cloud Based</h3>
+        <p style="font-size:11px;">Akses dari mana saja — laptop, HP, tablet</p>
+      </div>
+      <div class="feature-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-size:28px;margin-bottom:12px;">✓</div>
+        <h3 style="font-size:13px;margin-bottom:4px;">Dukungan Multi Cabang</h3>
+        <p style="font-size:11px;">Siap berkembang bersama bisnis Anda</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-padding" style="border-top: 1px solid rgba(0,240,255,0.03);">
+    <div class="section-title">
+      <span class="sub">⟐ Demo Access</span>
+      <h2>Coba <span>Gratis Sekarang</span></h2>
+      <p>Tidak perlu kartu kredit. Tidak perlu instalasi. Langsung gunakan.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:1000px;margin:0 auto;">
+      <div class="feature-card" style="padding:24px;">
+        <h3 style="font-size:14px;margin-bottom:12px;">⟐ POS Kasir</h3>
+        <p style="font-size:12px;margin-bottom:8px;"><a href="/pos?branch=branch-1" style="color:var(--neon-cyan);">/pos?branch=branch-1</a></p>
+        <p style="font-size:11px;color:var(--text-muted);">PIN Demo: <span style="color:var(--neon-cyan);font-family:var(--font-mono);">1234</span> or <span style="color:var(--neon-cyan);font-family:var(--font-mono);">5555</span></p>
+      </div>
+      <div class="feature-card" style="padding:24px;">
+        <h3 style="font-size:14px;margin-bottom:12px;">⌨ Owner Dashboard</h3>
+        <p style="font-size:12px;margin-bottom:8px;"><a href="/owner" style="color:var(--neon-cyan);">/owner</a></p>
+        <p style="font-size:11px;color:var(--text-muted);">Email: <span style="color:var(--neon-cyan);">admin@casirpro.com</span><br>Password: <span style="color:var(--neon-cyan);font-family:var(--font-mono);">admin123</span></p>
+      </div>
+      <div class="feature-card" style="padding:24px;">
+        <h3 style="font-size:14px;margin-bottom:12px;">◎ Online Store</h3>
+        <p style="font-size:12px;margin-bottom:8px;"><a href="/store" style="color:var(--neon-cyan);">/store</a></p>
+        <p style="font-size:11px;color:var(--text-muted);">Toko online aktif — siap belanja demo</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="markets" class="section-padding" style="border-top: 1px solid rgba(0,240,255,0.03);">
+    <div class="section-title">
+      <span class="sub">◈ Industrial Verticals</span>
+      <h2>Satu Sistem untuk <span>Semua Sektor</span></h2>
+      <p>Fleksibel namun presisi — CasirPRO beradaptasi dengan alur bisnis apapun.</p>
+    </div>
     <div class="market-grid">
       <div class="market-card">
         <span class="icon">☕</span>
-        <h4>F&B & Coffee Shop</h4>
-        <p>Bagi meja antrean, pesanan dapur, menu bundling, diskon BOGO, dan shift laci kasir.</p>
+        <h4>Cafe & Coffee Shop</h4>
+        <p>Bagi meja, pesanan dapur, BOGO, bundling, shift laci kasir, manajemen stok bahan baku.</p>
       </div>
       <div class="market-card">
-        <span class="icon">👗</span>
-        <h4>Boutique & Retail</h4>
-        <p>Barcode scanning, manajemen inventori multisize/color, katalog online, dan membership CRM.</p>
+        <span class="icon">🍽</span>
+        <h4>Restoran & F&B</h4>
+        <p>Area prasmanan, pesanan take-away, promo menu, dan laporan penjualan per meja.</p>
       </div>
       <div class="market-card">
-        <span class="icon">✂️</span>
-        <h4>Salon & Jasa</h4>
-        <p>Penjadwalan reservasi staf, kalkulasi komisi kinerja, dan loyalty program points pelanggan.</p>
+        <span class="icon">👔</span>
+        <h4>Boutique & Fashion</h4>
+        <p>Scan barcode, multi-size/color, katalog online, membership CRM & loyalty program.</p>
+      </div>
+      <div class="market-card">
+        <span class="icon">🛒</span>
+        <h4>Minimarket & Retail</h4>
+        <p>Barcode massal, expired date tracking, stock opname, dan supplier management.</p>
+      </div>
+      <div class="market-card">
+        <span class="icon">💊</span>
+        <h4>Apotek & Klinik</h4>
+        <p>Batch & expired tracking, resep digital, member loyalty, dan laporan omzet harian.</p>
+      </div>
+      <div class="market-card">
+        <span class="icon">💄</span>
+        <h4>Kosmetik & Beauty</h4>
+        <p>Multi-brand inventory, demo stock, membership points, dan online catalog.</p>
       </div>
       <div class="market-card">
         <span class="icon">📦</span>
         <h4>Grosir & Distribusi</h4>
-        <p>Buku kasbon debitur aktif, batas limit piutang, nota tagihan WhatsApp, dan grosir tiered pricing.</p>
+        <p>Buku kasbon debitur, limit piutang, nota tagihan WA, tiered pricing grosir.</p>
+      </div>
+      <div class="market-card">
+        <span class="icon">🏢</span>
+        <h4>Multi Cabang</h4>
+        <p>Semua sektor — kelola 2 sampai 100+ cabang dalam satu dashboard terpusat.</p>
       </div>
     </div>
   </section>
 
-  <!-- ===== CTA SECTION ===== -->
   <section class="section-padding">
     <div class="cta-banner">
-      <h2>Siap Mengendalikan Imperium Bisnis Anda?</h2>
-      <p>Uji coba CasirPRO sekarang juga. Semua modul demo (Kasir POS, Owner Portal, Toko Online) sudah dikonfigurasi dan siap dicoba secara instan tanpa perlu mendaftarkan kartu kredit.</p>
+      <h2>Bangun Bisnis yang <span>Lebih Modern</span></h2>
+      <p>CASIRPRO bukan hanya aplikasi kasir. Ini adalah platform manajemen bisnis lengkap yang membantu Anda mengontrol operasional, meningkatkan efisiensi, mengurangi kebocoran, dan mempercepat pertumbuhan bisnis.</p>
       <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
-        <a href="/pos?branch=branch-1" class="btn btn-gold">🚀 Masuk POS Kasir (Gratis)</a>
-        <a href="/owner" class="btn btn-ghost">🏛️ Buka Portal Owner</a>
+        <a href="/pos?branch=branch-1" class="btn btn-cyan">⟐ MASUK DEMO KASIR</a>
+        <a href="/owner" class="btn btn-ghost">⌨ PORTAL OWNER</a>
       </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <p>© 2026 CasirPRO Luxury Group & UMKM Indonesia. Hak Cipta Dilindungi.</p>
-  <p style="margin-top: 6px; opacity:0.5;">Didukung oleh CasirPay Premium Gateway • Real-time Sync Engine</p>
+  <p>© 2026 <span class="mono">CASIRPRO</span> — Smart POS. Smarter Business.</p>
+  <p style="margin-top: 6px; opacity:0.5;">Powered by CasirPay Quantum Gateway • Real-time Sync Engine v5 • Made for UMKM Indonesia</p>
 </footer>
 
-<!-- PWA INSTALL BANNER -->
-<div id="pwa-install-banner" class="glass-card" style="display: none; position: fixed; bottom: 24px; left: 24px; z-index: 999999; max-width: 400px; padding: 20px; box-shadow: var(--shadow-xl); border: 1px solid rgba(245,158,11,0.22); align-items: center; gap: 16px;">
-  <div style="font-size: 32px; filter: drop-shadow(0 0 10px rgba(245,158,11,0.3));">👑</div>
-  <div style="flex: 1; display:flex; flex-direction:column; gap:4px;">
-    <h4 style="margin:0; font-family:var(--font-display); font-size:14px; font-weight:700; color:#fff;">Pasang Aplikasi CasirPRO</h4>
-    <p style="margin:0; font-size:11px; color:var(--text-secondary); line-height:1.4;">Unduh aplikasi untuk performa super cepat dan akses offline.</p>
+<div id="pwa-install-banner" style="display:none;position:fixed;bottom:24px;left:24px;z-index:999999;max-width:400px;padding:20px;background:rgba(10,12,22,0.85);backdrop-filter:blur(24px) saturate(160%);border:1px solid rgba(0,240,255,0.15);border-radius:16px;box-shadow:0 0 30px rgba(0,240,255,0.04),var(--shadow-card);align-items:center;gap:16px;animation:slideUp 0.5s cubic-bezier(0.34,1.56,0.64,1) both;">
+  <div style="font-size:28px;filter:drop-shadow(0 0 10px rgba(0,240,255,0.2));font-family:var(--font-display);color:var(--neon-cyan);">⟐</div>
+  <div style="flex:1;display:flex;flex-direction:column;gap:4px;">
+    <h4 style="margin:0;font-family:var(--font-display);font-size:14px;font-weight:700;color:#fff;letter-spacing:0.5px;">Install CasirPRO App</h4>
+    <p style="margin:0;font-size:11px;color:var(--text-secondary);line-height:1.4;font-weight:500;">Akses lebih cepat & mode offline.</p>
   </div>
-  <div style="display:flex; flex-direction:column; gap:6px;">
-    <button class="btn btn-gold btn-sm" id="pwa-install-btn" style="padding: 6px 14px; font-size:11px; font-weight:700;">Pasang</button>
-    <button class="btn btn-ghost btn-sm" id="pwa-close-btn" style="padding: 6px 14px; font-size:11px; border:none; background:transparent; color:var(--text-muted);">Nanti</button>
+  <div style="display:flex;flex-direction:column;gap:6px;">
+    <button class="btn btn-cyan btn-sm" id="pwa-install-btn" style="padding:6px 14px;font-size:11px;font-weight:700;">⟐ INSTALL</button>
+    <button class="btn btn-ghost btn-sm" id="pwa-close-btn" style="padding:6px 14px;font-size:11px;border:none;background:transparent;color:var(--text-muted);">Nanti</button>
   </div>
 </div>
 
 <script>
-  // PWA Service Worker Registration
+  // PWA Service Worker
   if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').then(reg => {
-        console.log('CasirPRO Landing SW registered:', reg.scope);
-      }).catch(err => {
-        console.warn('SW registration failed:', err);
-      });
+      navigator.serviceWorker.register('sw.js').catch(() => {});
     });
   }
 
-  // PWA Install Prompt Logic
+  // PWA Install Prompt
   let deferredPrompt;
   const pwaBanner = document.getElementById('pwa-install-banner');
   const heroInstallBtn = document.getElementById('hero-install-btn');
@@ -530,10 +845,7 @@
   const installApp = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(choiceResult => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('User accepted CasirPRO PWA installation');
-        }
+      deferredPrompt.userChoice.then(() => {
         if (pwaBanner) pwaBanner.style.display = 'none';
         if (heroInstallBtn) heroInstallBtn.style.display = 'none';
         deferredPrompt = null;
@@ -544,23 +856,56 @@
   document.addEventListener('DOMContentLoaded', () => {
     const installBtn = document.getElementById('pwa-install-btn');
     const closeBtn = document.getElementById('pwa-close-btn');
-
     if (installBtn) installBtn.addEventListener('click', installApp);
     if (heroInstallBtn) heroInstallBtn.addEventListener('click', installApp);
-    if (closeBtn && pwaBanner) {
-      closeBtn.addEventListener('click', () => {
-        pwaBanner.style.display = 'none';
+    if (closeBtn && pwaBanner) closeBtn.addEventListener('click', () => { pwaBanner.style.display = 'none'; });
+
+    // Screenshot navigation
+    function initScreenNav(navId, imgId) {
+      const nav = document.getElementById(navId);
+      const img = document.getElementById(imgId);
+      if (!nav || !img) return;
+      const dots = nav.querySelectorAll('.screen-dot');
+      dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          dots.forEach(d => d.classList.remove('active'));
+          dot.classList.add('active');
+          img.style.opacity = '0';
+          img.style.transition = 'opacity 0.3s';
+          setTimeout(() => {
+            img.src = dot.dataset.img;
+            img.style.opacity = '1';
+          }, 150);
+        });
       });
     }
+    initScreenNav('laptopNav', 'heroLaptopImg');
+    initScreenNav('phoneNav', 'heroPhoneImg');
   });
 
-  // Background Gold Particles
+  // Feature card mouse tracking
+  document.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--mouse-x', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--mouse-y', ((e.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  // Background particle canvas
   function initParticles() {
     const canvas = document.getElementById('particle-canvas');
-    if(!canvas || !canvas.getContext) return;
-    const ctx = canvas.getContext('2d');
+    if (!canvas) {
+      const c = document.createElement('canvas');
+      c.id = 'particle-canvas';
+      c.style.cssText = 'position:fixed;inset:0;z-index:0;pointer-events:none;';
+      document.body.prepend(c);
+    }
+    const cv = document.getElementById('particle-canvas');
+    if(!cv || !cv.getContext) return;
+    const ctx = cv.getContext('2d');
     let w=window.innerWidth, h=window.innerHeight;
-    canvas.width=w; canvas.height=h;
+    cv.width=w; cv.height=h;
     const particles=[];
     for(let i=0;i<40;i++){
       particles.push({ x:Math.random()*w, y:Math.random()*h, vx:(Math.random()-0.5)*0.2, vy:(Math.random()-0.5)*0.2, r:Math.random()*1.5+0.5 });
@@ -572,19 +917,19 @@
         if(p.x<0||p.x>w) p.vx*=-1;
         if(p.y<0||p.y>h) p.vy*=-1;
         ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle='rgba(245,158,11,0.08)'; ctx.fill();
+        ctx.fillStyle='rgba(0,240,255,0.05)'; ctx.fill();
       });
       for(let i=0;i<particles.length;i++){
         for(let j=i+1;j<particles.length;j++){
           const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y;
           const dist=Math.sqrt(dx*dx+dy*dy);
-          if(dist<150){ ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle=`rgba(245,158,11,${0.03*(1-dist/150)})`; ctx.stroke(); }
+          if(dist<150){ ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle=`rgba(0,240,255,${0.02*(1-dist/150)})`; ctx.stroke(); }
         }
       }
       requestAnimationFrame(draw);
     }
     draw();
-    window.addEventListener('resize',()=>{ w=window.innerWidth; h=window.innerHeight; canvas.width=w; canvas.height=h; });
+    window.addEventListener('resize',()=>{ w=window.innerWidth; h=window.innerHeight; cv.width=w; cv.height=h; });
   }
   initParticles();
 </script>

@@ -748,7 +748,7 @@ function selectPayMethod(m) {
     }
   }
   if(m==='QRIS') {
-    const btn = document.getElementById('qrisPayWithNexaBtn');
+    const btn = document.getElementById('qrisPayWithCasirBtn');
     if (btn) {
       btn.onclick = () => {
         toast('✅ Pembayaran QRIS terkonfirmasi!', '', 'success');
@@ -788,7 +788,7 @@ function renderQRIS() {
   const container = document.getElementById('qrisImgContainer');
   if (container) {
     const branch = sessionStorage.getItem('casirpro_branch') || 'main';
-    const qrData = `NEXAPOS-BRANCH-${branch}-TOTAL-${total}-${Date.now()}`;
+    const qrData = `CASIRPRO-BRANCH-${branch}-TOTAL-${total}-${Date.now()}`;
     container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrData)}" style="width:160px; height:160px; border-radius:8px;" alt="QRIS Dinamis">`;
   }
   
@@ -1245,7 +1245,7 @@ function renderCustomers(filter=''){
     if(c.tier==='Diamond'){ tg='from-cyan-900 via-indigo-950 to-slate-950'; tc='text-cyan-400'; tl='DIAMOND VIP'; gl='rgba(6,182,212,0.3)'; }
     else if(c.tier==='Platinum'){ tg='from-indigo-900 via-slate-900 to-zinc-950'; tc='text-indigo-400'; tl='PLATINUM VIP'; gl='rgba(99,102,241,0.3)'; }
     else if(c.tier==='Gold'){ tg='from-amber-950 via-neutral-900 to-zinc-950'; tc='text-amber-400'; tl='GOLD PRIVILEGE'; gl='rgba(245,158,11,0.3)'; }
-    return `<div class="vip-card" style="background:linear-gradient(135deg,${tg});border:1px solid ${gl};border-radius:var(--radius-xl)"><div class="shine"></div><div class="vip-card-top"><div><div class="vip-card-name">${c.name}</div><span class="vip-card-tier" style="color:${tc}">${tl}</span></div><span class="vip-card-brand">NEXA</span></div><div class="vip-card-bottom"><div><div class="vip-card-label">${t('th_ltv')}</div><div class="vip-card-value">${rp(c.ltv)}</div></div><div class="text-right"><div class="vip-card-label">${t('th_points')}</div><div class="vip-card-value" style="color:${tc}">${c.points}</div></div></div><div class="vip-card-id"><span>${c.cardNo}</span><span>${t('since_label')} ${new Date(c.joinDate).getFullYear()}</span></div><div class="vip-card-glow" style="background:${gl}"></div></div>`;
+    return `<div class="vip-card" style="background:linear-gradient(135deg,${tg});border:1px solid ${gl};border-radius:var(--radius-xl)"><div class="shine"></div><div class="vip-card-top"><div><div class="vip-card-name">${c.name}</div><span class="vip-card-tier" style="color:${tc}">${tl}</span></div><span class="vip-card-brand">CASIR</span></div><div class="vip-card-bottom"><div><div class="vip-card-label">${t('th_ltv')}</div><div class="vip-card-value">${rp(c.ltv)}</div></div><div class="text-right"><div class="vip-card-label">${t('th_points')}</div><div class="vip-card-value" style="color:${tc}">${c.points}</div></div></div><div class="vip-card-id"><span>${c.cardNo}</span><span>${t('since_label')} ${new Date(c.joinDate).getFullYear()}</span></div><div class="vip-card-glow" style="background:${gl}"></div></div>`;
   }).join(''):`<div class="text-center py-8 text-gray-500" style="grid-column:1/-1">${t('no_vip_cards')}</div>`;
 }
 

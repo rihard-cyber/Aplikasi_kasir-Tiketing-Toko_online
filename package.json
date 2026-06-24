@@ -1,7 +1,7 @@
 {
-  "name": "nexapos-saas",
+  "name": "casirpro-saas",
   "version": "5.0.0",
-  "description": "NexaPOS SaaS — Multi-tenant POS for UMKM Indonesia",
+  "description": "CasirPRO SaaS — Multi-tenant POS for UMKM Indonesia",
   "main": "api/index.js",
   "scripts": {
     "start": "node server.js",
@@ -9,6 +9,19 @@
   },
   "dependencies": {
     "motion": "^12.40.0",
+    "playwright-chromium": "^1.61.1",
     "ws": "^8.16.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rihard-cyber/Aplikasi_kasir-Tiketing-Toko_online.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rihard-cyber/Aplikasi_kasir-Tiketing-Toko_online/issues"
+  },
+  "homepage": "https://github.com/rihard-cyber/Aplikasi_kasir-Tiketing-Toko_online#readme"
 }
