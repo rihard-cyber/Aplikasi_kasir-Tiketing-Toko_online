@@ -521,13 +521,13 @@
       gap: 8px;
     }
     .cart-qty-btn {
-      width: 24px;
-      height: 24px;
+      width: 36px;
+      height: 36px;
       border-radius: 6px;
       border: 1px solid var(--border);
       background: rgba(255,255,255,0.03);
       cursor: pointer;
-      font-size: 12px;
+      font-size: 18px;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -550,7 +550,7 @@
       color: var(--danger);
       cursor: pointer;
       font-size: 16px;
-      padding: 4px;
+      padding: 8px 12px;
       opacity: 0.7;
       transition: opacity 0.2s;
     }
@@ -761,6 +761,7 @@
     .cc-simulator-wrapper {
       perspective: 1000px;
       width: 320px;
+      max-width: 100%;
       height: 190px;
       margin: 20px auto;
     }
@@ -1295,6 +1296,82 @@
       .checkout-form { grid-template-columns: 1fr; }
       .details-content { grid-template-columns: 1fr; }
       .details-visual { min-height: 200px; font-size: 4rem; }
+      .store-header-right .nav-text { display: none; }
+      .store-header-right .nav-icon-only { display: inline; }
+    }
+    @media (max-width: 360px) {
+      .cc-simulator { width: 100% !important; max-width: 100% !important; }
+    }
+    @media (max-width: 480px) {
+      .ai-chat-drawer { width: calc(100vw - 32px) !important; max-width: 320px !important; height: 50vh !important; min-height: 300px !important; right: 16px !important; bottom: 85px !important; }
+      .details-body { padding: 20px !important; }
+    }
+    @media (max-width: 400px) {
+      .store-header { padding: 12px 12px; }
+      .store-header-right { gap: 8px; }
+      .store-hero { padding: 100px 12px 40px; }
+      .store-container { padding: 16px 12px; }
+    }
+    /* iOS zoom prevention: ensure all inputs are at least 16px */
+    @supports (-webkit-touch-callout: none) {
+      .checkout-form input, .checkout-form select, .checkout-form textarea,
+      .store-search, #aiStoreInput, #storeUrlInput { font-size: 16px !important; }
+    }
+    /* === CYBERPUNK BOTTOM TAB BAR (Store) === */
+    .store-bottom-tab {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 68px;
+      z-index: 1001;
+      background: rgba(8, 10, 20, 0.85);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-top: 1px solid rgba(0, 240, 255, 0.12);
+      box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 240, 255, 0.03);
+      justify-content: space-around;
+      align-items: center;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .store-bottom-tab.hidden { transform: translateY(100%); opacity: 0; }
+    .store-tab-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; color: rgba(232,234,240,0.4); cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1); flex: 1; height: 100%;
+      position: relative; -webkit-tap-highlight-color: transparent; user-select: none;
+    }
+    .store-tab-item .tab-icon {
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), color 0.25s;
+      position: relative; z-index: 2;
+    }
+    .store-tab-item .tab-label {
+      font-size: 9px; font-weight: 700; font-family: 'Orbitron', sans-serif;
+      letter-spacing: 0.5px; transition: color 0.25s; position: relative; z-index: 2; text-transform: uppercase;
+    }
+    .store-tab-item.active { color: var(--neon-cyan) !important; }
+    .store-tab-item.active .tab-icon {
+      color: var(--neon-cyan) !important; transform: translateY(-3px) scale(1.1);
+      filter: drop-shadow(0 0 8px rgba(0,240,255,0.6));
+    }
+    .store-tab-item.active .tab-label { color: var(--neon-cyan) !important; text-shadow: 0 0 8px rgba(0,240,255,0.3); }
+    .store-tab-item::before {
+      content: ''; position: absolute; top: -1px; left: 50%;
+      transform: translateX(-50%) scaleX(0); width: 36px; height: 3px;
+      background: var(--neon-cyan); border-radius: 0 0 3px 3px;
+      box-shadow: 0 0 12px var(--neon-cyan), 0 0 25px var(--neon-cyan);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); opacity: 0.8;
+    }
+    .store-tab-item.active::before { transform: translateX(-50%) scaleX(1); }
+    @media (max-width: 900px) {
+      .store-bottom-tab { display: flex !important; }
+      .store-container { padding-bottom: 80px !important; }
+      .page-content { padding-bottom: 0 !important; }
+      .store-header .store-header-right .nav-text { display: none; }
+    }
+    @media (max-width: 480px) {
+      .store-bottom-tab { height: 60px; }
+      .store-tab-item .tab-label { font-size: 8px; }
     }
   </style>
 </head>
@@ -1362,13 +1439,13 @@
       
       <div class="store-header-right">
         <a href="pos.html" class="store-wa-link" style="color:var(--accent); border-color:rgba(245,158,11,0.3);" title="Kembali ke Dashboard Kasir POS">
-          <span>🖥️ Panel Kasir POS</span>
+          <span class="nav-icon-only">🖥️</span><span class="nav-text"> Panel Kasir POS</span>
         </a>
         <a href="#" class="store-wa-link" onclick="showPage('tracking');return false" style="color:var(--primary)">
-          <span>📋 Pesanan Saya</span>
+          <span class="nav-icon-only">📋</span><span class="nav-text"> Pesanan Saya</span>
         </a>
         <a href="https://wa.me/6281234567890" target="_blank" class="store-wa-link" id="storeWaLink">
-          <span>💬 CS</span>
+          <span class="nav-icon-only">💬</span><span class="nav-text"> CS</span>
         </a>
         <button class="store-cart-btn" onclick="toggleCart()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
@@ -1526,7 +1603,7 @@
 
       <!-- Credit Card Interactive 3D Simulator -->
       <div id="pay-details-cc" style="display:none">
-        <div class="cc-simulator-wrapper">
+        <div class="cc-simulator-wrapper cc-simulator">
           <div class="cc-card-3d" id="ccCard">
             <!-- Front -->
             <div class="cc-front">
@@ -1734,7 +1811,7 @@
     </div>
     
     <div class="ai-chat-footer">
-      <input type="text" id="aiStoreInput" class="glass-input" style="font-size:11px;" placeholder="Ada yang bisa saya bantu?" onkeypress="handleAIChatKeyPress(event)">
+      <input type="text" id="aiStoreInput" class="glass-input" style="font-size:16px;" placeholder="Ada yang bisa saya bantu?" onkeypress="handleAIChatKeyPress(event)">
       <button class="submit-order-btn" onclick="submitStoreAIChat()" style="margin:0;padding:8px 14px;border-radius:10px">Kirim</button>
     </div>
   </div>
@@ -1777,7 +1854,7 @@
         <h4 style="font-family:'Playfair Display',serif; font-size:14px; font-weight:700; color:#fff; margin-bottom:18px;">Buletin VIP</h4>
         <p style="font-size:12px; line-height:1.6; margin-bottom:12px;">Berlangganan untuk menerima undangan rilis koleksi terbatas dan penawaran loyalty eksklusif.</p>
         <div style="display:flex; gap:6px;">
-          <input type="email" placeholder="Email Anda" style="flex:1; padding:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; font-size:11px; color:#fff; outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <input type="email" placeholder="Email Anda" style="flex:1; padding:10px; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; font-size:16px; color:#fff; outline:none;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           <button class="store-card-add" style="width:auto; margin:0; padding:10px 16px; border-radius:8px;" onclick="showToast('Terima kasih telah bergabung!')">Daftar</button>
         </div>
       </div>
@@ -1833,6 +1910,14 @@
     let activePaymentMode = 'transfer';
     let SERVER = localStorage.getItem('storeServerUrl') || 'http://localhost:3000';
 
+    function htmlEscape(str) {
+      if (typeof str !== 'string') return str;
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+    }
+    function htmlAttr(str) {
+      if (typeof str !== 'string') return str;
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
     function api(path) {
       const base = SERVER || window.location.origin;
       return base + path;
@@ -1903,9 +1988,9 @@
             bankInfo.innerHTML = `
               <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:8px">
                 <div style="font-size:13px;font-weight:600;margin-bottom:8px">💰 Transfer Bank</div>
-                <div style="font-size:14px"><strong>${s.bankName}</strong></div>
-                <div style="font-size:18px;font-weight:700;color:var(--accent);margin:4px 0">${s.bankAccount || '-'}</div>
-                <div style="font-size:12px;color:var(--text3)">a.n. ${s.bankHolder || '-'}</div>
+                <div style="font-size:14px"><strong>${htmlEscape(s.bankName)}</strong></div>
+                <div style="font-size:18px;font-weight:700;color:var(--accent);margin:4px 0">${htmlEscape(s.bankAccount || '-')}</div>
+                <div style="font-size:12px;color:var(--text3)">a.n. ${htmlEscape(s.bankHolder || '-')}</div>
               </div>`;
           }
         }
@@ -1925,7 +2010,7 @@
       el.innerHTML = '<button class="store-cat active" data-cat="all" onclick="filterCategory(\'all\')">📋 Semua</button>';
       cats.forEach(c => {
         const icon = CAT_ICONS[c] || '📦';
-        el.innerHTML += `<button class="store-cat" data-cat="${c}" onclick="filterCategory('${c}')">${icon} ${c}</button>`;
+        el.innerHTML += `<button class="store-cat" data-cat="${htmlAttr(c)}" onclick="filterCategory('${htmlAttr(c)}')">${icon} ${htmlEscape(c)}</button>`;
       });
     }
 
@@ -1959,19 +2044,19 @@
         const sold = (p.sold || Math.floor(Math.random() * 50) + 5);
         const desc = p.description || p.desc || '';
         return `
-          <div class="store-card ${oos ? 'store-card-out' : ''}" onclick="openDetailsModal('${p.id}')">
+            <div class="store-card ${oos ? 'store-card-out' : ''}" onclick="openDetailsModal('${htmlAttr(p.id)}')">
             <div class="shine-layer"></div>
-            <div class="store-card-image" style="background:${bg}">
-              <span class="store-card-emoji">${emoji}</span>
+            <div class="store-card-image" style="background:${htmlAttr(bg)}">
+              <span class="store-card-emoji">${htmlEscape(emoji)}</span>
               <span class="store-card-sold">Terjual ${sold}</span>
               ${p.stock <= 3 && p.stock > 0 ? `<span class="store-card-sisa">Sisa ${p.stock}</span>` : ''}
             </div>
             <div class="store-card-body">
-              <div class="store-card-cat">${p.category || 'Umum'}</div>
-              <div class="store-card-name" title="${p.name}">${p.name}</div>
+              <div class="store-card-cat">${htmlEscape(p.category || 'Umum')}</div>
+              <div class="store-card-name" title="${htmlAttr(p.name)}">${htmlEscape(p.name)}</div>
               <div class="store-card-price">${formatRupiah(p.price)}</div>
-              ${desc ? '<div class="store-card-desc">'+desc.slice(0,50)+(desc.length>50?'...':'')+'</div>' : ''}
-              <button class="store-card-add" ${oos ? 'disabled' : ''} onclick="event.stopPropagation();addToCart('${p.id}')">
+              ${desc ? '<div class="store-card-desc">'+htmlEscape(desc.slice(0,50))+(desc.length>50?'...':'')+'</div>' : ''}
+              <button class="store-card-add" ${oos ? 'disabled' : ''} onclick="event.stopPropagation();addToCart('${htmlAttr(p.id)}')">
                 ${oos ? 'Stok Habis' : (qty > 0 ? '✓ '+qty+' di Keranjang' : '🛒 + Keranjang')}
               </button>
             </div>
@@ -2112,17 +2197,17 @@
 
       el.innerHTML = cart.map(i => `
         <div class="cart-item">
-          <div class="cart-item-emoji">${i.image || '📦'}</div>
+          <div class="cart-item-emoji">${htmlEscape(i.image || '📦')}</div>
           <div class="cart-item-info">
-            <div class="cart-item-name" title="${i.name}">${i.name}</div>
+            <div class="cart-item-name" title="${htmlAttr(i.name)}">${htmlEscape(i.name)}</div>
             <div class="cart-item-price">${formatRupiah(i.price)}</div>
           </div>
           <div class="cart-item-qty">
-            <button class="cart-qty-btn" onclick="updateCartQty('${i.id}', -1)">−</button>
+            <button class="cart-qty-btn" onclick="updateCartQty('${htmlAttr(i.id)}', -1)">−</button>
             <span class="cart-qty-val">${i.qty}</span>
-            <button class="cart-qty-btn" onclick="updateCartQty('${i.id}', 1)">+</button>
+            <button class="cart-qty-btn" onclick="updateCartQty('${htmlAttr(i.id)}', 1)">+</button>
           </div>
-          <button class="cart-item-remove" onclick="removeFromCart('${i.id}')">✕</button>
+          <button class="cart-item-remove" onclick="removeFromCart('${htmlAttr(i.id)}')">✕</button>
         </div>
       `).join('');
     }
@@ -2161,9 +2246,9 @@
       summaryItemsEl.innerHTML = cart.map(i => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12px;">
           <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:1.2rem;">${i.image || '📦'}</span>
+            <span style="font-size:1.2rem;">${htmlEscape(i.image || '📦')}</span>
             <div>
-              <div style="font-weight:700; color:#fff;">${i.name}</div>
+              <div style="font-weight:700; color:#fff;">${htmlEscape(i.name)}</div>
               <div style="font-size:10px; color:var(--text3);">${formatRupiah(i.price)} x ${i.qty}</div>
             </div>
           </div>
@@ -2271,10 +2356,10 @@
         const cost = s.cost?.[0]?.value || 0;
         const etd = s.cost?.[0]?.etd || '';
         return `
-          <button class="shipping-option" style="flex:1;min-width:130px;padding:8px 12px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-family:inherit;text-align:left;display:block" onclick="selectService('${courier}','${s.service}',${cost},'${etd}')">
-            <div class="s-name">${s.service}</div>
+          <button class="shipping-option" style="flex:1;min-width:130px;padding:8px 12px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;font-family:inherit;text-align:left;display:block" onclick="selectService('${htmlAttr(courier)}','${htmlAttr(s.service)}',${cost},'${htmlAttr(etd)}')">
+            <div class="s-name">${htmlEscape(s.service)}</div>
             <div class="s-cost" style="color:var(--accent);font-weight:800;margin-top:2px">${formatRupiah(cost)}</div>
-            <div class="s-etd" style="font-size:9px;color:var(--text3);margin-top:2px">${etd}</div>
+            <div class="s-etd" style="font-size:9px;color:var(--text3);margin-top:2px">${htmlEscape(etd)}</div>
           </button>
         `;
       }).join('');
@@ -2446,7 +2531,7 @@
     }
 
     function showConfirmation(order) {
-      document.getElementById('confirmInv').innerHTML = `Invoice: <strong class="text-white">${order.invoiceNo}</strong>`;
+      document.getElementById('confirmInv').innerHTML = `Invoice: <strong class="text-white">${htmlEscape(order.invoiceNo)}</strong>`;
       document.getElementById('confirmTotal').innerHTML = `Total Tagihan: <strong style="color:var(--accent)">${formatRupiah(order.total)}</strong>`;
       document.getElementById('confirmStatus').innerHTML = `Status: <strong style="color:var(--accent)">Menunggu Pembayaran</strong>`;
 
@@ -2491,7 +2576,7 @@
             }
             if (o.resi) {
               const resiEl = document.getElementById('confirmResi');
-              if (resiEl) resiEl.innerHTML = `📦 Resi: <strong>${o.resi}</strong>`;
+              if (resiEl) resiEl.innerHTML = `📦 Resi: <strong>${htmlEscape(o.resi)}</strong>`;
             }
             showToast('🔄 Status pesanan diperbarui!');
           }
@@ -2533,10 +2618,10 @@
             const statusIcon = o.status === 'shipped' ? '📦' : o.status === 'accepted' ? '✅' : o.status === 'pending' ? '⏳' : '❌';
             const statusLabel = o.status === 'shipped' ? 'Dikirim' : o.status === 'accepted' ? 'Diproses' : o.status === 'pending' ? 'Menunggu' : 'Dibatalkan';
             const statusColor = o.status === 'shipped' ? 'var(--success)' : o.status === 'accepted' ? 'var(--primary)' : o.status === 'pending' ? 'var(--accent)' : 'var(--danger)';
-            const items = o.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+            const items = o.items.map(i => `${i.qty}x ${htmlEscape(i.name)}`).join(', ');
             return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                <strong>${o.invoiceNo || '#' + String(o.id).slice(-8)}</strong>
+                <strong>${htmlEscape(o.invoiceNo || '#' + String(o.id).slice(-8))}</strong>
                 <span style="color:${statusColor};font-weight:600;font-size:13px">${statusIcon} ${statusLabel}</span>
               </div>
               <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${items}</div>
@@ -2544,9 +2629,9 @@
                 <span style="font-weight:700">${formatRupiah(o.total)}</span>
                 <span style="color:var(--text3);font-size:12px">${new Date(o.timestamp).toLocaleDateString('id-ID')}</span>
               </div>
-              ${o.shippingCourier ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">🚚 ${o.shippingCourier} ${o.shippingService || ''}</div>` : ''}
-              ${o.resi ? `<div style="font-size:12px;color:var(--success);margin-top:2px">📦 Resi: ${o.resi}</div>` : ''}
-              ${o.status === 'pending' ? `<button onclick="waConfirmOrder(${o.id})" style="margin-top:8px;padding:6px 16px;background:#25D366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Konfirmasi via WA</button>` : ''}
+              ${o.shippingCourier ? `<div style="font-size:12px;color:var(--text3);margin-top:4px">🚚 ${htmlEscape(o.shippingCourier)} ${htmlEscape(o.shippingService || '')}</div>` : ''}
+              ${o.resi ? `<div style="font-size:12px;color:var(--success);margin-top:2px">📦 Resi: ${htmlEscape(o.resi)}</div>` : ''}
+              ${o.status === 'pending' ? `<button onclick="waConfirmOrder(${htmlAttr(o.id)})" style="margin-top:8px;padding:6px 16px;background:#25D366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">Konfirmasi via WA</button>` : ''}
             </div>`;
           }).join('');
         })
@@ -2607,7 +2692,7 @@
 
       setTimeout(() => {
         const text = queryStoreAI(q);
-        botBubble.innerHTML = text;
+        botBubble.innerHTML = htmlEscape(text);
         body.scrollTop = body.scrollHeight;
       }, 1000);
     }
@@ -2740,8 +2825,117 @@
 
 <div style="position:fixed;bottom:8px;right:8px;font-size:10px;color:var(--text3);background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;display:flex;align-items:center;gap:4px;z-index:9999;">
   <span style="opacity:0.6;">Server:</span>
-  <input id="storeUrlInput" style="width:160px;background:rgba(255,255,255,0.1);border:1px solid rgba(245,158,11,0.2);color:#fff;font-size:10px;outline:none;padding:2px 6px;border-radius:3px;" placeholder="http://localhost:3000" value="http://localhost:3000">
+  <input id="storeUrlInput" style="width:160px;background:rgba(255,255,255,0.1);border:1px solid rgba(245,158,11,0.2);color:#fff;font-size:16px;outline:none;padding:2px 6px;border-radius:3px;" placeholder="http://localhost:3000" value="http://localhost:3000">
   <button onclick="localStorage.setItem('storeServerUrl',document.getElementById('storeUrlInput').value);showToast('URL disimpan');SERVER=localStorage.getItem('storeServerUrl')" style="background:rgba(245,158,11,0.2);border:1px solid rgba(245,158,11,0.3);color:#fff;cursor:pointer;font-size:9px;padding:2px 8px;border-radius:3px;">Simpan</button>
 </div>
+<div class="store-bottom-tab" id="storeBottomTab">
+  <div class="store-tab-item" data-page="catalog">
+    <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span class="tab-label">Belanja</span>
+  </div>
+  <div class="store-tab-item" data-page="tracking">
+    <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    <span class="tab-label">Pesanan</span>
+  </div>
+  <div class="store-tab-item" data-page="checkout">
+    <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <span class="tab-label">Checkout</span>
+  </div>
+  <div class="store-tab-item" data-page="cart">
+    <svg class="tab-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+    <span class="tab-label">Keranjang</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var bar = document.getElementById('storeBottomTab');
+  if (!bar) return;
+  var lastY = 0, visible = true, timer = null;
+
+  function syncActive() {
+    var pages = document.querySelectorAll('.page-content');
+    var activePage = '';
+    pages.forEach(function(p) {
+      if (p.style.display !== 'none' && p.id) {
+        activePage = p.id.replace('page', '').toLowerCase();
+      }
+    });
+    bar.querySelectorAll('.store-tab-item').forEach(function(i) {
+      i.classList.toggle('active', i.dataset.page === activePage);
+    });
+  }
+
+  // Hook into showPage
+  var origShow = window.showPage;
+  if (origShow) {
+    window.showPage = function(p) {
+      origShow(p);
+      bar.querySelectorAll('.store-tab-item').forEach(function(i) {
+        i.classList.toggle('active', i.dataset.page === p);
+      });
+    };
+  }
+
+  bar.querySelectorAll('.store-tab-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var page = this.dataset.page;
+      if (window.showPage) showPage(page);
+      bar.querySelectorAll('.store-tab-item').forEach(function(i) { i.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+
+  window.addEventListener('scroll', function() {
+    var y = window.scrollY;
+    if (y > lastY && y > 50) { if (visible) { bar.classList.add('hidden'); visible = false; } }
+    else if (y < lastY) { if (!visible) { bar.classList.remove('hidden'); visible = true; } }
+    lastY = y;
+    clearTimeout(timer);
+    timer = setTimeout(function(){ if(!visible){ bar.classList.remove('hidden'); visible=true; } }, 3000);
+  }, { passive: true });
+
+  // Initial sync
+  setTimeout(syncActive, 100);
+})();
+</script>
+<script>
+// === PWA Enhance: Install Notice ===
+(function(){
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (!localStorage.getItem('pwa_done_' + location.pathname)) {
+      setTimeout(function(){
+        var n = document.createElement('div');
+        n.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,10,20,0.92);backdrop-filter:blur(30px);border:1px solid rgba(0,240,255,0.2);border-radius:20px;padding:40px 32px;text-align:center;z-index:999999;box-shadow:0 0 60px rgba(0,240,255,0.1);max-width:320px;width:90vw;animation:fadeIn 0.4s ease';
+        n.innerHTML = '<div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(0,240,255,0.5));">✓</div><h2 style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:800;color:#fff;margin:0 0 8px;">DONE ✓</h2><p style="color:rgba(232,234,240,0.6);font-size:13px;margin:0 0 20px;font-weight:500;">CasirPRO Enterprise berhasil terinstall!</p><button onclick="this.parentElement.remove()" style="background:linear-gradient(135deg,#00f0ff,#0099cc);border:none;border-radius:100px;padding:10px 32px;color:#000;font-weight:700;font-size:13px;cursor:pointer;font-family:Rajdhani,sans-serif;">⟐ BUKA</button>';
+        document.body.appendChild(n);
+        localStorage.setItem('pwa_done_' + location.pathname, '1');
+        setTimeout(function(){ n.remove(); }, 10000);
+      }, 800);
+    }
+    return;
+  }
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    var deferred = e;
+    var btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.addEventListener('click', function(){
+      deferred.prompt();
+      deferred.userChoice.then(function(r){
+        deferred = null;
+        if (r.outcome === 'accepted') {
+          setTimeout(function(){
+            var n = document.createElement('div');
+            n.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,10,20,0.92);backdrop-filter:blur(30px);border:1px solid rgba(0,240,255,0.2);border-radius:20px;padding:40px 32px;text-align:center;z-index:999999;box-shadow:0 0 60px rgba(0,240,255,0.1);max-width:320px;width:90vw;animation:fadeIn 0.4s ease';
+            n.innerHTML = '<div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(0,240,255,0.5));">✓</div><h2 style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:800;color:#fff;margin:0 0 8px;">DONE ✓</h2><p style="color:rgba(232,234,240,0.6);font-size:13px;margin:0 0 20px;font-weight:500;">Aplikasi berhasil diinstall! Silakan buka dari layar utama.</p><button onclick="this.parentElement.remove()" style="background:linear-gradient(135deg,#00f0ff,#0099cc);border:none;border-radius:100px;padding:10px 32px;color:#000;font-weight:700;font-size:13px;cursor:pointer;font-family:Rajdhani,sans-serif;">⟐ OK</button>';
+            document.body.appendChild(n);
+            setTimeout(function(){ n.remove(); }, 10000);
+          }, 500);
+        }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>

@@ -46,12 +46,21 @@ function getBranchData(branchId) { return store.branches[branchId] || null; }
 function getBranchFile(branchId, type) { const b = store.branches[branchId]; return b ? b[type] : null; }
 function saveBranchFile(branchId, type, data) { if (!store.branches[branchId]) return; store.branches[branchId][type] = data; }
 
+function stripStaffPins(staffList) {
+  return (staffList || []).map(s => {
+    const { pin, ...rest } = s;
+    return rest;
+  });
+}
+
 // ─── Crypto ──────────────────────────────────────────────────────────
 function base64url(s) { return Buffer.from(s).toString('base64url'); }
 function hashPassword(pw) { const salt = crypto.randomBytes(16).toString('hex'); const hash = crypto.scryptSync(pw, salt, 64).toString('hex'); return `${salt}:${hash}`; }
 function verifyPassword(pw, stored) { const [salt, hash] = stored.split(':'); return crypto.scryptSync(pw, salt, 64).toString('hex') === hash; }
 function createToken(payload) { const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' })); const body = base64url(JSON.stringify({ ...payload, iat: Date.now(), exp: Date.now() + 7 * 86400000 })); const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${header}.${body}`).digest('base64url'); return `${header}.${body}.${sig}`; }
-function verifyToken(token) { try { const parts = token.split('.'); if (parts.length !== 3) return null; const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest('base64url'); if (sig !== parts[2]) return null; const p = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); if (p.exp && p.exp < Date.now()) return null; return p; } catch (e) { return null; } }
+function hashPin(pin) { return hashPassword(pin); }
+function verifyPin(pin, stored) { return verifyPassword(pin, stored); }
+function verifyToken(token) { try { const parts = token.split('.'); if (parts.length !== 3) return null; const h = JSON.parse(Buffer.from(parts[0], 'base64url').toString()); if (h.alg !== 'HS256') return null; const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest('base64url'); if (sig !== parts[2]) return null; const p = JSON.parse(Buffer.from(parts[1], 'base64url').toString()); if (p.exp && p.exp < Date.now()) return null; return p; } catch (e) { return null; } }
 
 // ─── Shipping simulation ─────────────────────────────────────────────
 const SIM_CITIES = [{ city_id:'39', city_name:'Jakarta Pusat' },{ city_id:'40', city_name:'Jakarta Selatan' },{ city_id:'41', city_name:'Jakarta Barat' },{ city_id:'42', city_name:'Jakarta Timur' },{ city_id:'43', city_name:'Jakarta Utara' },{ city_id:'114', city_name:'Bandung' },{ city_id:'151', city_name:'Bekasi' },{ city_id:'180', city_name:'Bogor' },{ city_id:'261', city_name:'Depok' },{ city_id:'351', city_name:'Kota Surabaya' },{ city_id:'352', city_name:'Kota Surakarta' },{ city_id:'444', city_name:'Makassar' },{ city_id:'455', city_name:'Medan' },{ city_id:'501', city_name:'Padang' },{ city_id:'540', city_name:'Pekanbaru' },{ city_id:'555', city_name:'Pontianak' },{ city_id:'557', city_name:'Samarinda' },{ city_id:'561', city_name:'Semarang' },{ city_id:'581', city_name:'Tangerang' },{ city_id:'585', city_name:'Yogyakarta' }];
@@ -336,11 +345,11 @@ module.exports = (req, res) => {
         const staff = getBranchFile(b.id, 'staff') || [];
         staff.forEach(s => allStaff.push({ ...s, branchId: b.id, branchName: b.name }));
       });
-      return respond(200, allStaff);
+      return respond(200, stripStaffPins(allStaff));
     }
     const ctx = requireBranchAuth();
     if (!ctx) return respond(401, { error: 'Unauthorized' });
-    return respond(200, getBranchFile(ctx.branch.id, 'staff') || []);
+    return respond(200, stripStaffPins(getBranchFile(ctx.branch.id, 'staff') || []));
   }
   if (method === 'POST' && pathname === '/api/branch/staff') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return (async () => { try { saveBranchFile(ctx.branch.id, 'staff', JSON.parse(await readBody())); respond(200, { success: true }); } catch (e) { respond(400, { error: e.message }); } })(); }
   if (method === 'GET' && pathname === '/api/branch/settings') { const ctx = requireBranchAuth(); if (!ctx) return respond(401, { error: 'Unauthorized' }); return respond(200, getBranchFile(ctx.branch.id, 'settings') || {}); }
@@ -404,19 +413,22 @@ module.exports = (req, res) => {
   if (method === 'GET' && pathname === '/api/settings') { const id = firstBranch(); return respond(200, id ? (getBranchFile(id, 'settings') || {}) : {}); }
 
   if (method === 'POST' && pathname === '/api/sync') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
     return (async () => {
       try {
         const data = JSON.parse(await readBody());
+        if (typeof data !== 'object' || data === null) return respond(400, { error: 'Invalid data' });
         const queryBranch = new URL(req.url, 'http://localhost').searchParams.get('branch');
-        const id = queryBranch || firstBranch();
-        if (id) {
-          if (data.products) saveBranchFile(id, 'products', data.products);
-          if (data.settings) saveBranchFile(id, 'settings', data.settings);
-          if (data.staffList) saveBranchFile(id, 'staff', data.staffList);
-          if (data.transactions) saveBranchFile(id, 'transactions', data.transactions);
-          if (data.customers) saveBranchFile(id, 'customers', data.customers);
-          if (data.shifts) saveBranchFile(id, 'shifts', data.shifts);
-        }
+        const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
+        const id = queryBranch ? (branches.find(b => b.id === queryBranch) ? queryBranch : null) : (branches.length ? branches[0].id : null);
+        if (!id) return respond(403, { error: 'Branch not found or access denied' });
+        if (data.products) saveBranchFile(id, 'products', data.products);
+        if (data.settings) saveBranchFile(id, 'settings', data.settings);
+        if (data.staffList) saveBranchFile(id, 'staff', data.staffList);
+        if (data.transactions) saveBranchFile(id, 'transactions', data.transactions);
+        if (data.customers) saveBranchFile(id, 'customers', data.customers);
+        if (data.shifts) saveBranchFile(id, 'shifts', data.shifts);
         respond(200, { success: true });
       } catch (e) { respond(400, { error: e.message }); }
     })();

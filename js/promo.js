@@ -1,4 +1,8 @@
 // ─── Promo & Diskon Engine ──────────────────────────────────────────
+function htmlEscape(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
 const CasirPromo = {
   promos: [],
 
@@ -66,6 +70,8 @@ const CasirPromo = {
 
     result.totalDiscount = result.discounts.reduce((s, d) => s + (d.amount || 0), 0);
     result.totalAfterDiscount = cart.subtotal - result.totalDiscount;
+    if (cart.subtotal !== undefined) cart.subtotal = Math.max(0, result.totalAfterDiscount);
+    if (cart.total !== undefined) cart.total = Math.max(0, cart.subtotal + (cart.tax || 0));
     return result;
   },
 
@@ -105,8 +111,8 @@ const CasirPromo = {
     container.innerHTML = this.promos.map(p => `
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-weight:600;font-size:14px;">${p.name}</div>
-          <div style="font-size:11px;color:var(--text2);">${p.description || ''}
+          <div style="font-weight:600;font-size:14px;">${htmlEscape(p.name)}</div>
+          <div style="font-size:11px;color:var(--text2);">${htmlEscape(p.description || '')}
             ${p.type === 'percentage' ? ` • Diskon ${p.value}%` : ''}
             ${p.type === 'nominal' ? ` • Diskon Rp ${(p.value || 0).toLocaleString('id-ID')}` : ''}
           </div>
@@ -116,7 +122,7 @@ const CasirPromo = {
             ${p.active !== false ? '🟢 Aktif' : '🔴 Nonaktif'}
           </div>
         </div>
-        <button onclick="CasirPromo.remove('${p.id}');CasirPromo.renderPromoList('${containerId}')"
+        <button onclick="CasirPromo.remove('${htmlEscape(p.id)}');CasirPromo.renderPromoList('${htmlEscape(containerId)}')"
           style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#ef4444;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:11px;">Hapus</button>
       </div>
     `).join('');

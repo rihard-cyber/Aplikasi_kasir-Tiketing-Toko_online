@@ -4,10 +4,14 @@ const CasirReports = {
   // ─── Laba Rugi (Profit & Loss) ──────────────────────────────────
   profitLoss(transactions, products, period = 'all') {
     const filtered = this._filterPeriod(transactions, period);
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      console.warn('[CasirReports] products array empty — COGS will be 0');
+      products = [];
+    }
     const totalRevenue = filtered.reduce((s, t) => s + (t.total || 0), 0);
     const totalCost = filtered.reduce((s, t) => {
       const itemCost = (t.items || []).reduce((si, item) => {
-        const prod = (products || []).find(p => p.id === item.id || p.name === item.name);
+        const prod = products.find(p => p.id === item.id || p.name === item.name);
         return si + ((prod ? prod.cost || 0 : 0) * (item.qty || 1));
       }, 0);
       return s + itemCost;
@@ -64,17 +68,36 @@ const CasirReports = {
   },
 
   // ─── Arus Kas (Cash Flow) ───────────────────────────────────────
-  cashFlow(transactions, period = 'monthly') {
+  cashFlow(transactions, period = 'monthly', allExpenses = []) {
     const grouped = {};
+    const getKey = (d) => {
+      if (period === 'daily') return d.toISOString().split('T')[0];
+      if (period === 'monthly') return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      return d.getFullYear().toString();
+    };
     transactions.forEach(t => {
-      let key;
       const d = new Date(t.date || t.timestamp || Date.now());
-      if (period === 'daily') key = d.toISOString().split('T')[0];
-      else if (period === 'monthly') key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-      else key = d.getFullYear().toString();
+      const key = getKey(d);
       if (!grouped[key]) grouped[key] = { period: key, inflow: 0, outflow: 0, net: 0, count: 0 };
       grouped[key].inflow += t.total || 0;
       grouped[key].count++;
+    });
+    // Track outflow from expenses (refunds, expense entries, negative amounts)
+    (allExpenses || []).forEach(e => {
+      const d = new Date(e.date || e.timestamp || Date.now());
+      const key = getKey(d);
+      if (!grouped[key]) grouped[key] = { period: key, inflow: 0, outflow: 0, net: 0, count: 0 };
+      grouped[key].outflow += Math.abs(e.amount || 0);
+    });
+    // Also check for negative-amount transactions as additional outflow
+    transactions.forEach(t => {
+      if ((t.total || 0) < 0) {
+        const d = new Date(t.date || t.timestamp || Date.now());
+        const key = getKey(d);
+        if (!grouped[key]) grouped[key] = { period: key, inflow: 0, outflow: 0, net: 0, count: 0 };
+        grouped[key].outflow += Math.abs(t.total);
+        grouped[key].inflow -= Math.abs(t.total);
+      }
     });
     const result = Object.values(grouped).sort((a, b) => a.period.localeCompare(b.period));
     result.forEach(r => r.net = r.inflow - r.outflow);

@@ -1,4 +1,8 @@
 // ─── Manajemen Karyawan (Absensi, Komisi, Shift) ─────────────────────
+function htmlEscape(str) {
+  if (typeof str !== 'string') return str;
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+}
 const CasirStaff = {
   attendance: [],
 
@@ -69,6 +73,7 @@ const CasirStaff = {
   renderAttendance(containerId, staffList) {
     const container = document.getElementById(containerId);
     if (!container) return;
+    window._staffList = staffList || [];
     this.init();
     const today = new Date().toISOString().split('T')[0];
     const todayRecords = this.attendance.filter(a => a.date === today);
@@ -84,8 +89,8 @@ const CasirStaff = {
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <div>
-              <div style="font-weight:600;">${staff.name}</div>
-              <div style="font-size:11px;color:var(--text2);">${staff.role || 'Staff'}</div>
+              <div style="font-weight:600;">${htmlEscape(staff.name)}</div>
+              <div style="font-size:11px;color:var(--text2);">${htmlEscape(staff.role || 'Staff')}</div>
             </div>
             <div style="font-size:24px;">${isClockedIn ? '🟢' : '⚪'}</div>
           </div>
@@ -97,8 +102,8 @@ const CasirStaff = {
           ` : '<div style="font-size:11px;color:var(--text3);">Belum absen hari ini</div>'}
           <div style="margin-top:10px;">
             ${isClockedIn
-              ? `<button onclick="CasirStaff.clockOut('${staff.id}');CasirStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:12px;">Clock Out</button>`
-              : `<button onclick="CasirStaff.clockIn('${staff.id}','${staff.name}');CasirStaff.renderAttendance('${containerId}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#10b981;color:#fff;cursor:pointer;font-size:12px;">Clock In</button>`
+              ? `<button onclick="CasirStaff.clockOut('${htmlEscape(staff.id)}');CasirStaff.renderAttendance('${htmlEscape(containerId)}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:12px;">Clock Out</button>`
+              : `<button onclick="CasirStaff.clockIn('${htmlEscape(staff.id)}','${htmlEscape(staff.name)}');CasirStaff.renderAttendance('${htmlEscape(containerId)}',window._staffList||[])" style="padding:6px 14px;border-radius:8px;border:none;background:#10b981;color:#fff;cursor:pointer;font-size:12px;">Clock In</button>`
             }
           </div>
         </div>
@@ -130,7 +135,7 @@ const CasirStaff = {
       const calc = CasirStaff.calculateCommission(transactions, staff.id, rate);
       html += `
         <tr style="border-top:1px solid var(--border);">
-          <td style="padding:8px;font-weight:500;">${staff.name}</td>
+          <td style="padding:8px;font-weight:500;">${htmlEscape(staff.name)}</td>
           <td style="padding:8px;text-align:right;">Rp ${calc.totalSales.toLocaleString('id-ID')}</td>
           <td style="padding:8px;text-align:right;color:#10b981;font-weight:600;">Rp ${calc.commission.toLocaleString('id-ID')}</td>
         </tr>

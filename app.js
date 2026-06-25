@@ -6,6 +6,13 @@
 const DB_KEY = 'casirpro_db';
 const TAX_RATE = 0.11;
 
+async function sha256(str) {
+  if (typeof crypto?.subtle?.digest !== 'function') return str;
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+function isHashPin(pin) { return typeof pin === 'string' && /^[a-f0-9]{64}$/i.test(pin); }
+
 // =============================================
 // SEED DATA
 // =============================================
@@ -160,6 +167,20 @@ function switchTab(tab) {
   if (link) link.click();
 }
 
+function syncMobileHeaderTitle() {
+  const activeLink = document.querySelector('.sidebar-nav-link.active');
+  const mobileTitle = document.getElementById('mobilePageTitle');
+  if (activeLink && mobileTitle) {
+    const span = activeLink.querySelector('span');
+    if (span) {
+      let titleText = span.textContent.trim();
+      // Remove emojis
+      titleText = titleText.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]/g, '').trim();
+      mobileTitle.textContent = titleText;
+    }
+  }
+}
+
 // =============================================
 // DOM READY
 // =============================================
@@ -283,6 +304,28 @@ function initSidebar() {
       window.location.href = url;
     });
   }
+
+  // Sidebar auto-hide on scroll
+  (function() {
+    const s = document.getElementById('appSidebar');
+    if (!s) return;
+    let lastY = 0;
+    window.addEventListener('scroll', function() {
+      const y = window.scrollY;
+      if (y > lastY && y > 100) {
+        s.classList.add('sidebar-collapsed');
+      } else if (y < lastY) {
+        s.classList.remove('sidebar-collapsed');
+      }
+      lastY = y;
+    }, { passive: true });
+    s.addEventListener('mouseenter', function() {
+      s.classList.remove('sidebar-collapsed');
+    });
+    s.addEventListener('mouseleave', function() {
+      if (window.scrollY > 100) s.classList.add('sidebar-collapsed');
+    });
+  })();
 }
 
 // =============================================
@@ -308,6 +351,7 @@ function initRouter() {
       
       links.forEach(l=>l.classList.remove('active'));
       link.classList.add('active');
+      syncMobileHeaderTitle();
       sections.forEach(s=>{ s.classList.remove('active-section'); if(s.id==='section-'+target) s.classList.add('active-section'); });
       if(target==='kiosk') renderKioskView();
       if(target==='dashboard') renderDashboard();
@@ -1804,6 +1848,7 @@ function initMarketing() {
       e.preventDefault();
       document.querySelectorAll('.sidebar-nav-link').forEach(l => l.classList.remove('active'));
       link.classList.add('active');
+      syncMobileHeaderTitle();
       document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active-section'));
       let sec = document.getElementById('section-marketing');
       if (!sec) {
@@ -3821,7 +3866,7 @@ function connectWebSocket() {
             db.save();
             if (msg.data.settings.language && typeof applyLanguage === 'function') applyLanguage(msg.data.settings.language, false);
           }
-          showKioskSnackbar('🔄 Data disinkronkan dari server');
+          // showKioskSnackbar('🔄 Data disinkronkan dari server');
         }
       } catch(e) {}
     };
@@ -3944,7 +3989,7 @@ function updatePinIndicator() {
   });
 }
 
-function submitPin() {
+async function submitPin() {
   const select = document.getElementById('lockCashierSelect');
   if (!select) return;
   const cashier = select.value;
@@ -3958,7 +4003,14 @@ function submitPin() {
     correctPin = PIN_MAP[cashier] || '1234';
   }
 
-  if (enteredPin === correctPin) {
+  let pinMatch = false;
+  if (isHashPin(correctPin)) {
+    pinMatch = (await sha256(enteredPin)) === correctPin;
+  } else {
+    pinMatch = enteredPin === correctPin;
+  }
+
+  if (pinMatch) {
     // Authentication successful
     playSfx('sfxSuccess');
     
@@ -4168,7 +4220,7 @@ function togglePinReveal(id, btn) {
   if (pinSpan) {
     const staff = db.state.staffList.find(s => s.id === id);
     if (staff) {
-      pinSpan.textContent = pinVisibilityState[id] ? staff.pin : '••••';
+      pinSpan.textContent = pinVisibilityState[id] ? (isHashPin(staff.pin) ? '🔒 (protected)' : staff.pin) : '••••';
       btn.textContent = pinVisibilityState[id] ? '🔒 Hide' : '👁️ Show';
     }
   }
@@ -4482,7 +4534,7 @@ function renderProfilePage() {
   if (shiftSalesEl) shiftSalesEl.textContent = rp(shiftSales);
 }
 
-function changePersonalPin() {
+async function changePersonalPin() {
   const currentPinInput = document.getElementById('currentPinInput');
   const newPinInput = document.getElementById('newPinInput');
   const confirmNewPinInput = document.getElementById('confirmNewPinInput');
@@ -4509,8 +4561,14 @@ function changePersonalPin() {
   const staff = db.state.staffList.find(s => s.name === activeUser);
   if (!staff) return;
   
-  // Verify current PIN
-  if (staff.pin !== currentPin) {
+  // Verify current PIN (supports both hashed and plaintext)
+  let currentOk = false;
+  if (isHashPin(staff.pin)) {
+    currentOk = (await sha256(currentPin)) === staff.pin;
+  } else {
+    currentOk = staff.pin === currentPin;
+  }
+  if (!currentOk) {
     toast('Autentikasi Gagal', 'PIN lama yang Anda masukkan salah.', 'danger');
     playSfx('sfxError');
     return;
@@ -4523,8 +4581,8 @@ function changePersonalPin() {
     return;
   }
   
-  // Save new PIN
-  staff.pin = newPin;
+  // Save new PIN (hash if the existing format uses hashes)
+  staff.pin = isHashPin(staff.pin) ? await sha256(newPin) : newPin;
   db.save();
   syncProductsToServer();
   
@@ -5457,6 +5515,7 @@ function applyLanguage(lang, syncToServer = true) {
       wsClient.send(JSON.stringify({ type: 'sync', data: { settings: db.state.settings }, branchId: branch }));
     }
   }
+  syncMobileHeaderTitle();
 }
 
 // Decorate the global toast function to automatically translate notifications

@@ -31,6 +31,20 @@ function writeJSON(file, data) {
   try { fs.writeFileSync(path.join(DATA_DIR, file), JSON.stringify(data, null, 2)); } catch (e) {}
 }
 
+// ─── Rate Limiter ───────────────────────────────────────────────────────
+const rateLimitMap = new Map();
+function rateLimit(key, maxAttempts = 5, windowMs = 60000) {
+  const now = Date.now();
+  const record = rateLimitMap.get(key);
+  if (!record || now - record.start > windowMs) {
+    rateLimitMap.set(key, { start: now, count: 1 });
+    return true;
+  }
+  if (record.count >= maxAttempts) return false;
+  record.count++;
+  return true;
+}
+
 // ─── Crypto Helpers ────────────────────────────────────────────────────
 function base64url(s) { return Buffer.from(s).toString('base64url'); }
 
@@ -43,6 +57,33 @@ function verifyPassword(pw, stored) {
   const [salt, hash] = stored.split(':');
   return crypto.scryptSync(pw, salt, 64).toString('hex') === hash;
 }
+// For staff PINs: scrypt (server) + SHA-256 (client offline)
+function hashPin(pin) {
+  const serverHash = hashPassword(pin);
+  const clientHash = crypto.createHash('sha256').update(pin).digest('hex');
+  return JSON.stringify({ server: serverHash, client: clientHash });
+}
+function verifyPin(pin, stored) {
+  try {
+    const parsed = JSON.parse(stored);
+    if (parsed.server && parsed.client) {
+      const [salt, hash] = parsed.server.split(':');
+      return crypto.scryptSync(pin, salt, 64).toString('hex') === hash;
+    }
+  } catch (e) {}
+  return verifyPassword(pin, stored);
+}
+function getClientPinHash(stored) {
+  try {
+    const parsed = JSON.parse(stored);
+    return parsed.client || '';
+  } catch (e) { return ''; }
+}
+// Strip sensitive PIN hash for client consumption
+function stripStaffPin(staff) {
+  return { ...staff, pin: getClientPinHash(staff.pin) };
+}
+function stripStaffListPins(list) { return list.map(stripStaffPin); }
 
 function createToken(payload) {
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
@@ -54,6 +95,8 @@ function verifyToken(token) {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
+    const h = JSON.parse(Buffer.from(parts[0], 'base64url').toString());
+    if (h.alg !== 'HS256') return null;
     const sig = crypto.createHmac('sha256', JWT_SECRET).update(`${parts[0]}.${parts[1]}`).digest('base64url');
     if (sig !== parts[2]) return null;
     const p = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
@@ -104,8 +147,8 @@ function seed() {
         { id:'p8', name:'Aurora Buds Pro', sku:'AUR-BUDS-08', barcode:'899123456008', category:'Gadgets', brand:'NovaTech', unit:'pcs', cost:850000, price:1850000, memberPrice:1650000, stock:30, maxStock:60, minStock:10, imgBg:'linear-gradient(135deg,#a78bfa,#ec4899)', imgEmoji:'📳', desc:'Premium wireless earbuds with ANC.' }
       ]);
       saveBranchFile('branch-1', 'staff', [
-        { id:'st1', name:'Edward Stark', role:'Admin', pin:'1234' },
-        { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }
+        { id:'st1', name:'Edward Stark', role:'Admin', pin: hashPin('1234') },
+        { id:'st2', name:'John Doe', role:'Kasir', pin: hashPin('5555') }
       ]);
       saveBranchFile('branch-1', 'settings', {
         companyName:'CasirPRO Luxury Group', branchName:'Senayan Flagship Store',
@@ -229,14 +272,19 @@ const server = http.createServer((req, res) => {
   const method = req.method;
 
   const respond = (code, data) => {
-    res.writeHead(code, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.writeHead(code, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin') || '*' });
     res.end(JSON.stringify(data));
   };
   const readBody = () => new Promise(resolve => { let b = ''; req.on('data', c => b += c); req.on('end', () => resolve(b)); });
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers['origin'] || req.headers['host'] || '';
+  const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : [];
+  const isAllowed = !origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin) || origin.includes(req.headers['host'] || 'localhost');
+  res.setHeader('Access-Control-Allow-Origin', isAllowed && origin ? origin : (origin ? '' : '*'));
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Vary', 'Origin');
 
   if (method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
@@ -251,8 +299,12 @@ const server = http.createServer((req, res) => {
   if (method === 'POST' && pathname === '/api/auth/register') {
     (async () => {
       try {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        if (!rateLimit(`register:${clientIp}`, 3, 3600000)) return respond(429, { error: 'Too many registrations. Try again later.' });
         const { name, email, phone, password } = JSON.parse(await readBody());
         if (!name || !email || !password) return respond(400, { error: 'Name, email, password required' });
+        if (typeof email !== 'string' || !email.includes('@')) return respond(400, { error: 'Invalid email format' });
+        if (typeof password !== 'string' || password.length < 6) return respond(400, { error: 'Password must be at least 6 characters' });
         const owners = getOwners();
         if (owners.find(o => o.email === email)) return respond(409, { error: 'Email already registered' });
         const owner = { id: 'owner-' + Date.now().toString(36), name, email, phone: phone || '', password: hashPassword(password), createdAt: new Date().toISOString() };
@@ -268,6 +320,9 @@ const server = http.createServer((req, res) => {
     (async () => {
       try {
         const { email, password } = JSON.parse(await readBody());
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        if (!rateLimit(`login:${clientIp}`, 10, 60000)) return respond(429, { error: 'Too many login attempts. Try again in 60 seconds.' });
+        if (!email || !password) return respond(400, { error: 'Email and password required' });
         const owners = getOwners();
         const owner = owners.find(o => o.email === email);
         if (!owner || !verifyPassword(password, owner.password)) return respond(401, { error: 'Invalid email or password' });
@@ -330,8 +385,8 @@ const server = http.createServer((req, res) => {
             { id:'p8', name:'Aurora Buds Pro', sku:'AUR-BUDS-08', barcode:'899123456008', category:'Gadgets', brand:'NovaTech', unit:'pcs', cost:850000, price:1850000, memberPrice:1650000, stock:30, maxStock:60, minStock:10, imgBg:'linear-gradient(135deg,#a78bfa,#ec4899)', imgEmoji:'📳', desc:'Premium wireless earbuds with ANC.' }
           ]);
           saveBranchFile(branch.id, 'staff', [
-            { id:'st1', name:'Edward Stark', role:'Admin', pin:'1234' },
-            { id:'st2', name:'John Doe', role:'Kasir', pin:'5555' }
+            { id:'st1', name:'Edward Stark', role:'Admin', pin: hashPin('1234') },
+            { id:'st2', name:'John Doe', role:'Kasir', pin: hashPin('5555') }
           ]);
           saveBranchFile(branch.id, 'settings', {
             companyName: branch.name, branchName: branch.name,
@@ -522,14 +577,14 @@ const server = http.createServer((req, res) => {
       let allStaff = [];
       branches.forEach(b => {
         const staff = getBranchFile(b.id, 'staff') || [];
-        staff.forEach(s => allStaff.push({ ...s, branchId: b.id, branchName: b.name }));
+        staff.forEach(s => allStaff.push({ ...stripStaffPin(s), branchId: b.id, branchName: b.name }));
       });
       respond(200, allStaff);
       return;
     }
     const ctx = requireBranchAuth();
     if (!ctx) return respond(401, { error: 'Unauthorized' });
-    respond(200, getBranchFile(ctx.branch.id, 'staff') || []);
+    respond(200, stripStaffListPins(getBranchFile(ctx.branch.id, 'staff') || []));
     return;
   }
   if (method === 'POST' && pathname === '/api/branch/staff') {
@@ -538,8 +593,27 @@ const server = http.createServer((req, res) => {
     (async () => {
       try {
         const staff = JSON.parse(await readBody());
-        saveBranchFile(ctx.branch.id, 'staff', staff);
+        const hashed = Array.isArray(staff) ? staff.map(s => ({ ...s, pin: s.pin && !s.pin.includes(':') && !s.pin.includes('{') ? hashPin(s.pin) : s.pin })) : staff;
+        saveBranchFile(ctx.branch.id, 'staff', hashed);
         respond(200, { success: true });
+      } catch (e) { respond(400, { error: e.message }); }
+    })();
+    return;
+  }
+
+  // Branch PIN verification
+  if (method === 'POST' && pathname === '/api/branch/verify-pin') {
+    (async () => {
+      try {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+        if (!rateLimit(`verify-pin:${clientIp}`, 30, 60000)) return respond(429, { error: 'Too many PIN attempts. Try again later.' });
+        const { staffId, pin, branchId } = JSON.parse(await readBody());
+        if (!staffId || !pin || !branchId) return respond(400, { error: 'staffId, pin, branchId required' });
+        const staffList = getBranchFile(branchId, 'staff') || [];
+        const staff = staffList.find(s => s.id === staffId);
+        if (!staff) return respond(404, { error: 'Staff not found' });
+        const valid = verifyPin(pin, staff.pin);
+        respond(200, { success: valid, name: valid ? staff.name : null });
       } catch (e) { respond(400, { error: e.message }); }
     })();
     return;
@@ -590,6 +664,9 @@ const server = http.createServer((req, res) => {
         const body = JSON.parse(await readBody());
         const branchId = body.branchId;
         if (!branchId) return respond(400, { error: 'Branch ID required' });
+        const branches = getBranches();
+        const branchExists = branches.find(b => b.id === branchId);
+        if (!branchExists) return respond(404, { error: 'Branch not found' });
         const products = getBranchFile(branchId, 'products') || [];
         const orders = getBranchFile(branchId, 'orders') || [];
 
@@ -619,6 +696,23 @@ const server = http.createServer((req, res) => {
         orders.push(order);
         saveBranchFile(branchId, 'products', products);
         saveBranchFile(branchId, 'orders', orders);
+
+        const transactions = getBranchFile(branchId, 'transactions') || [];
+        transactions.push({
+          id: 'txn-' + Date.now(),
+          invoiceNo: order.invoiceNo,
+          date: order.timestamp,
+          items: order.items,
+          subtotal: order.subtotal,
+          tax: 0,
+          total: order.total,
+          paymentMethod: order.paymentMethod || 'Online Transfer',
+          status: 'Paid',
+          customerName: order.customerName,
+          source: 'online'
+        });
+        saveBranchFile(branchId, 'transactions', transactions);
+
         broadcast({ type: 'new_order', order, branchId });
 
         respond(201, { success: true, order });
@@ -713,7 +807,7 @@ const server = http.createServer((req, res) => {
   function firstBranch() { const b = getBranches(); return b.length ? b[0].id : null; }
 
   // Legacy legacy data loaded from server_data.json backup
-  const legacyDB = (function loadLegacy() {
+  function getLegacyDB() {
     const lf = path.join(__dirname, 'server_data.json.backup');
     try { if (fs.existsSync(lf)) return JSON.parse(fs.readFileSync(lf, 'utf8')); } catch (e) {}
     // Fallback: read from first branch
@@ -727,23 +821,27 @@ const server = http.createServer((req, res) => {
       };
     }
     return { products: [], orders: [], settings: {}, staffList: [] };
-  })();
+  }
 
-  if (method === 'GET' && pathname === '/api/products') { respond(200, legacyDB.products); return; }
-  if (method === 'GET' && pathname === '/api/orders') { respond(200, legacyDB.orders); return; }
-  if (method === 'GET' && pathname === '/api/settings') { respond(200, legacyDB.settings); return; }
+  if (method === 'GET' && pathname === '/api/products') { const db = getLegacyDB(); respond(200, db.products); return; }
+  if (method === 'GET' && pathname === '/api/orders') { const db = getLegacyDB(); respond(200, db.orders); return; }
+  if (method === 'GET' && pathname === '/api/settings') { const db = getLegacyDB(); respond(200, db.settings); return; }
 
   if (method === 'POST' && pathname === '/api/sync') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
     (async () => {
       try {
         const data = JSON.parse(await readBody());
+        if (typeof data !== 'object' || data === null) return respond(400, { error: 'Invalid data' });
         const queryBranch = url.searchParams.get('branch');
-        const branches = getBranches();
+        const branches = getBranches().filter(b => b.ownerId === auth.ownerId);
         const branchId = queryBranch || (branches.length ? branches[0].id : null);
+        if (!branchId || !branches.find(b => b.id === branchId)) return respond(403, { error: 'Branch not found or access denied' });
         if (branchId) {
           if (data.products) saveBranchFile(branchId, 'products', data.products);
           if (data.settings) saveBranchFile(branchId, 'settings', data.settings);
-          if (data.staffList) saveBranchFile(branchId, 'staff', data.staffList);
+          if (data.staffList) saveBranchFile(branchId, 'staff', data.staffList.map(s => ({ ...s, pin: s.pin && !s.pin.includes(':') && !s.pin.includes('{') ? hashPin(s.pin) : s.pin })));
           if (data.transactions) saveBranchFile(branchId, 'transactions', data.transactions);
           if (data.customers) saveBranchFile(branchId, 'customers', data.customers);
           if (data.shifts) saveBranchFile(branchId, 'shifts', data.shifts);
@@ -783,7 +881,8 @@ const server = http.createServer((req, res) => {
           orders.push(order);
           saveBranchFile(branches[0].id, 'orders', orders);
         }
-        broadcast({ type: 'new_order', order });
+        const legacyBranchId = branches.length ? branches[0].id : 'unknown';
+        broadcast({ type: 'new_order', order, branchId: legacyBranchId });
         respond(201, { success: true, orderId: order.id });
       } catch (e) { respond(400, { error: 'Invalid JSON' }); }
     })();
@@ -803,7 +902,8 @@ const server = http.createServer((req, res) => {
           if (idx !== -1) {
             orders[idx] = { ...orders[idx], ...update };
             saveBranchFile(branches[0].id, 'orders', orders);
-            broadcast({ type: 'order_updated', order: orders[idx] });
+            const legacyBranchId = branches.length ? branches[0].id : 'unknown';
+            broadcast({ type: 'order_updated', order: orders[idx], branchId: legacyBranchId });
           }
         }
         respond(200, { success: true });
@@ -874,6 +974,8 @@ const server = http.createServer((req, res) => {
 
   // ─── New: Staff Attendance API ───────────────────────────────────
   if (pathname === '/api/staff/attendance') {
+    const auth = getAuth();
+    if (!auth) return respond(401, { error: 'Unauthorized' });
     if (method === 'GET') {
       const branches = getBranches();
       const id = branches.length ? branches[0].id : null;
@@ -928,28 +1030,46 @@ const wss = new WebSocketServer({ server });
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const branchId = url.searchParams.get('branch');
+  const token = url.searchParams.get('token');
+
+  // Verify token for authenticated access
+  const auth = token ? verifyToken(token) : null;
 
   // Send init data
   const initData = { type: 'init' };
-  if (branchId) {
+  if (branchId && auth) {
+    const branches = getBranches();
+    const branch = branches.find(b => b.id === branchId && b.ownerId === auth.ownerId);
+    if (!branch) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized: branch access denied' }));
+      ws.close();
+      return;
+    }
     initData.products = getBranchFile(branchId, 'products') || [];
     initData.orders = (getBranchFile(branchId, 'orders') || []).filter(o => o.status === 'pending');
-    initData.staffList = getBranchFile(branchId, 'staff') || [];
+    initData.staffList = stripStaffListPins(getBranchFile(branchId, 'staff') || []);
     initData.settings = getBranchFile(branchId, 'settings') || {};
     initData.customers = getBranchFile(branchId, 'customers') || [];
     initData.shifts = getBranchFile(branchId, 'shifts') || [];
     initData.branchId = branchId;
-  } else {
-    // Legacy mode
+  } else if (!auth && branchId) {
+    // For store/public users without token, only send limited public data
+    initData.products = (getBranchFile(branchId, 'products') || []).filter(p => p.stock > 0).map(p => ({
+      id: p.id, name: p.name, price: p.price, stock: p.stock, imgEmoji: p.imgEmoji,
+      category: p.category, desc: p.desc
+    }));
+    initData.branchId = branchId;
+    initData.public = true;
+  } else if (!branchId) {
+    // Legacy mode (no branch ID, no auth) — minimal access
     const branches = getBranches();
     if (branches.length) {
       const b = branches[0];
-      initData.products = getBranchFile(b.id, 'products') || [];
-      initData.orders = (getBranchFile(b.id, 'orders') || []).filter(o => o.status === 'pending');
-      initData.staffList = getBranchFile(b.id, 'staff') || [];
-      initData.settings = getBranchFile(b.id, 'settings') || {};
-      initData.customers = getBranchFile(b.id, 'customers') || [];
-      initData.shifts = getBranchFile(b.id, 'shifts') || [];
+      initData.products = (getBranchFile(b.id, 'products') || []).filter(p => p.stock > 0).map(p => ({
+        id: p.id, name: p.name, price: p.price, stock: p.stock, imgEmoji: p.imgEmoji,
+        category: p.category, desc: p.desc
+      }));
+      initData.public = true;
     }
   }
   ws.send(JSON.stringify(initData));
@@ -975,7 +1095,7 @@ wss.on('connection', (ws, req) => {
       if (msg.type === 'sync') {
         if (msg.data.products) { saveBranchFile(brId, 'products', msg.data.products); }
         if (msg.data.settings) { const s = getBranchFile(brId, 'settings') || {}; Object.assign(s, msg.data.settings); saveBranchFile(brId, 'settings', s); }
-        if (msg.data.staffList) { saveBranchFile(brId, 'staff', msg.data.staffList); }
+        if (msg.data.staffList) { saveBranchFile(brId, 'staff', msg.data.staffList.map(s => ({ ...s, pin: s.pin && !s.pin.includes(':') && !s.pin.includes('{') ? hashPin(s.pin) : s.pin }))); }
         if (msg.data.transactions) { saveBranchFile(brId, 'transactions', msg.data.transactions); }
         if (msg.data.customers) { saveBranchFile(brId, 'customers', msg.data.customers); }
         if (msg.data.shifts) { saveBranchFile(brId, 'shifts', msg.data.shifts); }

@@ -481,6 +481,28 @@
       .cta-banner { padding: 40px 20px; }
       .cta-banner h2 { font-size: 22px; }
     }
+
+    @media (max-width: 768px) {
+      .features-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .showcase-grid { grid-template-columns: 1fr !important; }
+      .cta-banner h2 { font-size: 24px; }
+    }
+
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr !important; }
+      .market-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-section h1 { font-size: 24px; }
+      .devices-showcase { gap: 16px; }
+      .laptop-mockup { width: 100%; }
+      .phone-mockup { width: 140px; }
+      .pain-points { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 400px) {
+      .hero-actions { flex-direction: column; align-items: center; }
+      .hero-actions .btn { width: 100%; max-width: 280px; }
+      .cta-banner { padding: 30px 16px; }
+    }
   </style>
 </head>
 <body>
@@ -1047,6 +1069,44 @@
     window.addEventListener('resize',()=>{ w=window.innerWidth; h=window.innerHeight; cv.width=w; cv.height=h; });
   }
   initParticles();
+</script>
+<script>
+// === PWA Enhance: Install Notice ===
+(function(){
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (!localStorage.getItem('pwa_done_' + location.pathname)) {
+      setTimeout(function(){
+        var n = document.createElement('div');
+        n.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,10,20,0.92);backdrop-filter:blur(30px);border:1px solid rgba(0,240,255,0.2);border-radius:20px;padding:40px 32px;text-align:center;z-index:999999;box-shadow:0 0 60px rgba(0,240,255,0.1);max-width:320px;width:90vw;animation:fadeIn 0.4s ease';
+        n.innerHTML = '<div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(0,240,255,0.5));">✓</div><h2 style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:800;color:#fff;margin:0 0 8px;">DONE ✓</h2><p style="color:rgba(232,234,240,0.6);font-size:13px;margin:0 0 20px;font-weight:500;">CasirPRO Enterprise berhasil terinstall!</p><button onclick="this.parentElement.remove()" style="background:linear-gradient(135deg,#00f0ff,#0099cc);border:none;border-radius:100px;padding:10px 32px;color:#000;font-weight:700;font-size:13px;cursor:pointer;font-family:Rajdhani,sans-serif;">⟐ BUKA</button>';
+        document.body.appendChild(n);
+        localStorage.setItem('pwa_done_' + location.pathname, '1');
+        setTimeout(function(){ n.remove(); }, 10000);
+      }, 800);
+    }
+    return;
+  }
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    var deferred = e;
+    var btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.addEventListener('click', function(){
+      deferred.prompt();
+      deferred.userChoice.then(function(r){
+        deferred = null;
+        if (r.outcome === 'accepted') {
+          setTimeout(function(){
+            var n = document.createElement('div');
+            n.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,10,20,0.92);backdrop-filter:blur(30px);border:1px solid rgba(0,240,255,0.2);border-radius:20px;padding:40px 32px;text-align:center;z-index:999999;box-shadow:0 0 60px rgba(0,240,255,0.1);max-width:320px;width:90vw;animation:fadeIn 0.4s ease';
+            n.innerHTML = '<div style="font-size:48px;margin-bottom:16px;filter:drop-shadow(0 0 20px rgba(0,240,255,0.5));">✓</div><h2 style="font-family:Orbitron,sans-serif;font-size:18px;font-weight:800;color:#fff;margin:0 0 8px;">DONE ✓</h2><p style="color:rgba(232,234,240,0.6);font-size:13px;margin:0 0 20px;font-weight:500;">Aplikasi berhasil diinstall! Silakan buka dari layar utama.</p><button onclick="this.parentElement.remove()" style="background:linear-gradient(135deg,#00f0ff,#0099cc);border:none;border-radius:100px;padding:10px 32px;color:#000;font-weight:700;font-size:13px;cursor:pointer;font-family:Rajdhani,sans-serif;">⟐ OK</button>';
+            document.body.appendChild(n);
+            setTimeout(function(){ n.remove(); }, 10000);
+          }, 500);
+        }
+      });
+    });
+  });
+})();
 </script>
 </body>
 </html>

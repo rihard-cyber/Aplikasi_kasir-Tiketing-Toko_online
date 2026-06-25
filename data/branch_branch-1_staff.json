@@ -3,12 +3,12 @@
     "id": "st1",
     "name": "Edward Stark",
     "role": "Admin",
-    "pin": "1234"
+    "pin": "{\"server\":\"3e1314d6b41932fd82634a851dd77739:36926ff3e7c8ba11a954ec1e006ee93c9601243261f5f42f8080996e0b5345db4134dee8fe157564e37f9e2a91262b4a1dae2d3f5376924c0f09f21c987792f8\",\"client\":\"03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4\"}"
   },
   {
     "id": "st2",
     "name": "John Doe",
     "role": "Kasir",
-    "pin": "5555"
+    "pin": "{\"server\":\"a0e8c3276e3139e1a9d7917678b7ebcc:c110423f719468cdc30b7e5a6ddd237689844c326aabeb31b27aed2d0d37f22f879989d353cd56cda70132e01de66ea41b1b90b86f966c075ce58bafb3ad0798\",\"client\":\"c1f330d0aff31c1c87403f1e4347bcc21aff7c179908723535f2b31723702525\"}"
   }
 ]

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'casirpro-cache-v3';
+const CACHE_NAME = 'casirpro-cache-v4';
 const STATIC_ASSETS = [
   './',
   './pos.html',
@@ -24,7 +24,14 @@ self.addEventListener('install', e => {
       return cache.addAll(STATIC_ASSETS).catch(err => {
         console.warn('Pre-caching failed:', err);
       });
-    }).then(() => self.skipWaiting())
+    }).then(() => {
+      self.skipWaiting();
+      self.clients.matchAll().then(clients => {
+        clients.forEach(client => {
+          client.postMessage({ type: 'INSTALLED' });
+        });
+      });
+    })
   );
 });
 
@@ -71,6 +78,12 @@ self.addEventListener('fetch', e => {
       });
     })
   );
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 async function networkFirstWithCache(request) {
